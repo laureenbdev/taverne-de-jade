@@ -1,9 +1,12 @@
 import React from "react";
 import "./footer.scss";
+import { useTranslation } from "react-i18next";
 
 import { GithubLogo, TwitterLogo, DiscordLogo, Envelope } from "phosphor-react";
 
 const Footer: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <footer>
             <div className="footer-inner">
@@ -11,12 +14,12 @@ const Footer: React.FC = () => {
                     <div className="footer-logo" aria-hidden="true" />
                     <div>
                         <p className="footer-name">La Taverne de Jade</p>
-                        <p className="footer-tag">Un outil multifonction.</p>
+                        <p className="footer-tag">{t("footer.tag")}</p>
                     </div>
                 </div>
 
                 <div className="footer-col">
-                    <h3>Contact</h3>
+                    <h3>{t("footer.contact")}</h3>
                     <a href="https://github.com/laureenbdev" target="_blank" rel="noreferrer">
                         <GithubLogo className="icon" size={20} /> Github
                     </a>
@@ -32,26 +35,24 @@ const Footer: React.FC = () => {
                 </div>
 
                 <div className="footer-col">
-                    <h3>Crédits</h3>
+                    <h3>{t("footer.credits")}</h3>
                     <p className="credit">
-                        <span>Développé par</span>
+                        <span>{t("footer.developedBy")}</span>
                         <a href="https://github.com/laureenbdev" target="_blank" rel="noreferrer">Mei</a>
                     </p>
                     <p className="credit">
-                        <span>Avec l'aide de</span>
+                        <span>{t("footer.withHelp")}</span>
                         <a href="https://github.com/Erlow38" target="_blank" rel="noreferrer">Erlow</a>
                     </p>
                     <p className="credit">
-                        <span>Logo par</span>
+                        <span>{t("footer.logoBy")}</span>
                         <a href="https://github.com/R4it0" target="_blank" rel="noreferrer">Raito</a>
                     </p>
                 </div>
             </div>
 
             <div className="footer-legal">
-                <p>
-                    Genshin Impact™ is a registered trademark of HoYoverse Co., Ltd. This site is not affiliated with or endorsed by HoYoverse. Images and data © HoYoverse Co., Ltd.
-                </p>
+                <p>{t("footer.legal")}</p>
             </div>
         </footer>
     );

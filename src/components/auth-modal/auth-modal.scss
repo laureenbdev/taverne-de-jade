@@ -1,0 +1,121 @@
+.auth-modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1200;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow: auto;
+	background: rgba(12, 16, 14, 0.62);
+	padding: 32px 16px;
+
+	.auth-modal-content {
+		width: min(100%, 400px);
+		flex-shrink: 0;
+		margin: auto;
+		padding: 28px 24px;
+		border-radius: var(--radius);
+		border: 1px solid rgba(198, 163, 106, 0.32);
+		background: var(--color-bg-light);
+		box-shadow: var(--shadow-soft);
+	}
+
+	.auth-modal-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 18px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid rgba(198, 163, 106, 0.35);
+
+		h2 {
+			margin: 0;
+			color: var(--color-heading);
+			font-size: 1.4rem;
+		}
+	}
+
+	.auth-modal-close {
+		display: flex;
+		padding: 4px;
+		border: none;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--color-text);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--color-gray);
+		}
+	}
+
+	.auth-modal-form {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		font-weight: 500;
+	}
+
+	.auth-modal-hint {
+		font-size: 0.82rem;
+		font-weight: 400;
+		color: #6d756f;
+	}
+
+	input {
+		padding: 10px 12px;
+		border: 1px solid var(--color-grey);
+		border-radius: 8px;
+		background: var(--color-bg-light);
+		color: var(--color-text);
+		font: inherit;
+	}
+
+	.auth-modal-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin-top: 4px;
+	}
+
+	button {
+		padding: 10px 12px;
+		border-radius: 8px;
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+
+		&:disabled {
+			opacity: 0.6;
+			cursor: default;
+		}
+	}
+
+	.btn-submit {
+		border: none;
+		background: var(--color-primary-deep);
+		color: #fff;
+	}
+
+	.btn-secondary {
+		border: 1px solid var(--color-primary-deep);
+		background: transparent;
+		color: var(--color-primary-deep);
+	}
+
+	.auth-modal-message {
+		margin: 0;
+		color: var(--color-primary-deep);
+		font-size: 0.92rem;
+
+		&.error {
+			color: #9a4a4a;
+		}
+	}
+}

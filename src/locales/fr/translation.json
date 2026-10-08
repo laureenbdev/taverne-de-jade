@@ -1,4 +1,166 @@
 {
-  
+  "common": {
+    "loading": "Chargement…",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "search": "Rechercher…",
+    "character": "Personnage",
+    "weapon": "Arme",
+    "date": "Date"
+  },
+  "nav": {
+    "home": "Accueil",
+    "advancement": "Progression",
+    "planner": "Planificateur",
+    "wishes": "Vœux",
+    "settings": "Paramètres"
+  },
+  "header": {
+    "account": "{{name}}"
+  },
+  "home": {
+    "kicker": "Genshin Impact",
+    "title": "La Taverne de Jade",
+    "lede": "Un outil multifonction.",
+    "welcomeTitle": "Bienvenue",
+    "welcome1": "La Taverne de Jade est un site dédié aux fans de Genshin Impact. Suivez votre progression et gardez un œil sur ce qu'il vous reste à accomplir. Créez une liste d'objectifs — quotidiens, hebdomadaires, mensuels ou liés aux mises à jour — et choisissez les rappels que vous voulez afficher.",
+    "welcome2": "L'historique de vœux et la liste de souhaits sont disponibles. La planification d'ascension des personnages arrive bientôt.",
+    "welcome3Before": "Développé avec soin par ",
+    "welcome3Middle": ", avec le soutien du ",
+    "welcome3Discord": "serveur Discord",
+    "welcome3After": " du même nom. Une suggestion ou un problème ? Écrivez-nous.",
+    "progressTitle": "Progression",
+    "progressText": "Gardez une vue claire sur ce qu'il reste à accomplir.",
+    "goalsTitle": "Objectifs",
+    "goalsText": "Rappels du jour, de la semaine, du mois ou d'une mise à jour.",
+    "wishesTitle": "Vœux",
+    "wishesText": "Historique, liste de souhaits, et bientôt l'ascension.",
+    "newsTitle": "Nouveautés",
+    "newsWishHistory": "Ajout de l'historique de vœux et de la liste de souhaits",
+    "newsRefactor": "Refonte du code et des styles"
+  },
+  "footer": {
+    "tag": "Un outil multifonction.",
+    "contact": "Contact",
+    "credits": "Crédits",
+    "developedBy": "Développé par",
+    "withHelp": "Avec l'aide de",
+    "logoBy": "Logo par",
+    "legal": "Genshin Impact™ est une marque déposée de HoYoverse Co., Ltd. Ce site n'est ni affilié à HoYoverse, ni approuvé par HoYoverse. Images et données © HoYoverse Co., Ltd."
+  },
+  "wishes": {
+    "stats": "Statistiques",
+    "wishlist": "Liste de souhaits",
+    "overview": "Historique des vœux",
+    "addPull": "Ajouter un tirage",
+    "confirmDelete": "Voulez-vous vraiment supprimer ce vœu ?",
+    "table": {
+      "name": "Nom 5☆",
+      "total": "Nombre de vœux",
+      "date": "Date",
+      "banner": "Bannière / version",
+      "empty": "Aucun vœu enregistré",
+      "edit": "Modifier ce tirage",
+      "delete": "Supprimer ce tirage"
+    },
+    "modal": {
+      "editTitle": "Modifier le vœu",
+      "addTitle": "Ajouter un vœu",
+      "character": "Personnage",
+      "selectCharacter": "Choisir un personnage 5☆…",
+      "pity": "Compteur de pity",
+      "banner": "Bannière / version",
+      "bannerPlaceholder": "Ex. : 5.0, 4.8, Perma…",
+      "edit": "Modifier",
+      "add": "Ajouter"
+    }
+  },
+  "wishlist": {
+    "empty": "Votre liste de souhaits est vide. Cliquez sur « Ajouter » pour commencer.",
+    "addItem": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "completed": "Marquer comme obtenu",
+    "confirmDelete": "Voulez-vous vraiment retirer « {{name}} » de votre liste de souhaits ?",
+    "rarity": "Rareté",
+    "count": "Nombre",
+    "countTip": "Nombre d'exemplaires visés",
+    "avg": "Moy.",
+    "avgTip": "Estimation moyenne des vœux nécessaires",
+    "max": "Max",
+    "maxTip": "Nombre de vœux nécessaires dans le pire cas",
+    "form": {
+      "editTitle": "Modifier l'élément",
+      "addTitle": "Ajouter un élément",
+      "type": "Type",
+      "character": "Personnage",
+      "weapon": "Arme",
+      "selectCharacter": "Choisir un personnage…",
+      "selectWeapon": "Choisir une arme…",
+      "selectRequired": "Veuillez sélectionner un élément",
+      "targetCount": "Nombre visé (1-7)",
+      "releaseDate": "Date de sortie estimée (facultatif)",
+      "save": "Enregistrer",
+      "add": "Ajouter"
+    }
+  },
+  "itemSelect": {
+    "placeholder": "Choisir un élément…",
+    "search": "Rechercher…",
+    "empty": "Aucun élément trouvé"
+  },
+  "characterSelect": {
+    "placeholder": "Choisir un personnage…",
+    "search": "Rechercher un personnage…",
+    "empty": "Aucun personnage trouvé"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "accountTitle": "Compte",
+    "connect": "Se connecter",
+    "connectHint": "Connectez-vous pour débloquer les paramètres et les enregistrer sur votre compte.",
+    "signedOut": "Non connecté",
+    "localNote": "Connectez-vous pour garder ces paramètres sur votre compte. Le site fonctionne aussi sans compte : ils sont alors enregistrés dans ce navigateur, et peuvent être perdus.",
+    "savedLocal": "Enregistré dans ce navigateur.",
+    "pseudo": "Pseudo",
+    "pseudoHint": "Affiché dans l'en-tête. Il n'a pas besoin d'être unique.",
+    "signOut": "Se déconnecter",
+    "signOutConfirm": "Se déconnecter de ce compte ?",
+    "language": "Langue",
+    "uid": "UID",
+    "uidHint": "Votre UID Genshin Impact à 9 chiffres.",
+    "server": "Serveur",
+    "serverPlaceholder": "Choisir un serveur",
+    "saved": "Paramètres enregistrés.",
+    "tableMissing": "La table profiles est absente. Exécutez le SQL dans Supabase, puis réessayez.",
+    "uidInvalid": "L'UID doit contenir 9 chiffres.",
+    "serverRequired": "Choisissez un serveur.",
+    "servers": {
+      "america": "Amérique",
+      "europe": "Europe",
+      "asia": "Asie",
+      "tw": "TW, HK, MO"
+    }
+  },
+  "auth": {
+    "title": "Connexion",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "pseudo": "Pseudo",
+    "pseudoHint": "Obligatoire pour créer un compte.",
+    "pseudoInvalid": "Choisissez un pseudo de 2 à 24 caractères.",
+    "accountCreated": "Compte créé. Vérifiez vos e-mails si la confirmation est activée.",
+    "errors": {
+      "notConfigured": "Renseignez REACT_APP_SUPABASE_URL et REACT_APP_SUPABASE_PUBLISHABLE_KEY dans .env.local, puis redémarrez le serveur.",
+      "invalidCredentials": "E-mail ou mot de passe incorrect.",
+      "alreadyRegistered": "Un compte existe déjà avec cet e-mail.",
+      "emailNotConfirmed": "E-mail pas encore confirmé."
+    }
+  }
 }
-  

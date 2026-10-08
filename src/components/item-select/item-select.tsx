@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import './item-select.scss';
 
 import { CaretDown, MagnifyingGlass } from 'phosphor-react';
@@ -26,9 +27,10 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 	isLoading = false,
 	value,
 	onChange,
-	placeholder = 'Select an item...',
+	placeholder,
 	required = false,
 }) => {
+	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -148,7 +150,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 				tabIndex={0}
 			>
 				<span className="item-select-value">
-					{value ? (selectedItem ? selectedItem.name : value) : placeholder}
+					{value ? (selectedItem ? selectedItem.name : value) : (placeholder || t('itemSelect.placeholder'))}
 				</span>
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
@@ -163,17 +165,17 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 							value={searchTerm}
 							onChange={handleSearchChange}
 							onKeyDown={handleKeyDown}
-							placeholder="Search..."
+							placeholder={t('itemSelect.search')}
 							className="item-select-search-input"
 						/>
 					</div>
 
 					<div className="item-select-options inner-scroll" role="listbox">
 						{isLoading ? (
-							<div className="item-select-option loading">Loading...</div>
+							<div className="item-select-option loading">{t('common.loading')}</div>
 						) : filteredItems.length === 0 ? (
 							<div className="item-select-option no-results">
-								No item found
+								{t('itemSelect.empty')}
 							</div>
 						) : (
 							filteredItems.map((item, index) => (

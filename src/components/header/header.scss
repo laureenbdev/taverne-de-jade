@@ -68,6 +68,40 @@ header {
             color: var(--color-primary);
         }
     }
+
+    .header_account {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        align-self: center;
+        color: var(--color-gold-light);
+        font-weight: 400;
+        letter-spacing: 0;
+        line-height: 1.15;
+
+        .header_account_text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .header_account_name {
+            color: var(--color-gold-light);
+            font-size: 0.85rem;
+        }
+
+        .header_account_uid {
+            color: var(--color-muted-on-dark);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+        }
+
+        &:hover,
+        &:hover .header_account_name,
+        &:hover .header_account_uid {
+            color: var(--color-primary);
+        }
+    }
 }
 
 @media (max-width: 1200px) {
@@ -125,6 +159,12 @@ header {
                 font-size: 0.85rem;
                 font-weight: 400;
             }
+        }
+
+        .header_account {
+            width: 100%;
+            max-width: none;
+            padding: 2px 0 4px;
         }
     }
 }

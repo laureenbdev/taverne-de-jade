@@ -58,17 +58,7 @@
         padding: 36px 40px 32px;
     }
 
-    .lang-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 36px;
-        width: 100%;
-
-        article + article {
-            padding-left: 36px;
-            border-left: 1px solid var(--color-grey);
-        }
-
+    .welcome {
         h2 {
             font-size: 1.45rem;
             margin-bottom: 14px;
@@ -77,7 +67,13 @@
             gap: 10px;
         }
 
-        p + p {
+        .welcome-copy {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 28px;
+        }
+
+        .welcome-copy p + p {
             margin-top: 14px;
         }
 
@@ -173,16 +169,9 @@
             padding: 24px 18px 20px;
         }
 
-        .lang-grid {
+        .welcome .welcome-copy {
             grid-template-columns: 1fr;
-            gap: 28px;
-
-            article + article {
-                padding-left: 0;
-                padding-top: 28px;
-                border-left: none;
-                border-top: 1px solid var(--color-grey);
-            }
+            gap: 14px;
         }
 
         .features {

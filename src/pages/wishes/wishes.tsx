@@ -1,17 +1,20 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './wishes.scss';
 
 import WishesOverview from '../../components/wishes-overview/wishes-overview.tsx';
 import Wishlist from '../../components/wishlist/wishlist.tsx';
 
 const Wishes: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <div id="wishes" className="page">
 
             <section className="left">
 
                 <div className="section-container">
-                    <h2>Stats</h2>
+                    <h2>{t('wishes.stats')}</h2>
                 </div>
 
                 <WishesOverview />
@@ -21,7 +24,7 @@ const Wishes: React.FC = () => {
             <section className="right">
 
                 <div className="section-container">
-                    <h2>Wishlist</h2>
+                    <h2>{t('wishes.wishlist')}</h2>
                     <Wishlist />
                 </div>
 

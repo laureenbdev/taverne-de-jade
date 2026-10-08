@@ -1,3 +1,166 @@
 {
-  
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "search": "Search…",
+    "character": "Character",
+    "weapon": "Weapon",
+    "date": "Date"
+  },
+  "nav": {
+    "home": "Home",
+    "advancement": "Advancement",
+    "planner": "Planner",
+    "wishes": "Wishes",
+    "settings": "Settings"
+  },
+  "header": {
+    "account": "{{name}}"
+  },
+  "home": {
+    "kicker": "Genshin Impact",
+    "title": "La Taverne de Jade",
+    "lede": "A multi-purpose tool.",
+    "welcomeTitle": "Welcome",
+    "welcome1": "La Taverne de Jade is a site for Genshin Impact fans. Track your progress and keep an eye on what you still need to complete. Build a to-do list for daily, weekly, monthly, or update goals, and choose which reminders to show.",
+    "welcome2": "Wish history and the wishlist are available now. Character ascension planning is on the way.",
+    "welcome3Before": "Lovingly built by ",
+    "welcome3Middle": ", with help from the ",
+    "welcome3Discord": "Discord server",
+    "welcome3After": " of the same name. Reach out with suggestions or issues.",
+    "progressTitle": "Progress",
+    "progressText": "Keep a clear view of what you still need to complete.",
+    "goalsTitle": "Goals",
+    "goalsText": "Reminders for the day, the week, the month, or an update.",
+    "wishesTitle": "Wishes",
+    "wishesText": "History, wishlist, and ascension planning soon.",
+    "newsTitle": "What's new",
+    "newsWishHistory": "Added wish history and wish list",
+    "newsRefactor": "Refactored the codebase and styles"
+  },
+  "footer": {
+    "tag": "A multi-purpose tool.",
+    "contact": "Contact",
+    "credits": "Credits",
+    "developedBy": "Built by",
+    "withHelp": "With help from",
+    "logoBy": "Logo by",
+    "legal": "Genshin Impact™ is a registered trademark of HoYoverse Co., Ltd. This site is not affiliated with or endorsed by HoYoverse. Images and data © HoYoverse Co., Ltd."
+  },
+  "wishes": {
+    "stats": "Stats",
+    "wishlist": "Wishlist",
+    "overview": "Wishes overview",
+    "addPull": "Add a pull",
+    "confirmDelete": "Are you sure you want to delete this wish?",
+    "table": {
+      "name": "5☆ name",
+      "total": "Total wishes",
+      "date": "Date",
+      "banner": "Banner / patch",
+      "empty": "No wish recorded",
+      "edit": "Edit this pull",
+      "delete": "Delete this pull"
+    },
+    "modal": {
+      "editTitle": "Edit wish",
+      "addTitle": "Add wish",
+      "character": "Character",
+      "selectCharacter": "Select a 5☆ character…",
+      "pity": "Pity count",
+      "banner": "Banner / patch",
+      "bannerPlaceholder": "Ex: 5.0, 4.8, Perma…",
+      "edit": "Edit",
+      "add": "Add"
+    }
+  },
+  "wishlist": {
+    "empty": "No items in your wishlist yet. Click \"Add item\" to get started!",
+    "addItem": "Add item",
+    "edit": "Edit",
+    "delete": "Delete",
+    "completed": "Mark as completed",
+    "confirmDelete": "Are you sure you want to delete \"{{name}}\" from your wishlist?",
+    "rarity": "Rarity",
+    "count": "Count",
+    "countTip": "Number of copies you are aiming for",
+    "avg": "Avg",
+    "avgTip": "Average estimate of wishes needed",
+    "max": "Max",
+    "maxTip": "Wishes needed in the worst case",
+    "form": {
+      "editTitle": "Edit item",
+      "addTitle": "Add item",
+      "type": "Type",
+      "character": "Character",
+      "weapon": "Weapon",
+      "selectCharacter": "Select a character…",
+      "selectWeapon": "Select a weapon…",
+      "selectRequired": "Please select an item",
+      "targetCount": "Target count (1-7)",
+      "releaseDate": "Estimated release date (optional)",
+      "save": "Save",
+      "add": "Add"
+    }
+  },
+  "itemSelect": {
+    "placeholder": "Select an item…",
+    "search": "Search…",
+    "empty": "No item found"
+  },
+  "characterSelect": {
+    "placeholder": "Select a character…",
+    "search": "Search a character…",
+    "empty": "No character found"
+  },
+  "settings": {
+    "title": "Settings",
+    "accountTitle": "Account",
+    "connect": "Sign in",
+    "connectHint": "Sign in to unlock settings and save them to your account.",
+    "signedOut": "Not signed in",
+    "localNote": "Sign in to keep these settings on your account. The site works without an account too: they are then stored in this browser, and can be lost.",
+    "savedLocal": "Saved in this browser.",
+    "pseudo": "Pseudo",
+    "pseudoHint": "Shown in the header. It does not have to be unique.",
+    "signOut": "Sign out",
+    "signOutConfirm": "Sign out of this account?",
+    "language": "Language",
+    "uid": "UID",
+    "uidHint": "Your 9-digit Genshin Impact UID.",
+    "server": "Server",
+    "serverPlaceholder": "Select a server",
+    "saved": "Settings saved.",
+    "tableMissing": "The profiles table is missing. Run the SQL setup in Supabase, then try again.",
+    "uidInvalid": "UID must be 9 digits.",
+    "serverRequired": "Select a server.",
+    "servers": {
+      "america": "America",
+      "europe": "Europe",
+      "asia": "Asia",
+      "tw": "TW, HK, MO"
+    }
+  },
+  "auth": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signUp": "Create an account",
+    "pseudo": "Pseudo",
+    "pseudoHint": "Required to create an account.",
+    "pseudoInvalid": "Choose a pseudo between 2 and 24 characters.",
+    "accountCreated": "Account created. Check your inbox if confirmation is enabled.",
+    "errors": {
+      "notConfigured": "Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_PUBLISHABLE_KEY in .env.local, then restart the server.",
+      "invalidCredentials": "Incorrect email or password.",
+      "alreadyRegistered": "An account already exists with this email.",
+      "emailNotConfirmed": "Email not confirmed yet."
+    }
+  }
 }

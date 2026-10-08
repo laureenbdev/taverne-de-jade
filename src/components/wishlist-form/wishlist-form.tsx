@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './wishlist-form.scss';
 
 import { X } from 'phosphor-react';
@@ -18,6 +19,7 @@ interface WishlistFormProps {
  * Composant modale pour ajouter/éditer un élément de wishlist
  */
 const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSubmit }) => {
+	const { t } = useTranslation();
 	const { characters, isLoading: isLoadingCharacters } = useCharacters();
 	const { weapons, isLoading: isLoadingWeapons } = useWeapons();
 	const [formData, setFormData] = useState<WishlistItemFormData>({
@@ -69,7 +71,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!formData.name) {
-			alert('Please select an item');
+			alert(t('wishlist.form.selectRequired'));
 			return;
 		}
 		onSubmit(formData);
@@ -88,47 +90,47 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 		<div className="wishlist-form-overlay" onClick={onClose}>
 			<div className="wishlist-form-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wishlist-form-header">
-					<h2>{item ? 'Edit item' : 'Add item'}</h2>
-					<button className="wishlist-form-close" onClick={onClose} aria-label="Close">
+					<h2>{item ? t('wishlist.form.editTitle') : t('wishlist.form.addTitle')}</h2>
+					<button className="wishlist-form-close" onClick={onClose} aria-label={t('common.close')}>
 						<X size={24} />
 					</button>
 				</div>
 
 				<form onSubmit={handleSubmit} className="wishlist-form-form">
 					<div className="form-group">
-						<label htmlFor="type">Type</label>
+						<label htmlFor="type">{t('wishlist.form.type')}</label>
 						<div className="switch-container">
 							<button
 								type="button"
 								className={`switch-option ${formData.type === 'character' ? 'active' : ''}`}
 								onClick={() => handleChange('type', 'character')}
 							>
-								Character
+								{t('wishlist.form.character')}
 							</button>
 							<button
 								type="button"
 								className={`switch-option ${formData.type === 'weapon' ? 'active' : ''}`}
 								onClick={() => handleChange('type', 'weapon')}
 							>
-								Weapon
+								{t('wishlist.form.weapon')}
 							</button>
 						</div>
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="name">{formData.type === 'character' ? 'Character' : 'Weapon'}</label>
+						<label htmlFor="name">{formData.type === 'character' ? t('wishlist.form.character') : t('wishlist.form.weapon')}</label>
 						<ItemSelect
 							items={availableItems}
 							isLoading={isLoading}
 							value={formData.name}
 							onChange={(name) => handleChange('name', name)}
-							placeholder={`Select a ${formData.type}...`}
+							placeholder={formData.type === 'character' ? t('wishlist.form.selectCharacter') : t('wishlist.form.selectWeapon')}
 							required
 						/>
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="targetCount">Target count (1-7)</label>
+						<label htmlFor="targetCount">{t('wishlist.form.targetCount')}</label>
 						<input
 							id="targetCount"
 							type="number"
@@ -145,7 +147,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="estimatedReleaseDate">Estimated release date (optional)</label>
+						<label htmlFor="estimatedReleaseDate">{t('wishlist.form.releaseDate')}</label>
 						<input
 							id="estimatedReleaseDate"
 							type="date"
@@ -156,10 +158,10 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 
 					<div className="form-actions">
 						<button type="button" onClick={onClose} className="btn-cancel">
-							Cancel
+							{t('common.cancel')}
 						</button>
 						<button type="submit" className="btn-submit">
-							{item ? 'Save' : 'Add'}
+							{item ? t('wishlist.form.save') : t('wishlist.form.add')}
 						</button>
 					</div>
 				</form>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './wish-modal.scss';
 
 import { X } from 'phosphor-react';
@@ -17,6 +18,7 @@ interface WishModalProps {
  * Composant modale pour ajouter/éditer un vœu
  */
 const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }) => {
+	const { t } = useTranslation();
 	const { characters, isLoading: isLoadingCharacters } = useCharacters();
 	const [formData, setFormData] = useState<WishFormData>({
 		characterName: '',
@@ -64,27 +66,27 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 		<div className="wish-modal-overlay" onClick={onClose}>
 			<div className="wish-modal-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wish-modal-header">
-					<h2>{wish ? 'Edit wish' : 'Add wish'}</h2>
-					<button className="wish-modal-close" onClick={onClose} aria-label="Fermer">
+					<h2>{wish ? t('wishes.modal.editTitle') : t('wishes.modal.addTitle')}</h2>
+					<button className="wish-modal-close" onClick={onClose} aria-label={t('common.close')}>
 						<X size={24} />
 					</button>
 				</div>
 
 				<form onSubmit={handleSubmit} className="wish-modal-form">
 					<div className="form-group">
-						<label htmlFor="characterName">Character</label>
+						<label htmlFor="characterName">{t('wishes.modal.character')}</label>
 						<CharacterSelect
 							characters={characters}
 							isLoading={isLoadingCharacters}
 							value={formData.characterName}
 							onChange={(characterName) => handleChange('characterName', characterName)}
-							placeholder="Select a 5☆ character..."
+							placeholder={t('wishes.modal.selectCharacter')}
 							required
 						/>
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="totalWishes">Pity count</label>
+						<label htmlFor="totalWishes">{t('wishes.modal.pity')}</label>
 						<input
 							id="totalWishes"
 							type="number"
@@ -96,7 +98,7 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="date">Date</label>
+						<label htmlFor="date">{t('common.date')}</label>
 						<input
 							id="date"
 							type="date"
@@ -107,23 +109,23 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="banner">Banner / Patch</label>
+						<label htmlFor="banner">{t('wishes.modal.banner')}</label>
 						<input
 							id="banner"
 							type="text"
 							value={formData.banner}
 							onChange={(e) => handleChange('banner', e.target.value)}
 							required
-							placeholder="Ex: 5.0, 4.8, Perma..."
+							placeholder={t('wishes.modal.bannerPlaceholder')}
 						/>
 					</div>
 
 					<div className="form-actions">
 						<button type="button" onClick={onClose} className="btn-cancel">
-							Cancel
+							{t('common.cancel')}
 						</button>
 						<button type="submit" className="btn-submit">
-							{wish ? 'Edit' : 'Add'}
+							{wish ? t('wishes.modal.edit') : t('wishes.modal.add')}
 						</button>
 					</div>
 				</form>

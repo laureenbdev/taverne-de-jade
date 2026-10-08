@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import "./wishes-overview.scss";
 
 import { ListPlus } from "phosphor-react";
@@ -12,6 +13,7 @@ import WishModal from "../wish-modal/wish-modal.tsx";
  * Composant d'affichage de l'historique des vœux
  */
 const WishesOverview: React.FC = () => {
+    const { t } = useTranslation();
     const { wishes, addWish, updateWish, deleteWish } = useWishes();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingWish, setEditingWish] = useState<Wish | null>(null);
@@ -27,7 +29,7 @@ const WishesOverview: React.FC = () => {
     };
 
     const handleDelete = (id: string) => {
-        if (window.confirm("Are you sure you want to delete this wish?")) {
+        if (window.confirm(t("wishes.confirmDelete"))) {
             deleteWish(id);
         }
     };
@@ -55,7 +57,7 @@ const WishesOverview: React.FC = () => {
 		<>
 			<section className="wishes-overview left">
 				<div className="section-container">
-					<h3>Wishes overview</h3>
+					<h3>{t("wishes.overview")}</h3>
 
 					<WishesTable
 						wishes={sortedWishes}
@@ -70,7 +72,7 @@ const WishesOverview: React.FC = () => {
                         }
                     }}>
                         <ListPlus size={24} />
-                        <span>Add a pull</span>
+                        <span>{t("wishes.addPull")}</span>
                     </div>
                 </div>
             </section>

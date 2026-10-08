@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowElbowDownRight, PencilSimple, Trash } from 'phosphor-react';
 import { Wish } from '../../features/wishes/types';
 import './wishes-table.scss';
@@ -14,14 +15,24 @@ interface WishesTableProps {
  */
 // todo : remplacer 0 par une condition pour check si c'est perdu
 const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) => {
+	const { t, i18n } = useTranslation();
+	const locale = i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US';
+
+	const formatDate = (value: string) => {
+		if (!value) return '';
+		const date = new Date(`${value}T00:00:00`);
+		if (Number.isNaN(date.getTime())) return value;
+		return date.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
+	};
+
 	return (
 		<table className="wishes-table">
 			<thead>
 				<tr>
-					<th>5☆ name</th>
-					<th>Total wishes</th>
-					<th>Date</th>
-					<th>Banner / patch</th>
+					<th>{t('wishes.table.name')}</th>
+					<th>{t('wishes.table.total')}</th>
+					<th>{t('wishes.table.date')}</th>
+					<th>{t('wishes.table.banner')}</th>
 					<th></th>
 					<th></th>
 				</tr>
@@ -30,7 +41,7 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 				{wishes.length === 0 ? (
 					<tr>
 						<td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
-							No wish recorded
+							{t('wishes.table.empty')}
 						</td>
 					</tr>
 				) : (
@@ -44,11 +55,11 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 								{wish.characterName}
 							</td>
 							<td>{wish.totalWishes}</td>
-							<td>{wish.date}</td>
+							<td>{formatDate(wish.date)}</td>
 							<td>{wish.banner}</td>
 							<td
 								className="edit-pull"
-								title="Edit this pull"
+								title={t('wishes.table.edit')}
 								onClick={() => onEdit(wish)}
 								role="button"
 								tabIndex={0}
@@ -63,7 +74,7 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 							</td>
 							<td
 								className="del-pull"
-								title="Delete this pull"
+								title={t('wishes.table.delete')}
 								onClick={() => onDelete(wish.id)}
 								role="button"
 								tabIndex={0}

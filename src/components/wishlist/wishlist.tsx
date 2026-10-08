@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './wishlist.scss';
 
 import { Plus } from 'phosphor-react';
@@ -11,6 +12,7 @@ import WishlistForm from '../wishlist-form/wishlist-form.tsx';
  * Composant principal de la wishlist
  */
 const Wishlist: React.FC = () => {
+	const { t } = useTranslation();
 	const { items, addItem, updateItem, toggleCompleted, deleteItem } = useWishlist();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
@@ -104,7 +106,7 @@ const Wishlist: React.FC = () => {
 
 				{items.length === 0 && (
 					<div className="wishlist-empty">
-						<p>No items in your wishlist yet. Click "Add item" to get started!</p>
+						<p>{t('wishlist.empty')}</p>
 					</div>
 				)}
 			</div>
@@ -122,7 +124,7 @@ const Wishlist: React.FC = () => {
 				}}
 			>
 				<Plus size={24} />
-				<span>Add item</span>
+				<span>{t('wishlist.addItem')}</span>
 			</button>
 
 			<WishlistForm

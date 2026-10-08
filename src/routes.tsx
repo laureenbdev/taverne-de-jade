@@ -1,16 +1,15 @@
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 
-import { HouseLine, ChartBar, CalendarBlank, Sparkle, Gear, User } from 'phosphor-react';
+import { HouseLine, ChartBar, CalendarBlank, Sparkle, Gear } from 'phosphor-react';
 
 import Home from './pages/home/home.tsx';
 import Wishes from './pages/wishes/wishes.tsx';
-import SupabaseTest from './pages/supabase-test/supabase-test.tsx';
+import Settings from './pages/settings/settings.tsx';
 
-// Configuration de navigation pour le Header
 export interface NavItem {
   path: string;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   element?: React.ComponentType;
 }
@@ -18,42 +17,36 @@ export interface NavItem {
 export const navConfig: NavItem[] = [
   {
     path: '/',
-    label: 'Home',
+    labelKey: 'nav.home',
     icon: HouseLine,
     element: Home,
   },
   {
     path: '/advancement',
-    label: 'Advancement',
+    labelKey: 'nav.advancement',
     icon: ChartBar,
   },
   {
     path: '/planner',
-    label: 'Planner',
+    labelKey: 'nav.planner',
     icon: CalendarBlank,
   },
   {
     path: '/wishes',
-    label: 'Wishes',
+    labelKey: 'nav.wishes',
     icon: Sparkle,
     element: Wishes,
   },
   {
     path: '/settings',
-    label: 'Settings',
+    labelKey: 'nav.settings',
     icon: Gear,
-  },
-  {
-    path: '/supabase',
-    label: 'Supabase',
-    icon: User,
-    element: SupabaseTest,
+    element: Settings,
   },
 ];
 
-// Configuration des routes pour React Router
 export const routes: RouteObject[] = navConfig
-  .filter((item) => item.element) // Seulement les routes avec un composant
+  .filter((item) => item.element)
   .map((item) => {
     const Component = item.element!;
     return {

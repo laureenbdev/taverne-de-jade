@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import './character-select.scss';
 
 import { CaretDown, MagnifyingGlass } from 'phosphor-react';
@@ -22,9 +23,10 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 	isLoading = false,
 	value,
 	onChange,
-	placeholder = 'Select a character...',
+	placeholder,
 	required = false,
 }) => {
+	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -144,7 +146,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 				tabIndex={0}
 			>
 				<span className="character-select-value">
-					{value ? (selectedCharacter ? selectedCharacter.name : value) : placeholder}
+					{value ? (selectedCharacter ? selectedCharacter.name : value) : (placeholder || t('characterSelect.placeholder'))}
 				</span>
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
@@ -159,17 +161,17 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 							value={searchTerm}
 							onChange={handleSearchChange}
 							onKeyDown={handleKeyDown}
-							placeholder="Search a character..."
+							placeholder={t('characterSelect.search')}
 							className="character-select-search-input"
 						/>
 					</div>
 
 					<div className="character-select-options inner-scroll" role="listbox">
 						{isLoading ? (
-							<div className="character-select-option loading">Loading...</div>
+							<div className="character-select-option loading">{t('common.loading')}</div>
 						) : filteredCharacters.length === 0 ? (
 							<div className="character-select-option no-results">
-								No character found
+								{t('characterSelect.empty')}
 							</div>
 						) : (
 							filteredCharacters.map((character, index) => (
