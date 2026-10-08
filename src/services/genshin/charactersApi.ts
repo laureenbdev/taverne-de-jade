@@ -14,7 +14,7 @@ export interface Character {
 	};
 }
 
-const API_URL = 'https://raw.githubusercontent.com/meihwg/genshin-api/main/characters.json';
+const API_URL = 'https://raw.githubusercontent.com/laureenbdev/genshin-api/main/characters.json';
 
 /**
  * Service pour récupérer les personnages depuis l'API GitHub

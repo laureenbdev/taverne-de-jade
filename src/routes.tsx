@@ -1,10 +1,11 @@
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 
-import { HouseLine, ChartBar, CalendarBlank, Sparkle, Gear } from 'phosphor-react';
+import { HouseLine, ChartBar, CalendarBlank, Sparkle, Gear, User } from 'phosphor-react';
 
 import Home from './pages/home/home.tsx';
 import Wishes from './pages/wishes/wishes.tsx';
+import SupabaseTest from './pages/supabase-test/supabase-test.tsx';
 
 // Configuration de navigation pour le Header
 export interface NavItem {
@@ -41,6 +42,12 @@ export const navConfig: NavItem[] = [
     path: '/settings',
     label: 'Settings',
     icon: Gear,
+  },
+  {
+    path: '/supabase',
+    label: 'Supabase',
+    icon: User,
+    element: SupabaseTest,
   },
 ];
 

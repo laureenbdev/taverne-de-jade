@@ -14,14 +14,14 @@ const Footer: React.FC = () => {
                     <div className="footer-content">
                         <div className="col">
                             <h3>About me</h3>
-                            <a href="https://github.com/meihwg" target="_blank"><GithubLogo className="icon" size={24} /> Github</a> 
+                            <a href="https://github.com/laureenbdev" target="_blank"><GithubLogo className="icon" size={24} /> Github</a> 
                             <a href="https://x.com/meinko__" target="_blank"><TwitterLogo className="icon" size={24} /> Twitter</a> 
                             <a href="https://discord.gg/Urwmqt9jgK" target="_blank"><DiscordLogo className="icon" size={24} /> Discord</a> 
                             <a href="mailto:laureenbelgrand.dev@gmail.com" target="_blank"><Envelope className="icon" size={24} /> Mail : laureenbelgrand.dev@gmail.com</a> 
                         </div>
                         <div className="col">
                             <h3>Developed by</h3>
-                            <a href="https://github.com/meihwg" target="_blank">Mei</a>
+                            <a href="https://github.com/laureenbdev" target="_blank">Mei</a>
                             <h4>With the help of</h4>
                             <a href="https://github.com/Erlow38" target="_blank">Erlow</a>
                             <h4>Logo by</h4>

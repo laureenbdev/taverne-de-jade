@@ -18,7 +18,7 @@ export interface Weapon {
 	};
 }
 
-const API_URL = 'https://raw.githubusercontent.com/meihwg/genshin-api/main/weapons.json';
+const API_URL = 'https://raw.githubusercontent.com/laureenbdev/genshin-api/main/weapons.json';
 
 /**
  * Service pour récupérer les armes depuis l'API GitHub
