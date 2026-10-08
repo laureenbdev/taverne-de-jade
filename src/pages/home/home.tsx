@@ -36,8 +36,8 @@ const PageHome: React.FC = () => {
                             <hr />
                             <h3>What's new ?</h3>
                             <p>
-                                <span><span><WarningCircle size={24} weight="duotone" color="var(--color-primary)" className="warning-icon" />09/11/2024 </span> - Made the TodoList work</span>
-                                <span><span><WarningCircle size={24} weight="duotone" color="var(--color-primary)" className="warning-icon" />09/11/2024 </span> - Added home page</span>
+                                <span><span><WarningCircle size={24} weight="duotone" color="var(--color-primary)" className="warning-icon" />[2025-01-22] </span> - Added wish history and wish list feature</span>
+                                <span><span><WarningCircle size={24} weight="duotone" color="var(--color-primary)" className="warning-icon" />[2025-01-22] </span> - Refactored the codebase and styles</span>
                             </p>
                         </div>
                     </div>

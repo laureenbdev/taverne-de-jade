@@ -1,0 +1,131 @@
+.wishlist-card {
+	background-color: var(--color-bg-light);
+	border-radius: 10px;
+	padding: 15px;
+	margin-bottom: 15px;
+	border: 2px solid transparent;
+	transition: all 0.2s;
+
+	&.rarity-5 {
+		background: var(--color-yellow-light);
+	}
+
+	&.rarity-4 {
+		background: var(--color-blue-light);
+		
+		&.type-weapon {
+			background: var(--color-red-light);
+		}
+	}
+
+	&.completed {
+		opacity: 0.6;
+	}
+
+	&:hover {
+		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	}
+
+	.wishlist-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: 15px;
+		padding-bottom: 10px;
+		border-bottom: 1px solid var(--color-gray);
+
+		.wishlist-card-title {
+			flex: 1;
+
+			h4 {
+				margin: 0 0 5px 0;
+				color: var(--color-text);
+				font-size: 1.1rem;
+			}
+
+			.wishlist-card-type {
+				display: inline-block;
+				padding: 4px 8px;
+				background-color: var(--color-gray);
+				border-radius: 4px;
+				font-size: 0.75rem;
+				text-transform: capitalize;
+				color: var(--color-text);
+				margin-right: 8px;
+			}
+
+			.wishlist-card-date {
+				display: block;
+				margin-top: 5px;
+				font-size: 0.8rem;
+				color: var(--color-text);
+				opacity: 0.7;
+				font-style: italic;
+			}
+		}
+
+		.wishlist-card-actions {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+
+			.complete-checkbox-small {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				margin-right: 4px;
+
+				input[type='checkbox'] {
+					width: 20px;
+					height: 20px;
+					cursor: pointer;
+					accent-color: var(--color-primary);
+				}
+			}
+
+			.icon-button {
+				background: none;
+				border: none;
+				cursor: pointer;
+				color: var(--color-text);
+				padding: 5px;
+				border-radius: 4px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: background-color 0.2s;
+
+				&:hover {
+					background-color: var(--color-gray);
+				}
+			}
+		}
+	}
+
+	.wishlist-card-body {
+		.wishlist-card-info {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+
+			.info-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+
+				.info-label {
+					color: var(--color-text);
+					font-size: 0.9rem;
+					opacity: 0.8;
+				}
+
+				.info-value {
+					color: var(--color-text);
+					font-weight: 500;
+					font-size: 0.9rem;
+				}
+			}
+		}
+	}
+}

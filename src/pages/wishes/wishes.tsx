@@ -1,6 +1,7 @@
 import React from 'react';
 
 import WishesOverview from '../../components/wishes-overview/wishes-overview.tsx';
+import Wishlist from '../../components/wishlist/wishlist.tsx';
 
 const Wishes: React.FC = () => {
     return (
@@ -19,7 +20,8 @@ const Wishes: React.FC = () => {
             <section className="right">
 
                 <div className="section-container">
-                    <h2>Wishist</h2>
+                    <h2>Wishlist</h2>
+                    <Wishlist />
                 </div>
 
             </section>

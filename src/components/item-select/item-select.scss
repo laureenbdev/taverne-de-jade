@@ -1,0 +1,144 @@
+.item-select {
+	position: relative;
+	width: 100%;
+
+	.item-select-trigger {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px;
+		border: 1px solid var(--color-gray);
+		border-radius: 5px;
+		background-color: var(--color-bg-light);
+		color: var(--color-text);
+		cursor: pointer;
+		transition: border-color 0.2s;
+		min-height: 42px;
+
+		&:hover {
+			border-color: var(--color-blue);
+		}
+
+		&:focus {
+			outline: none;
+			border-color: var(--color-blue);
+		}
+
+		&.open {
+			border-color: var(--color-blue);
+		}
+
+		&.placeholder {
+			.item-select-value {
+				color: #999;
+			}
+		}
+
+		.item-select-value {
+			flex: 1;
+			text-align: left;
+		}
+
+		.caret {
+			transition: transform 0.2s;
+			flex-shrink: 0;
+			margin-left: 10px;
+
+			&.open {
+				transform: rotate(180deg);
+			}
+		}
+	}
+
+	.item-select-dropdown {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		margin-top: 4px;
+		background-color: var(--color-bg-light);
+		border: 1px solid var(--color-gray);
+		border-radius: 5px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		z-index: 1000;
+		max-height: 300px;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.item-select-search {
+		display: flex;
+		align-items: center;
+		padding: 10px;
+		border-bottom: 1px solid var(--color-gray);
+		gap: 8px;
+		background-color: var(--color-bg-light);
+
+		.item-select-search-input {
+			flex: 1;
+			border: none;
+			outline: none;
+			background: transparent;
+			color: var(--color-text);
+			font-size: 14px;
+
+			&::placeholder {
+				color: #999;
+			}
+		}
+	}
+
+	.item-select-options {
+		overflow-y: auto;
+		max-height: 250px;
+	}
+
+	.item-select-option {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 10px 15px;
+		cursor: pointer;
+		color: var(--color-text);
+		transition: background-color 0.15s;
+		border-bottom: 1px solid var(--color-gray);
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		&:hover,
+		&.highlighted {
+			background-color: var(--color-gray);
+		}
+
+		&.selected {
+			background-color: var(--color-blue-light);
+			color: var(--color-text);
+			font-weight: 500;
+		}
+
+		&.loading,
+		&.no-results {
+			text-align: center;
+			color: #999;
+			cursor: default;
+			font-style: italic;
+
+			&:hover {
+				background-color: transparent;
+			}
+		}
+
+		.item-name {
+			flex: 1;
+		}
+
+		.item-rarity {
+			margin-left: 10px;
+			font-size: 0.9em;
+			color: var(--color-yellow);
+		}
+	}
+}
