@@ -1,4 +1,5 @@
 import React from 'react';
+import './wishes.scss';
 
 import WishesOverview from '../../components/wishes-overview/wishes-overview.tsx';
 import Wishlist from '../../components/wishlist/wishlist.tsx';

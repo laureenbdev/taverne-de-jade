@@ -1,37 +1,47 @@
 table.wishes-table {
 	width: 100%;
-	padding: 20px 60px;
+	margin-top: 8px;
 	border-collapse: collapse;
 	color: var(--color-text);
 
-	thead {
+	thead th {
+		padding: 8px 10px;
 		text-align: left;
-		color: var(--color-text);
-		background-color: var(--color-gray);
-
-		th {
-			padding: 5px 40px;
-		}
+		font-family: Poppins, "Segoe UI", sans-serif;
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--color-heading);
+		background: transparent;
+		border-bottom: 1px solid rgba(28, 40, 35, 0.12);
 	}
 
 	tbody td {
-		padding: 5px 40px;
-		margin: 0 10px;
-		background-color: var(--color-bg-light);
-		border-bottom: 1px solid var(--color-gray);
+		padding: 7px 10px;
+		background: transparent;
+		border-bottom: 1px solid rgba(28, 40, 35, 0.06);
+	}
+
+	tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	tbody tr:hover td {
+		background: rgba(28, 122, 86, 0.05);
 	}
 
 	.edit-pull,
 	.del-pull {
-		color: var(--color-text);
-		max-width: 0px;
-		padding: 0;
+		width: 40px;
+		padding: 8px;
 		text-align: center;
+		color: var(--color-text);
 		cursor: pointer;
 	}
 
 	.edit-pull:hover {
-		color: var(--color-blue);
+		color: var(--color-primary-deep);
 	}
 
 	.del-pull:hover {

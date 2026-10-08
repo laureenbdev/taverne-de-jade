@@ -62,7 +62,7 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 
 	return (
 		<div className="wish-modal-overlay" onClick={onClose}>
-			<div className="wish-modal-content" onClick={(e) => e.stopPropagation()}>
+			<div className="wish-modal-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wish-modal-header">
 					<h2>{wish ? 'Edit wish' : 'Add wish'}</h2>
 					<button className="wish-modal-close" onClick={onClose} aria-label="Fermer">

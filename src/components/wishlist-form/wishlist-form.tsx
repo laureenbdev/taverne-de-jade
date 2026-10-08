@@ -86,7 +86,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 
 	return (
 		<div className="wishlist-form-overlay" onClick={onClose}>
-			<div className="wishlist-form-content" onClick={(e) => e.stopPropagation()}>
+			<div className="wishlist-form-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wishlist-form-header">
 					<h2>{item ? 'Edit item' : 'Add item'}</h2>
 					<button className="wishlist-form-close" onClick={onClose} aria-label="Close">

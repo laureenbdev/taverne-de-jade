@@ -1,44 +1,117 @@
 footer {
-    background-color: var(--color-primary);
-    padding: 20px 0;
-    text-align: center;
-    width: 100%;
-    margin-top: 100px;
-    
-    .footer-content {
+    position: relative;
+    z-index: 1;
+    margin-top: 72px;
+    background:
+        linear-gradient(180deg, rgba(61, 190, 143, 0.09), transparent 90px),
+        var(--color-bg-dark);
+    border-top: 1px solid rgba(198, 163, 106, 0.45);
+    color: var(--color-text-on-dark);
+
+    .footer-inner {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 0.8fr;
+        gap: 40px;
+        width: min(1040px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 42px 0 28px;
+    }
+
+    .footer-brand {
         display: flex;
-        justify-content: space-evenly;
         align-items: center;
-        flex-wrap: wrap;
-    
-        .col {
-            width: 25%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            
-            h3,
-            h4 {
-                padding: 10px 0 0 0;
-                color: #ffffff;
-            }
-            
-            a {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-bottom: 2px;
-                margin-top: 10px;
-            }
-            
-            a:hover {
-                color: #ffffff;
-                cursor: pointer;
-            }
-            
-            .icon {
-                margin-right: 10px;
-            }
+        gap: 16px;
+    }
+
+    .footer-logo {
+        width: 56px;
+        height: 56px;
+        flex-shrink: 0;
+        background: url(../../../public/img/logo-taverne.png) no-repeat center center/contain;
+    }
+
+    .footer-name {
+        font-family: Cinzel, serif;
+        color: var(--color-gold-light);
+        font-size: 1.15rem;
+        letter-spacing: 0.04em;
+    }
+
+    .footer-tag {
+        margin-top: 4px;
+        color: var(--color-muted-on-dark);
+        font-size: 0.92rem;
+        max-width: 26rem;
+    }
+
+    .footer-col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    h3 {
+        display: block;
+        padding: 0 0 6px;
+        color: var(--color-gold-light);
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+    }
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--color-text-on-dark);
+        font-size: 0.95rem;
+    }
+
+    a:hover {
+        color: var(--color-primary);
+    }
+
+    .icon {
+        color: var(--color-primary);
+        flex-shrink: 0;
+    }
+
+    .credit {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.35em;
+
+        span {
+            color: var(--color-muted-on-dark);
+            font-size: 0.95rem;
+        }
+    }
+
+    .footer-legal {
+        width: min(1040px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 16px 0 28px;
+        border-top: 1px solid rgba(231, 226, 214, 0.12);
+
+        p {
+            color: var(--color-muted-on-dark);
+            font-size: 0.78rem;
+            line-height: 1.55;
+        }
+    }
+}
+
+@media (max-width: 800px) {
+    footer {
+        .footer-inner {
+            grid-template-columns: 1fr;
+            gap: 28px;
+            padding-top: 32px;
+        }
+
+        .footer-brand {
+            align-items: flex-start;
         }
     }
 }

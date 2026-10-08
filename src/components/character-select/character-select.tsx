@@ -164,7 +164,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 						/>
 					</div>
 
-					<div className="character-select-options" role="listbox">
+					<div className="character-select-options inner-scroll" role="listbox">
 						{isLoading ? (
 							<div className="character-select-option loading">Loading...</div>
 						) : filteredCharacters.length === 0 ? (

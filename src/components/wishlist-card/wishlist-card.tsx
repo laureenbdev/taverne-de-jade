@@ -1,7 +1,7 @@
 import React from 'react';
 import './wishlist-card.scss';
 
-import { Pencil, Trash } from 'phosphor-react';
+import { Pencil, Sword, Trash, User } from 'phosphor-react';
 import { WishlistItem } from '../../features/wishlist/types.ts';
 
 interface WishlistCardProps {
@@ -47,6 +47,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 	const wishes = calculateWishes(item.targetCount, item.rarity);
 	const rarityClass = item.rarity === 5 ? 'rarity-5' : 'rarity-4';
 	const typeClass = item.type === 'weapon' ? 'type-weapon' : 'type-character';
+	const TypeIcon = item.type === 'weapon' ? Sword : User;
 
 	const handleDelete = () => {
 		if (window.confirm(`Are you sure you want to delete "${item.name}" from your wishlist?`)) {
@@ -62,30 +63,35 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 
 	return (
 		<div className={`wishlist-card ${rarityClass} ${typeClass} ${item.isCompleted ? 'completed' : ''}`}>
-			<div className="wishlist-card-header">
+			<div className="wishlist-card-top">
 				<div className="wishlist-card-title">
 					<h4>{item.name}</h4>
-					<span className="wishlist-card-type">{item.type}</span>
-					{item.estimatedReleaseDate && (
-						<span className="wishlist-card-date">Release: {formatDate(item.estimatedReleaseDate)}</span>
-					)}
+					<p className="wishlist-card-meta">
+						<span className="wishlist-card-type">
+							<TypeIcon size={14} aria-hidden="true" />
+							{item.type}
+						</span>
+						{item.estimatedReleaseDate && (
+							<span className="wishlist-card-date">{formatDate(item.estimatedReleaseDate)}</span>
+						)}
+					</p>
 				</div>
 				<div className="wishlist-card-actions">
 					<button
-						className="icon-button"
+						className="icon-button edit"
 						onClick={() => onEdit(item)}
 						aria-label="Edit"
 						title="Edit"
 					>
-						<Pencil size={18} />
+						<Pencil size={16} />
 					</button>
 					<button
-						className="icon-button"
+						className="icon-button delete"
 						onClick={handleDelete}
 						aria-label="Delete"
 						title="Delete"
 					>
-						<Trash size={18} />
+						<Trash size={16} />
 					</button>
 					<label className="complete-checkbox-small">
 						<input
@@ -98,26 +104,33 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 				</div>
 			</div>
 
-			<div className="wishlist-card-body">
-				<div className="wishlist-card-info">
-					<div className="info-row">
-						<span className="info-label">Rarity:</span>
-						<span className="info-value">⭐{item.rarity}</span>
-					</div>
-					<div className="info-row">
-						<span className="info-label">Target count:</span>
-						<span className="info-value">{item.targetCount}</span>
-					</div>
-					<div className="info-row">
-						<span className="info-label">Avg wishes:</span>
-						<span className="info-value">{wishes.average}</span>
-					</div>
-					<div className="info-row">
-						<span className="info-label">Max wishes:</span>
-						<span className="info-value">{wishes.max}</span>
-					</div>
+			<dl className="wishlist-card-stats">
+				<div>
+					<dt>Rarity</dt>
+					<dd><span className="star" aria-hidden="true">★</span> {item.rarity}</dd>
 				</div>
-			</div>
+				<div>
+					<dt>Count</dt>
+					<dd className="tooltip-anchor" tabIndex={0}>
+						{item.targetCount}
+						<span className="tooltip bottom" role="tooltip">Nombre d'exemplaires visés</span>
+					</dd>
+				</div>
+				<div>
+					<dt>Avg</dt>
+					<dd className="tooltip-anchor" tabIndex={0}>
+						{wishes.average}
+						<span className="tooltip bottom" role="tooltip">Estimation moyenne des vœux nécessaires</span>
+					</dd>
+				</div>
+				<div>
+					<dt>Max</dt>
+					<dd className="tooltip-anchor" tabIndex={0}>
+						{wishes.max}
+						<span className="tooltip bottom" role="tooltip">Nombre de vœux nécessaires dans le pire cas</span>
+					</dd>
+				</div>
+			</dl>
 		</div>
 	);
 };

@@ -73,8 +73,7 @@ const Wishlist: React.FC = () => {
 
 	return (
 		<div className="wishlist">
-
-			<div className="wishlist-content">
+			<div className="wishlist-content inner-scroll">
 				{itemsWithDate.length > 0 && (
 					<div className="wishlist-section">
 						{itemsWithDate.map((item) => (

@@ -168,7 +168,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 						/>
 					</div>
 
-					<div className="item-select-options" role="listbox">
+					<div className="item-select-options inner-scroll" role="listbox">
 						{isLoading ? (
 							<div className="item-select-option loading">Loading...</div>
 						) : filteredItems.length === 0 ? (
