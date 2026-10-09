@@ -4,6 +4,8 @@ import './wishlist-card.scss';
 
 import { Pencil, Sword, Trash, User } from 'phosphor-react';
 import { WishlistItem } from '../../features/wishlist/types.ts';
+import { useCharacters } from '../../hooks/useCharacters.ts';
+import { useWeapons } from '../../hooks/useWeapons.ts';
 
 interface WishlistCardProps {
 	item: WishlistItem;
@@ -46,8 +48,12 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 	onToggleCompleted,
 }) => {
 	const { t, i18n } = useTranslation();
-	const wishes = calculateWishes(item.targetCount, item.rarity);
-	const rarityClass = item.rarity === 5 ? 'rarity-5' : 'rarity-4';
+	const { characters } = useCharacters();
+	const { weapons } = useWeapons();
+	const catalog = item.type === 'weapon' ? weapons : characters;
+	const rarity = catalog.find((entry) => entry.name === item.name)?.rarity;
+	const wishes = rarity ? calculateWishes(item.targetCount, rarity) : null;
+	const rarityClass = rarity === 5 ? 'rarity-5' : rarity === 4 ? 'rarity-4' : '';
 	const typeClass = item.type === 'weapon' ? 'type-weapon' : 'type-character';
 	const TypeIcon = item.type === 'weapon' ? Sword : User;
 
@@ -110,7 +116,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 			<dl className="wishlist-card-stats">
 				<div>
 					<dt>{t('wishlist.rarity')}</dt>
-					<dd><span className="star" aria-hidden="true">★</span> {item.rarity}</dd>
+					<dd><span className="star" aria-hidden="true">★</span> {rarity ?? '—'}</dd>
 				</div>
 				<div>
 					<dt>{t('wishlist.count')}</dt>
@@ -122,14 +128,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 				<div>
 					<dt>{t('wishlist.avg')}</dt>
 					<dd className="tooltip-anchor" tabIndex={0}>
-						{wishes.average}
+						{wishes ? wishes.average : '—'}
 						<span className="tooltip bottom" role="tooltip">{t('wishlist.avgTip')}</span>
 					</dd>
 				</div>
 				<div>
 					<dt>{t('wishlist.max')}</dt>
 					<dd className="tooltip-anchor" tabIndex={0}>
-						{wishes.max}
+						{wishes ? wishes.max : '—'}
 						<span className="tooltip bottom" role="tooltip">{t('wishlist.maxTip')}</span>
 					</dd>
 				</div>

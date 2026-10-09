@@ -54,10 +54,35 @@
   },
   "wishes": {
     "stats": "Stats",
+    "statsCards": {
+      "winRate": "Win rate",
+      "winEmpty": "No 50/50 yet",
+      "won_one": "{{count}} win",
+      "won_other": "{{count}} wins",
+      "lost_one": "{{count}} loss",
+      "lost_other": "{{count}} losses",
+      "fiveStars": "Number of 5☆",
+      "fiveStarsEmpty": "No 5☆ yet",
+      "characters_one": "{{count}} character",
+      "characters_other": "{{count}} characters",
+      "weapons_one": "{{count}} weapon",
+      "weapons_other": "{{count}} weapons",
+      "pity": "Average pity",
+      "pityEmpty": "No pulls yet",
+      "pulls_one": "{{count}} pull",
+      "pulls_other": "{{count}} pulls"
+    },
     "wishlist": "Wishlist",
     "overview": "Wishes overview",
     "addPull": "Add a pull",
     "confirmDelete": "Are you sure you want to delete this wish?",
+    "bannerBlock": "{{name}} banner",
+    "banners": {
+      "character": "Character",
+      "weapon": "Weapon",
+      "standard": "Standard",
+      "chronicled": "Chronicled"
+    },
     "table": {
       "name": "5☆ name",
       "total": "Total wishes",
@@ -71,10 +96,15 @@
       "editTitle": "Edit wish",
       "addTitle": "Add wish",
       "character": "Character",
+      "weapon": "Weapon",
+      "subject": "Type",
       "selectCharacter": "Select a 5☆ character…",
+      "selectWeapon": "Select a 5☆ weapon…",
       "pity": "Pity count",
-      "banner": "Banner / patch",
-      "bannerPlaceholder": "Ex: 5.0, 4.8, Perma…",
+      "banner": "Banner",
+      "win": "Win",
+      "yes": "Yes",
+      "no": "No",
       "edit": "Edit",
       "add": "Add"
     }

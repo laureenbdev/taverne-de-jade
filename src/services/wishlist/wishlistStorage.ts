@@ -13,7 +13,22 @@ export class WishlistStorageService {
 		try {
 			const data = localStorage.getItem(STORAGE_KEY);
 			if (!data) return [];
-			return JSON.parse(data) as WishlistItem[];
+			const parsed = JSON.parse(data) as Array<Partial<WishlistItem> & { rarity?: number }>;
+			const items = parsed.flatMap((raw) => {
+				if ((raw.type !== 'character' && raw.type !== 'weapon') || typeof raw.id !== 'string' || typeof raw.name !== 'string') {
+					return [];
+				}
+				return [{
+					id: raw.id,
+					type: raw.type,
+					name: raw.name,
+					targetCount: typeof raw.targetCount === 'number' ? raw.targetCount : 1,
+					estimatedReleaseDate: raw.estimatedReleaseDate,
+					isCompleted: Boolean(raw.isCompleted),
+				}];
+			});
+			if (parsed.some((raw) => 'rarity' in raw)) this.saveAll(items);
+			return items;
 		} catch (error) {
 			console.error('Error reading wishlist from localStorage:', error);
 			return [];

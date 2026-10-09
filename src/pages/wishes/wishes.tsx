@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import './wishes.scss';
 
 import WishesOverview from '../../components/wishes-overview/wishes-overview.tsx';
+import WishesStats from '../../components/wishes-stats/wishes-stats.tsx';
 import Wishlist from '../../components/wishlist/wishlist.tsx';
 
 const Wishes: React.FC = () => {
@@ -15,6 +16,7 @@ const Wishes: React.FC = () => {
 
                 <div className="section-container">
                     <h2>{t('wishes.stats')}</h2>
+                    <WishesStats />
                 </div>
 
                 <WishesOverview />

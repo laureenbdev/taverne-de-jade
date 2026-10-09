@@ -54,10 +54,35 @@
   },
   "wishes": {
     "stats": "Statistiques",
+    "statsCards": {
+      "winRate": "Taux de win",
+      "winEmpty": "Pas encore de 50/50",
+      "won_one": "{{count}} gagné",
+      "won_other": "{{count}} gagnés",
+      "lost_one": "{{count}} perdu",
+      "lost_other": "{{count}} perdus",
+      "fiveStars": "Nombre de 5☆",
+      "fiveStarsEmpty": "Aucun 5☆",
+      "characters_one": "{{count}} personnage",
+      "characters_other": "{{count}} personnages",
+      "weapons_one": "{{count}} arme",
+      "weapons_other": "{{count}} armes",
+      "pity": "Pity moyenne",
+      "pityEmpty": "Aucun tirage",
+      "pulls_one": "{{count}} tirage",
+      "pulls_other": "{{count}} tirages"
+    },
     "wishlist": "Liste de souhaits",
     "overview": "Historique des vœux",
     "addPull": "Ajouter un tirage",
     "confirmDelete": "Voulez-vous vraiment supprimer ce vœu ?",
+    "bannerBlock": "Bannière {{name}}",
+    "banners": {
+      "character": "Personnage",
+      "weapon": "Arme",
+      "standard": "Perma",
+      "chronicled": "Nostalgie"
+    },
     "table": {
       "name": "Nom 5☆",
       "total": "Nombre de vœux",
@@ -71,10 +96,15 @@
       "editTitle": "Modifier le vœu",
       "addTitle": "Ajouter un vœu",
       "character": "Personnage",
+      "weapon": "Arme",
+      "subject": "Type",
       "selectCharacter": "Choisir un personnage 5☆…",
+      "selectWeapon": "Choisir une arme 5☆…",
       "pity": "Compteur de pity",
-      "banner": "Bannière / version",
-      "bannerPlaceholder": "Ex. : 5.0, 4.8, Perma…",
+      "banner": "Bannière",
+      "win": "Gagné",
+      "yes": "Oui",
+      "no": "Non",
       "edit": "Modifier",
       "add": "Ajouter"
     }

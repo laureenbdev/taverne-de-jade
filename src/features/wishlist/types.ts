@@ -4,7 +4,6 @@ export interface WishlistItem {
 	id: string;
 	type: WishlistItemType;
 	name: string;
-	rarity: number;
 	targetCount: number;
 	estimatedReleaseDate?: string;
 	isCompleted: boolean;

@@ -1,4 +1,4 @@
-import { Wish } from '../../features/wishes/types';
+import { normalizeWish, Wish } from '../../features/wishes/types.ts';
 
 const STORAGE_KEY = 'wishes_history';
 
@@ -14,7 +14,13 @@ export class WishesStorageService {
 		try {
 			const data = localStorage.getItem(STORAGE_KEY);
 			if (!data) return [];
-			return JSON.parse(data) as Wish[];
+			const parsed = JSON.parse(data) as Partial<Wish>[];
+			const wishes = parsed.flatMap((raw) => {
+				const wish = normalizeWish(raw);
+				return wish ? [wish] : [];
+			});
+			if (JSON.stringify(parsed) !== JSON.stringify(wishes)) this.saveAll(wishes);
+			return wishes;
 		} catch (error) {
 			console.error('Erreur lors de la lecture du localStorage:', error);
 			return [];

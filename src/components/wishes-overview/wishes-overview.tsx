@@ -4,27 +4,27 @@ import "./wishes-overview.scss";
 
 import { ListPlus } from "phosphor-react";
 import { useWishes } from "../../hooks/useWishes.ts";
-import { Wish, WishFormData } from "../../features/wishes/types.ts";
+import { WISH_BANNERS, Wish, WishBanner, WishFormData } from "../../features/wishes/types.ts";
 
 import WishesTable from "../wishes-table/wishes-table.tsx";
 import WishModal from "../wish-modal/wish-modal.tsx";
 
-/**
- * Composant d'affichage de l'historique des vœux
- */
 const WishesOverview: React.FC = () => {
     const { t } = useTranslation();
     const { wishes, addWish, updateWish, deleteWish } = useWishes();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingWish, setEditingWish] = useState<Wish | null>(null);
+    const [defaultBanner, setDefaultBanner] = useState<WishBanner>('character');
 
     const handleAddClick = () => {
         setEditingWish(null);
+        setDefaultBanner('character');
         setIsModalOpen(true);
     };
 
     const handleEdit = (wish: Wish) => {
         setEditingWish(wish);
+        setDefaultBanner(wish.banner);
         setIsModalOpen(true);
     };
 
@@ -55,31 +55,39 @@ const WishesOverview: React.FC = () => {
 
 	return (
 		<>
-			<section className="wishes-overview left">
-				<div className="section-container">
-					<h3>{t("wishes.overview")}</h3>
+			<section className="wishes-overview">
+				{WISH_BANNERS.map((banner) => (
+					<div className="section-container" key={banner}>
+						<h3>{t('wishes.bannerBlock', { name: t(`wishes.banners.${banner}`) })}</h3>
+						<WishesTable
+							wishes={sortedWishes.filter((wish) => wish.banner === banner)}
+							onEdit={handleEdit}
+							onDelete={handleDelete}
+						/>
+					</div>
+				))}
 
-					<WishesTable
-						wishes={sortedWishes}
-						onEdit={handleEdit}
-						onDelete={handleDelete}
-					/>
-
-                    <div className="add-wish" onClick={handleAddClick} role="button" tabIndex={0} onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleAddClick();
-                        }
-                    }}>
-                        <ListPlus size={24} />
-                        <span>{t("wishes.addPull")}</span>
-                    </div>
-                </div>
+				<div
+					className="section-container add-wish"
+					onClick={handleAddClick}
+					role="button"
+					tabIndex={0}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							handleAddClick();
+						}
+					}}
+				>
+					<ListPlus size={24} />
+					<span>{t("wishes.addPull")}</span>
+				</div>
             </section>
 
             <WishModal
                 isOpen={isModalOpen}
                 wish={editingWish}
+                defaultBanner={defaultBanner}
                 onClose={handleModalClose}
                 onSubmit={handleModalSubmit}
             />

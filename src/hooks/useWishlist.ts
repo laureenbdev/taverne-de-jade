@@ -1,114 +1,114 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WishlistItem, WishlistItemFormData } from '../features/wishlist/types.ts';
+import { useAuth } from '../features/auth/AuthContext.tsx';
 import { WishlistStorageService } from '../services/wishlist/wishlistStorage.ts';
+import {
+	deleteWishlistItem,
+	insertWishlistItem,
+	listWishlist,
+	updateWishlistItem,
+} from '../services/wishlist/wishlistRemote.ts';
+
+function createId() {
+	return `wishlist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
 
 /**
- * Hook personnalisé pour gérer la logique métier de la wishlist
+ * Liste de souhaits du compte connecté en base, sinon dans le navigateur.
  */
 export const useWishlist = () => {
+	const { session, loading: authLoading } = useAuth();
+	const userId = session?.user.id ?? null;
 	const [items, setItems] = useState<WishlistItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
-	// Chargement initial depuis le localStorage
 	useEffect(() => {
-		const loadItems = () => {
+		if (authLoading) return;
+		let cancelled = false;
+
+		const loadItems = async () => {
+			setIsLoading(true);
 			try {
-				const loadedItems = WishlistStorageService.getAll();
-				setItems(loadedItems);
+				const loadedItems = userId
+					? await listWishlist(userId)
+					: WishlistStorageService.getAll();
+				if (!cancelled) setItems(loadedItems);
 			} catch (error) {
 				console.error('Error loading wishlist:', error);
+				if (!cancelled) setItems([]);
 			} finally {
-				setIsLoading(false);
+				if (!cancelled) setIsLoading(false);
 			}
 		};
 
-		loadItems();
-	}, []);
+		void loadItems();
+		return () => {
+			cancelled = true;
+		};
+	}, [authLoading, userId]);
 
-	/**
-	 * Ajoute un nouvel élément
-	 */
-	const addItem = useCallback((itemData: WishlistItemFormData) => {
+	const addItem = useCallback(async (itemData: WishlistItemFormData) => {
 		const newItem: WishlistItem = {
 			...itemData,
-			id: `wishlist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+			id: createId(),
 			isCompleted: false,
 		};
 
 		try {
-			WishlistStorageService.add(newItem);
+			if (userId) await insertWishlistItem(userId, newItem);
+			else WishlistStorageService.add(newItem);
 			setItems((prev) => [...prev, newItem]);
 		} catch (error) {
 			console.error('Error adding wishlist item:', error);
 			throw error;
 		}
-	}, []);
+	}, [userId]);
 
-	/**
-	 * Met à jour un élément existant
-	 */
-	const updateItem = useCallback((id: string, itemData: WishlistItemFormData) => {
+	const updateItem = useCallback(async (id: string, itemData: WishlistItemFormData) => {
+		const currentItem = items.find((item) => item.id === id);
+		if (!currentItem) throw new Error('Item not found');
+
+		const next: WishlistItem = {
+			...itemData,
+			id,
+			isCompleted: currentItem.isCompleted,
+		};
+
 		try {
-			const currentItem = items.find(item => item.id === id);
-			if (!currentItem) {
-				throw new Error('Item not found');
-			}
-			
-			WishlistStorageService.update(id, {
-				...itemData,
-				isCompleted: currentItem.isCompleted,
-			});
-			setItems((prev) =>
-				prev.map((item) => (item.id === id ? { ...itemData, id, isCompleted: item.isCompleted } : item))
-			);
+			if (userId) await updateWishlistItem(userId, next);
+			else WishlistStorageService.update(id, next);
+			setItems((prev) => prev.map((item) => (item.id === id ? next : item)));
 		} catch (error) {
 			console.error('Error updating wishlist item:', error);
 			throw error;
 		}
-	}, [items]);
+	}, [items, userId]);
 
-	/**
-	 * Marque un élément comme complété ou non
-	 */
-	const toggleCompleted = useCallback((id: string) => {
+	const toggleCompleted = useCallback(async (id: string) => {
+		const currentItem = items.find((item) => item.id === id);
+		if (!currentItem) return;
+
+		const next: WishlistItem = { ...currentItem, isCompleted: !currentItem.isCompleted };
 		try {
-			setItems((prev) => {
-				const item = prev.find(i => i.id === id);
-				if (!item) {
-					console.error('Item not found:', id);
-					return prev;
-				}
-				
-				const updatedItem = { ...item, isCompleted: !item.isCompleted };
-				WishlistStorageService.update(id, {
-					type: updatedItem.type,
-					name: updatedItem.name,
-					rarity: updatedItem.rarity,
-					targetCount: updatedItem.targetCount,
-					estimatedReleaseDate: updatedItem.estimatedReleaseDate,
-					isCompleted: updatedItem.isCompleted,
-				});
-				
-				return prev.map((item) => (item.id === id ? updatedItem : item));
-			});
+			if (userId) await updateWishlistItem(userId, next);
+			else WishlistStorageService.update(id, next);
+			setItems((prev) => prev.map((item) => (item.id === id ? next : item)));
 		} catch (error) {
 			console.error('Error toggling wishlist item:', error);
 			throw error;
 		}
-	}, []);
+	}, [items, userId]);
 
-	/**
-	 * Supprime un élément
-	 */
-	const deleteItem = useCallback((id: string) => {
+	const deleteItem = useCallback(async (id: string) => {
 		try {
-			WishlistStorageService.delete(id);
+			if (userId) await deleteWishlistItem(userId, id);
+			else WishlistStorageService.delete(id);
 			setItems((prev) => prev.filter((item) => item.id !== id));
 		} catch (error) {
 			console.error('Error deleting wishlist item:', error);
 			throw error;
 		}
-	}, []);
+	}, [userId]);
 
 	return {
 		items,

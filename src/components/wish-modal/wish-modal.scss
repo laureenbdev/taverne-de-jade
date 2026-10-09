@@ -1,16 +1,15 @@
 .wish-modal-overlay {
 	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.5);
+	inset: 0;
+	z-index: 1200;
 	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
+	flex-direction: column;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.5);
+	padding: 24px 16px;
 
 	.wish-modal-content {
+		margin: auto;
 		background-color: var(--color-bg-light);
 		border-radius: 10px;
 		padding: 30px;
@@ -69,7 +68,8 @@
 			
 			input[type='text'],
 			input[type='number'],
-			input[type='date'] {
+			input[type='date'],
+			select {
 				padding: 10px;
 				border: 1px solid var(--color-gray);
 				border-radius: 5px;

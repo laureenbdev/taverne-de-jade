@@ -25,7 +25,6 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 	const [formData, setFormData] = useState<WishlistItemFormData>({
 		type: 'character',
 		name: '',
-		rarity: 5,
 		targetCount: 1,
 		estimatedReleaseDate: undefined,
 	});
@@ -38,16 +37,13 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 				setFormData({
 					type: item.type,
 					name: item.name,
-					rarity: item.rarity,
 					targetCount: item.targetCount,
 					estimatedReleaseDate: item.estimatedReleaseDate,
 				});
 			} else {
-				// Mode création : formulaire vide
 				setFormData({
 					type: 'character',
 					name: '',
-					rarity: 5,
 					targetCount: 1,
 					estimatedReleaseDate: undefined,
 				});
@@ -57,15 +53,6 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 
 	const availableItems = formData.type === 'character' ? characters : weapons;
 	const isLoading = formData.type === 'character' ? isLoadingCharacters : isLoadingWeapons;
-	const selectedItem = availableItems.find((i) => i.name === formData.name);
-
-	// Mettre à jour la rareté quand on sélectionne un item
-	useEffect(() => {
-		if (selectedItem) {
-			setFormData((prev) => ({ ...prev, rarity: selectedItem.rarity }));
-		}
-	}, [selectedItem]);
-
 	if (!isOpen) return null;
 
 	const handleSubmit = (e: React.FormEvent) => {

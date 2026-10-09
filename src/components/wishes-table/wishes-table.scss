@@ -31,6 +31,16 @@ table.wishes-table {
 		background: rgba(28, 122, 86, 0.05);
 	}
 
+	.wish-name {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	tbody tr.lost td {
+		color: var(--color-red);
+	}
+
 	.edit-pull,
 	.del-pull {
 		width: 40px;

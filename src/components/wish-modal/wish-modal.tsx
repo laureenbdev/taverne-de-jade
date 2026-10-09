@@ -1,68 +1,82 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import './wish-modal.scss';
 
 import { X } from 'phosphor-react';
-import { Wish, WishFormData } from '../../features/wishes/types.ts';
+import { WISH_BANNERS, Wish, WishBanner, WishFormData } from '../../features/wishes/types.ts';
 import { useCharacters } from '../../hooks/useCharacters.ts';
-import CharacterSelect from '../character-select/character-select.tsx';
+import { useWeapons } from '../../hooks/useWeapons.ts';
+import ItemSelect from '../item-select/item-select.tsx';
 
 interface WishModalProps {
 	isOpen: boolean;
 	wish?: Wish | null;
+	defaultBanner?: WishBanner;
 	onClose: () => void;
 	onSubmit: (data: WishFormData) => void;
 }
 
-/**
- * Composant modale pour ajouter/éditer un vœu
- */
-const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }) => {
+const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'character', onClose, onSubmit }) => {
 	const { t } = useTranslation();
 	const { characters, isLoading: isLoadingCharacters } = useCharacters();
+	const { weapons, isLoading: isLoadingWeapons } = useWeapons();
+	const [subject, setSubject] = useState<'character' | 'weapon'>('character');
 	const [formData, setFormData] = useState<WishFormData>({
 		characterName: '',
 		totalWishes: 0,
 		date: new Date().toISOString().split('T')[0],
-		banner: '',
+		banner: defaultBanner,
+		won: true,
 	});
 
-	// Réinitialise le formulaire quand la modale s'ouvre ou que le wish change
 	useEffect(() => {
-		if (isOpen) {
-			if (wish) {
-				// Mode édition : pré-remplir avec les données du vœu
-				setFormData({
-					characterName: wish.characterName,
-					totalWishes: wish.totalWishes,
-					date: wish.date,
-					banner: wish.banner,
-				});
-			} else {
-				// Mode création : formulaire vide
-				setFormData({
-					characterName: '',
-					totalWishes: 0,
-					date: new Date().toISOString().split('T')[0],
-					banner: '',
-				});
-			}
-		}
-	}, [isOpen, wish]);
+		if (!isOpen) return;
+		const banner = wish?.banner ?? defaultBanner;
+		setSubject(banner === 'weapon' ? 'weapon' : 'character');
+		setFormData({
+			characterName: wish?.characterName ?? '',
+			totalWishes: wish?.totalWishes ?? 0,
+			date: wish?.date ?? new Date().toISOString().split('T')[0],
+			banner,
+			won: banner === 'standard' ? null : wish ? wish.won !== false : true,
+		});
+	}, [isOpen, wish, defaultBanner]);
+
+	useEffect(() => {
+		if (!isOpen || !wish) return;
+		if (wish.banner !== 'standard' && wish.banner !== 'chronicled') return;
+		if (weapons.some((weapon) => weapon.name === wish.characterName)) setSubject('weapon');
+	}, [isOpen, wish, weapons]);
 
 	if (!isOpen) return null;
 
+	const mixedBanner = formData.banner === 'standard' || formData.banner === 'chronicled';
+	const usesWeapons = formData.banner === 'weapon' || (mixedBanner && subject === 'weapon');
+	const items = (usesWeapons ? weapons : characters).filter((item) => item.rarity === 5);
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		onSubmit(formData);
+		if (!formData.characterName.trim()) return;
+		onSubmit({
+			...formData,
+			won: formData.banner === 'standard' ? null : formData.won === false ? false : true,
+		});
 		onClose();
 	};
 
-	const handleChange = (field: keyof WishFormData, value: string | number | boolean) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
+	const handleBanner = (banner: WishBanner) => {
+		setFormData((prev) => ({
+			...prev,
+			banner,
+			characterName: '',
+			won: banner === 'standard' ? null : prev.won ?? true,
+		}));
+		if (banner === 'weapon') setSubject('weapon');
+		if (banner === 'character') setSubject('character');
 	};
 
-	return (
+	return createPortal(
 		<div className="wish-modal-overlay" onClick={onClose}>
 			<div className="wish-modal-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wish-modal-header">
@@ -74,13 +88,47 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 
 				<form onSubmit={handleSubmit} className="wish-modal-form">
 					<div className="form-group">
-						<label htmlFor="characterName">{t('wishes.modal.character')}</label>
-						<CharacterSelect
-							characters={characters}
-							isLoading={isLoadingCharacters}
+						<label htmlFor="banner">{t('wishes.modal.banner')}</label>
+						<select
+							id="banner"
+							value={formData.banner}
+							onChange={(e) => handleBanner(e.target.value as WishBanner)}
+						>
+							{WISH_BANNERS.map((banner) => (
+								<option key={banner} value={banner}>
+									{t(`wishes.banners.${banner}`)}
+								</option>
+							))}
+						</select>
+					</div>
+
+					{mixedBanner && (
+						<div className="form-group">
+							<label htmlFor="subject">{t('wishes.modal.subject')}</label>
+							<select
+								id="subject"
+								value={subject}
+								onChange={(e) => {
+									setSubject(e.target.value as 'character' | 'weapon');
+									setFormData((prev) => ({ ...prev, characterName: '' }));
+								}}
+							>
+								<option value="character">{t('common.character')}</option>
+								<option value="weapon">{t('common.weapon')}</option>
+							</select>
+						</div>
+					)}
+
+					<div className="form-group">
+						<label htmlFor="characterName">
+							{usesWeapons ? t('wishes.modal.weapon') : t('wishes.modal.character')}
+						</label>
+						<ItemSelect
+							items={items}
+							isLoading={usesWeapons ? isLoadingWeapons : isLoadingCharacters}
 							value={formData.characterName}
-							onChange={(characterName) => handleChange('characterName', characterName)}
-							placeholder={t('wishes.modal.selectCharacter')}
+							onChange={(characterName) => setFormData((prev) => ({ ...prev, characterName }))}
+							placeholder={usesWeapons ? t('wishes.modal.selectWeapon') : t('wishes.modal.selectCharacter')}
 							required
 						/>
 					</div>
@@ -92,7 +140,9 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 							type="number"
 							min="0"
 							value={formData.totalWishes}
-							onChange={(e) => handleChange('totalWishes', parseInt(e.target.value) || 0)}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, totalWishes: parseInt(e.target.value) || 0 }))
+							}
 							required
 						/>
 					</div>
@@ -103,22 +153,24 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 							id="date"
 							type="date"
 							value={formData.date}
-							onChange={(e) => handleChange('date', e.target.value)}
+							onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
 							required
 						/>
 					</div>
 
-					<div className="form-group">
-						<label htmlFor="banner">{t('wishes.modal.banner')}</label>
-						<input
-							id="banner"
-							type="text"
-							value={formData.banner}
-							onChange={(e) => handleChange('banner', e.target.value)}
-							required
-							placeholder={t('wishes.modal.bannerPlaceholder')}
-						/>
-					</div>
+					{formData.banner !== 'standard' && (
+						<div className="form-group">
+							<label htmlFor="won">{t('wishes.modal.win')}</label>
+							<select
+								id="won"
+								value={formData.won === false ? 'no' : 'yes'}
+								onChange={(e) => setFormData((prev) => ({ ...prev, won: e.target.value === 'yes' }))}
+							>
+								<option value="yes">{t('wishes.modal.yes')}</option>
+								<option value="no">{t('wishes.modal.no')}</option>
+							</select>
+						</div>
+					)}
 
 					<div className="form-actions">
 						<button type="button" onClick={onClose} className="btn-cancel">
@@ -130,7 +182,8 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, onClose, onSubmit }
 					</div>
 				</form>
 			</div>
-		</div>
+		</div>,
+		document.body
 	);
 };
 
