@@ -43,7 +43,7 @@ const StatRing: React.FC<StatRingProps> = ({ value, label, className }) => {
 					/>
 				)}
 			</svg>
-			<span className="stat-ring-label">{label}</span>
+			<span key={label} className="stat-ring-label">{label}</span>
 		</div>
 	);
 };

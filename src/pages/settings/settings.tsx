@@ -5,6 +5,7 @@ import { SignIn, UserPlus } from 'phosphor-react';
 
 import AuthModal, { AuthMode } from '../../components/auth-modal/auth-modal.tsx';
 import { useAuth } from '../../features/auth/AuthContext.tsx';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 import { PLAYER_SERVERS, PlayerServer } from '../../features/profile/types.ts';
 import './settings.scss';
 
@@ -13,6 +14,7 @@ const Settings: React.FC = () => {
 	const { session, loading, profile, signOut, saveProfile, setLanguage } = useAuth();
 	const [authMode, setAuthMode] = useState<AuthMode | null>(null);
 	const [signOutOpen, setSignOutOpen] = useState(false);
+	useLockBodyScroll(signOutOpen);
 	const [displayName, setDisplayName] = useState(profile.displayName);
 	const [uid, setUid] = useState(profile.uid);
 	const [server, setServer] = useState<PlayerServer | ''>(profile.server);

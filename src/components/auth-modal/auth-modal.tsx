@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'phosphor-react';
 
 import { useAuth } from '../../features/auth/AuthContext.tsx';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 import './auth-modal.scss';
 
 type AuthMode = 'signIn' | 'signUp';
@@ -39,6 +40,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
 		return () => window.removeEventListener('keydown', onKey);
 	}, [mode, onClose]);
 
+	useLockBodyScroll(Boolean(mode));
 	if (!mode) return null;
 
 	const handleSignIn = async () => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import './wishlist-form.scss';
 
@@ -7,6 +8,7 @@ import { WishlistItem, WishlistItemFormData } from '../../features/wishlist/type
 import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import ItemSelect from '../item-select/item-select.tsx';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 
 interface WishlistFormProps {
 	isOpen: boolean;
@@ -53,6 +55,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 
 	const availableItems = formData.type === 'character' ? characters : weapons;
 	const isLoading = formData.type === 'character' ? isLoadingCharacters : isLoadingWeapons;
+	useLockBodyScroll(isOpen);
 	if (!isOpen) return null;
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -73,7 +76,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 		}
 	};
 
-	return (
+	return createPortal(
 		<div className="wishlist-form-overlay" onClick={onClose}>
 			<div className="wishlist-form-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wishlist-form-header">
@@ -153,7 +156,8 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 					</div>
 				</form>
 			</div>
-		</div>
+		</div>,
+		document.body,
 	);
 };
 

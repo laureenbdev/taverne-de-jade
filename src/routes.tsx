@@ -3,7 +3,9 @@ import { RouteObject } from 'react-router-dom';
 
 import { HouseLine, ChartBar, CalendarBlank, Sparkle, Gear } from 'phosphor-react';
 
+import Advancement from './pages/advancement/advancement.tsx';
 import Home from './pages/home/home.tsx';
+import Planner from './pages/planner/planner.tsx';
 import Wishes from './pages/wishes/wishes.tsx';
 import Settings from './pages/settings/settings.tsx';
 
@@ -25,11 +27,13 @@ export const navConfig: NavItem[] = [
     path: '/advancement',
     labelKey: 'nav.advancement',
     icon: ChartBar,
+    element: Advancement,
   },
   {
     path: '/planner',
     labelKey: 'nav.planner',
     icon: CalendarBlank,
+    element: Planner,
   },
   {
     path: '/wishes',

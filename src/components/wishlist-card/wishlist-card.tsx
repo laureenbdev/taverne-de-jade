@@ -87,20 +87,20 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 				</div>
 				<div className="wishlist-card-actions">
 					<button
-						className="icon-button edit"
+						className="icon-button edit tooltip-anchor"
 						onClick={() => onEdit(item)}
 						aria-label={t('wishlist.edit')}
-						title={t('wishlist.edit')}
 					>
 						<Pencil size={16} />
+						<span className="tooltip bottom" role="tooltip">{t('wishlist.edit')}</span>
 					</button>
 					<button
-						className="icon-button delete"
+						className="icon-button delete tooltip-anchor"
 						onClick={handleDelete}
 						aria-label={t('wishlist.delete')}
-						title={t('wishlist.delete')}
 					>
 						<Trash size={16} />
+						<span className="tooltip bottom" role="tooltip">{t('wishlist.delete')}</span>
 					</button>
 					<label className="complete-checkbox-small">
 						<input

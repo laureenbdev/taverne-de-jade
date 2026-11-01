@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { usePresence } from '../unfold/unfold.tsx';
 import './character-select.scss';
 
 import { CaretDown, MagnifyingGlass } from 'phosphor-react';
@@ -28,6 +29,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
+	const dropdown = usePresence(isOpen);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [highlightedIndex, setHighlightedIndex] = useState(-1);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -151,8 +153,9 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
 
-			{isOpen && (
-				<div className="character-select-dropdown" ref={dropdownRef}>
+			{dropdown.present && (
+				<div className={`character-select-dropdown${dropdown.shown ? ' is-open' : ''}`} ref={dropdownRef}>
+					<div className="character-select-panel">
 					<div className="character-select-search">
 						<MagnifyingGlass size={16} />
 						<input
@@ -189,6 +192,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 								</div>
 							))
 						)}
+					</div>
 					</div>
 				</div>
 			)}

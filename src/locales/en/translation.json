@@ -17,7 +17,10 @@
     "advancement": "Advancement",
     "planner": "Planner",
     "wishes": "Wishes",
-    "settings": "Settings"
+    "settings": "Settings",
+    "menu": "Navigation",
+    "collapse": "Close menu",
+    "expand": "Open menu"
   },
   "header": {
     "account": "{{name}}"
@@ -40,6 +43,10 @@
     "wishesTitle": "Wishes",
     "wishesText": "History, wishlist, and ascension planning soon.",
     "newsTitle": "What's new",
+    "newsPlanner": "Created the planning tools",
+    "newsProgress": "Created the progress-tracking tools",
+    "newsSideNav": "Moved the links into a side menu",
+    "newsAccount": "Account sign-in and saving data in the database",
     "newsWishHistory": "Added wish history and wish list",
     "newsRefactor": "Refactored the codebase and styles"
   },
@@ -191,6 +198,74 @@
       "invalidCredentials": "Incorrect email or password.",
       "alreadyRegistered": "An account already exists with this email.",
       "emailNotConfirmed": "Email not confirmed yet."
+    }
+  },
+  "planner": {
+    "characters": "Characters",
+    "add": "Add a character",
+    "addTitle": "Add a character",
+    "editTitle": "Edit character",
+    "saveError": "Couldn't save. Run the planner SQL in Supabase, then try again.",
+    "emptyRoster": "No characters yet.",
+    "currentLevel": "Current level",
+    "targetLevel": "Target level",
+    "weapon": "Equipped weapon",
+    "weaponLevel": "Weapon level",
+    "weaponNone": "No weapon",
+    "talentNormal": "Normal attack",
+    "talentSkill": "Elemental skill",
+    "talentBurst": "Elemental burst",
+    "artifactSet": "Artifact set",
+    "artifactNone": "No set",
+    "remove": "Remove",
+    "materials": "Materials to farm",
+    "materialsEmpty": "Nothing to farm right now.",
+    "materialsNeedRoster": "Add a character to see the materials.",
+    "mora": "Mora",
+    "commonTier": "{{name}} · ★{{rarity}}",
+    "groups": {
+      "mora": "Mora",
+      "stone": "Elemental stones",
+      "boss": "Boss materials",
+      "local": "Local specialties",
+      "common": "Common materials",
+      "talentBook": "Talent books",
+      "weekly": "Weekly bosses",
+      "weaponMat": "Weapon materials",
+      "elite": "Elite materials"
+    },
+    "stones": {
+      "label": "{{tier}} of {{stone}}",
+      "tiers": {
+        "sliver": "Sliver",
+        "fragment": "Fragment",
+        "chunk": "Chunk",
+        "gemstone": "Gemstone"
+      },
+      "names": {
+        "pyro": "Agnidus Agate",
+        "hydro": "Varunada Lazurite",
+        "electro": "Vajrada Amethyst",
+        "cryo": "Shivada Jade",
+        "anemo": "Vayuda Turquoise",
+        "geo": "Prithiva Topaz",
+        "dendro": "Nagadus Emerald"
+      }
+    }
+  },
+  "advancement": {
+    "stats": "Progress",
+    "categories": "Categories",
+    "done": "{{done}} / {{total}}",
+    "empty": "Nothing checked yet.",
+    "saveError": "Couldn't save. Run the advancement SQL in Supabase, then try again.",
+    "todos": {
+      "story": "Sample only. Replace with the full story quest list from the API.",
+      "world": "Sample only. Replace with the full world quest list from the API.",
+      "hangouts": "Sample only. Replace with the full hangout list from the API.",
+      "areas": "Incomplete areas. Fill these in when a map or an API publishes them.",
+      "viewpoints": "Sample only. Replace with every viewpoint from the API.",
+      "achievements": "Series only. Replace with every achievement from the API."
     }
   }
 }

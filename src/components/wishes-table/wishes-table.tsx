@@ -54,11 +54,11 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 							<td>{wish.totalWishes}</td>
 							<td>{formatDate(wish.date)}</td>
 							<td
-								className="edit-pull"
-								title={t('wishes.table.edit')}
+								className="edit-pull tooltip-anchor"
 								onClick={() => onEdit(wish)}
 								role="button"
 								tabIndex={0}
+								aria-label={t('wishes.table.edit')}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
 										e.preventDefault();
@@ -67,13 +67,14 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 								}}
 							>
 								<PencilSimple size={15} />
+								<span className="tooltip top" role="tooltip">{t('wishes.table.edit')}</span>
 							</td>
 							<td
-								className="del-pull"
-								title={t('wishes.table.delete')}
+								className="del-pull tooltip-anchor"
 								onClick={() => onDelete(wish.id)}
 								role="button"
 								tabIndex={0}
+								aria-label={t('wishes.table.delete')}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
 										e.preventDefault();
@@ -82,6 +83,7 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 								}}
 							>
 								<Trash size={15} />
+								<span className="tooltip top" role="tooltip">{t('wishes.table.delete')}</span>
 							</td>
 						</tr>
 						);

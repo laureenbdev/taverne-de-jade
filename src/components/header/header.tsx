@@ -1,10 +1,8 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import "./header.scss";
 import { NavLink } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { UserCircle } from "phosphor-react";
 
-import { navConfig } from "../../routes.tsx";
 import { useAuth } from "../../features/auth/AuthContext.tsx";
 
 function shortEmail(email: string) {
@@ -14,35 +12,29 @@ function shortEmail(email: string) {
 }
 
 const Header: React.FC = () => {
-    const { t } = useTranslation();
+    const headerRef = useRef<HTMLElement>(null);
     const { session, profile } = useAuth();
     const email = session?.user.email;
     const name = session ? (profile.displayName || (email ? shortEmail(email) : '')) : '';
 
+    useEffect(() => {
+        const element = headerRef.current;
+        if (!element) return;
+        const apply = () => {
+            document.documentElement.style.setProperty('--header-height', `${element.offsetHeight}px`);
+        };
+        apply();
+        const observer = new ResizeObserver(apply);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, []);
+
     return (
-        <header className="header">
-            <div className="header_title">
-                <div className="header_logo"></div>
+        <header ref={headerRef} className="header">
+            <NavLink to="/" end className="header_title">
+                <span className="header_logo" aria-hidden="true" />
                 <h1>La Taverne de Jade</h1>
-            </div>
-            <nav className="header_nav">
-                <ul>
-                    {navConfig.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <li key={item.path}>
-                                <NavLink
-                                    to={item.path}
-                                    end
-                                    className={({ isActive }) => (isActive ? 'active' : '')}
-                                >
-                                    <Icon className="icon" size={20} /> {t(item.labelKey)}
-                                </NavLink>
-                            </li>
-                        );
-                    })}
-                </ul>
-            </nav>
+            </NavLink>
             {session && name && (
                 <NavLink
                     to="/settings"

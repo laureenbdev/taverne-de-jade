@@ -60,12 +60,25 @@ const PageHome: React.FC = () => {
                     <h3>{t("home.newsTitle")}</h3>
                     <ul>
                         <li>
-                            <time dateTime="2025-01-22">2025-01-22</time>
-                            <span>{t("home.newsWishHistory")}</span>
+                            <time dateTime="2026-11-01">2026-11-01</time>
+                            <ul>
+                                <li>{t("home.newsPlanner")}</li>
+                                <li>{t("home.newsProgress")}</li>
+                                <li>{t("home.newsSideNav")}</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <time dateTime="2026-10-09">2026-10-09</time>
+                            <ul>
+                                <li>{t("home.newsAccount")}</li>
+                            </ul>
                         </li>
                         <li>
                             <time dateTime="2025-01-22">2025-01-22</time>
-                            <span>{t("home.newsRefactor")}</span>
+                            <ul>
+                                <li>{t("home.newsWishHistory")}</li>
+                                <li>{t("home.newsRefactor")}</li>
+                            </ul>
                         </li>
                     </ul>
                 </div>

@@ -23,6 +23,10 @@ table.wishes-table {
 		border-bottom: 1px solid rgba(28, 40, 35, 0.06);
 	}
 
+	tbody tr {
+		animation: wish-row-in 0.35s ease;
+	}
+
 	tbody tr:last-child td {
 		border-bottom: none;
 	}
@@ -64,5 +68,17 @@ table.wishes-table {
 
 	.text-blue {
 		color: var(--color-blue);
+	}
+}
+
+@keyframes wish-row-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
 	}
 }

@@ -13,14 +13,18 @@ header {
     padding: 0 50px;
 
     .header_logo {
+        display: block;
         width: 50px;
         height: 50px;
         background: url(../../../public/img/logo-taverne.png) no-repeat center center/cover;
+        text-decoration: none;
     }
 
     .header_title {
         display: flex;
         align-items: center;
+        text-decoration: none;
+        color: inherit;
     }
 
     h1 {
@@ -28,45 +32,6 @@ header {
         padding: 20px;
         font-weight: 500;
         font-size: 1.8rem;
-    }
-
-    nav {
-
-        ul {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            height: 100%;
-            gap: 20px;
-        }
-        li {
-            list-style: none;
-        }
-        a {
-            text-decoration: none;
-            color: #fff;
-            font-size: 16px;
-            letter-spacing: 2px;
-            align-items: center;
-            display: flex;
-            font-weight: 100;
-        }
-
-        .icon {
-            margin-right: 10px;
-            color: var(--color-muted-on-dark);
-        }
-
-        li:hover a,
-        li:hover .icon {
-            color: var(--color-primary);
-        }
-        
-        .active,
-        .active .icon {
-            color: var(--color-primary);
-        }
     }
 
     .header_account {
@@ -112,17 +77,6 @@ header {
             font-size: 1.35rem;
             padding: 12px;
         }
-
-        nav {
-            ul {
-                gap: 12px;
-            }
-
-            a {
-                letter-spacing: 0.03em;
-                font-size: 14px;
-            }
-        }
     }
 }
 
@@ -144,27 +98,10 @@ header {
             white-space: nowrap;
         }
 
-        nav {
-            width: 100%;
-
-            ul {
-                justify-content: flex-start;
-                flex-wrap: wrap;
-                gap: 6px 14px;
-                height: auto;
-            }
-
-            a {
-                letter-spacing: 0.02em;
-                font-size: 0.85rem;
-                font-weight: 400;
-            }
-        }
-
         .header_account {
-            width: 100%;
-            max-width: none;
-            padding: 2px 0 4px;
+            margin-left: auto;
+            width: auto;
+            padding: 0;
         }
     }
 }

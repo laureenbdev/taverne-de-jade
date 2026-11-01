@@ -1,0 +1,234 @@
+.app-shell {
+	display: flex;
+	align-items: stretch;
+	flex: 1;
+	min-width: 0;
+	position: relative;
+	z-index: 1;
+}
+
+.app-main {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.app-route {
+	animation: route-in 0.35s ease;
+}
+
+@keyframes route-in {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.side-nav {
+	position: sticky;
+	top: 100px;
+	align-self: flex-start;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	width: 220px;
+	flex: 0 0 220px;
+	height: calc(100vh - 100px);
+	padding: 12px 12px 16px;
+	background: rgba(12, 16, 14, 0.92);
+	border-right: 1px solid rgba(198, 163, 106, 0.28);
+	backdrop-filter: blur(14px);
+	z-index: 900;
+	overflow: visible;
+	transition: width 0.28s ease, flex-basis 0.28s ease;
+
+	ul {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		margin: 46px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	a {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 12px;
+		width: auto;
+		margin: 0 -12px;
+		padding: 11px 16px 11px 20px;
+		border-radius: 0;
+		background: transparent;
+		color: var(--color-text-on-dark);
+		font-size: 0.95rem;
+		font-weight: 400;
+		letter-spacing: 0.02em;
+		text-decoration: none;
+		text-align: left;
+		white-space: nowrap;
+		transition: color 0.2s ease, background-color 0.2s ease;
+
+		&::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 7px;
+			bottom: 7px;
+			width: 3px;
+			border-radius: 0 3px 3px 0;
+			background: var(--color-primary);
+			opacity: 0;
+			transform: scaleY(0.4);
+			transition: opacity 0.2s ease, transform 0.2s ease;
+		}
+	}
+
+	a:focus,
+	a:focus-visible,
+	.side-nav-toggle:focus,
+	.side-nav-toggle:focus-visible {
+		outline: none;
+	}
+
+	.icon {
+		flex: 0 0 auto;
+		color: var(--color-muted-on-dark);
+		transition: color 0.2s ease, transform 0.2s ease;
+	}
+
+	a:hover,
+	a:focus-visible {
+		background: rgba(61, 190, 143, 0.14);
+		color: #fff;
+
+		.icon {
+			color: var(--color-primary);
+		}
+
+		&::before {
+			opacity: 1;
+			transform: scaleY(1);
+		}
+	}
+
+	a:active {
+		background: rgba(61, 190, 143, 0.24);
+	}
+
+	a.active {
+		background: rgba(198, 163, 106, 0.16);
+		color: var(--color-gold-light);
+
+		.icon {
+			color: var(--color-gold-light);
+		}
+
+		&::before {
+			opacity: 1;
+			transform: scaleY(1);
+			background: var(--color-gold);
+		}
+	}
+
+	a.active:hover,
+	a.active:focus-visible {
+		background: rgba(198, 163, 106, 0.26);
+	}
+
+	.nav-label {
+		color: inherit;
+		overflow: hidden;
+		transition: opacity 0.2s ease;
+	}
+
+	.side-nav-toggle {
+		position: absolute;
+		top: 16px;
+		right: -16px;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		margin: 0;
+		padding: 0;
+		border: 1px solid rgba(198, 163, 106, 0.45);
+		border-radius: 50%;
+		background: var(--color-bg-dark);
+		color: var(--color-gold-light);
+		cursor: pointer;
+		transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+
+		svg {
+			transform: translateX(0) rotate(0deg);
+			transition: transform 0.28s ease;
+		}
+
+		&:hover {
+			background: #24302a;
+			border-color: var(--color-gold);
+			color: var(--color-gold-light);
+
+			svg {
+				transform: translateX(-2px) rotate(0deg);
+			}
+		}
+
+		&:active {
+			transform: scale(0.92);
+		}
+	}
+
+	&.is-collapsed {
+		width: 64px;
+		flex-basis: 64px;
+
+		.nav-label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+
+		.side-nav-toggle svg {
+			transform: translateX(0) rotate(180deg);
+		}
+
+		.side-nav-toggle:hover svg {
+			transform: translateX(2px) rotate(180deg);
+		}
+	}
+}
+
+@media (max-width: 860px) {
+	.side-nav {
+		top: 72px;
+		height: calc(100vh - 72px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.side-nav,
+	.side-nav .icon,
+	.side-nav-toggle,
+	.side-nav-toggle svg,
+	.app-route {
+		transition: none;
+		animation: none;
+	}
+}

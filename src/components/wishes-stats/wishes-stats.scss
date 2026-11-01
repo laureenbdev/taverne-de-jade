@@ -67,6 +67,7 @@
 			font-family: Cinzel, serif;
 			font-size: 1.35rem;
 			color: var(--color-heading);
+			animation: stat-in 0.4s ease;
 		}
 	}
 
@@ -86,5 +87,17 @@
 @media (max-width: 720px) {
 	.wishes-stats {
 		grid-template-columns: 1fr;
+	}
+}
+
+@keyframes stat-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
 	}
 }

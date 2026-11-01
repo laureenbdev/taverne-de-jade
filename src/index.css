@@ -28,6 +28,7 @@
 
   --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.22);
   --radius: 16px;
+  --header-height: 100px;
 }
 
 * {
@@ -44,6 +45,10 @@
 html {
   scroll-behavior: smooth;
   scrollbar-color: #245c46 var(--color-bg);
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 body {
@@ -341,6 +346,29 @@ html::-webkit-scrollbar-thumb {
 @media (prefers-reduced-motion: reduce) {
   .tooltip {
     transition: opacity 0.01ms linear, visibility 0.01ms linear;
+  }
+}
+
+.unfold {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.32s ease, opacity 0.24s ease;
+}
+
+.unfold.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.unfold-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unfold {
+    transition: none;
   }
 }
 

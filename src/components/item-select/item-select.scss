@@ -49,21 +49,35 @@
 			}
 		}
 	}
+}
 
-	.item-select-dropdown {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		margin-top: 4px;
-		background-color: var(--color-bg-light);
-		border: 1px solid var(--color-gray);
-		border-radius: 5px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		z-index: 1000;
-		max-height: 300px;
+.item-select-dropdown {
+	position: fixed;
+	margin: 0;
+	background-color: var(--color-bg-light);
+	border: 1px solid var(--color-gray);
+	border-radius: 5px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	z-index: 1400;
+	display: grid;
+	grid-template-rows: 0fr;
+	opacity: 0;
+	overflow: hidden;
+	pointer-events: none;
+	transform-origin: top;
+	transition: grid-template-rows 0.32s ease, opacity 0.24s ease;
+
+	&.is-open {
+		grid-template-rows: 1fr;
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.item-select-panel {
 		display: flex;
 		flex-direction: column;
+		min-height: 0;
+		max-height: 300px;
 		overflow: hidden;
 	}
 

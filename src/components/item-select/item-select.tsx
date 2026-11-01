@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { usePresence } from '../unfold/unfold.tsx';
 import './item-select.scss';
 
 import { CaretDown, MagnifyingGlass } from 'phosphor-react';
@@ -32,11 +34,14 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
+	const dropdown = usePresence(isOpen);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [highlightedIndex, setHighlightedIndex] = useState(-1);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const triggerRef = useRef<HTMLDivElement>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(null);
 
 	// Trouver l'élément sélectionné
 	const selectedItem = items.find((item) => item.name === value);
@@ -49,7 +54,10 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 	// Fermer la dropdown si on clique en dehors
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+			const target = event.target as Node;
+			const insideTrigger = containerRef.current?.contains(target);
+			const insideMenu = dropdownRef.current?.contains(target);
+			if (!insideTrigger && !insideMenu) {
 				setIsOpen(false);
 				setSearchTerm('');
 				setHighlightedIndex(-1);
@@ -64,6 +72,24 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
 	}, [isOpen]);
+
+	useLayoutEffect(() => {
+		if (!dropdown.present) return;
+
+		const place = () => {
+			const rect = triggerRef.current?.getBoundingClientRect();
+			if (!rect) return;
+			setAnchor({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+		};
+
+		place();
+		window.addEventListener('resize', place);
+		window.addEventListener('scroll', place, true);
+		return () => {
+			window.removeEventListener('resize', place);
+			window.removeEventListener('scroll', place, true);
+		};
+	}, [dropdown.present]);
 
 	// Focus sur l'input de recherche quand la dropdown s'ouvre
 	useEffect(() => {
@@ -128,19 +154,21 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		setHighlightedIndex(-1);
 	};
 
-	// Scroll vers l'élément highlighté
 	useEffect(() => {
-		if (highlightedIndex >= 0 && dropdownRef.current) {
-			const highlightedElement = dropdownRef.current.children[highlightedIndex] as HTMLElement;
-			if (highlightedElement) {
-				highlightedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-			}
-		}
+		if (highlightedIndex < 0 || !dropdownRef.current) return;
+		const list = dropdownRef.current.querySelector('.item-select-options');
+		const option = list?.querySelectorAll('.item-select-option')[highlightedIndex] as HTMLElement | undefined;
+		if (!list || !option) return;
+		const top = option.offsetTop;
+		const bottom = top + option.offsetHeight;
+		if (top < list.scrollTop) list.scrollTop = top;
+		else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
 	}, [highlightedIndex]);
 
 	return (
 		<div className="item-select" ref={containerRef}>
 			<div
+				ref={triggerRef}
 				className={`item-select-trigger ${isOpen ? 'open' : ''} ${!value ? 'placeholder' : ''}`}
 				onClick={handleToggle}
 				onKeyDown={handleKeyDown}
@@ -155,8 +183,13 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
 
-			{isOpen && (
-				<div className="item-select-dropdown" ref={dropdownRef}>
+			{dropdown.present && anchor && createPortal(
+				<div
+					className={`item-select-dropdown${dropdown.shown ? ' is-open' : ''}`}
+					ref={dropdownRef}
+					style={{ top: anchor.top, left: anchor.left, width: anchor.width }}
+				>
+					<div className="item-select-panel">
 					<div className="item-select-search">
 						<MagnifyingGlass size={16} />
 						<input
@@ -195,7 +228,9 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 							))
 						)}
 					</div>
-				</div>
+					</div>
+				</div>,
+				document.body,
 			)}
 		</div>
 	);

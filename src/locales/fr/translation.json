@@ -17,7 +17,10 @@
     "advancement": "Progression",
     "planner": "Planificateur",
     "wishes": "Vœux",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "menu": "Navigation",
+    "collapse": "Fermer le menu",
+    "expand": "Ouvrir le menu"
   },
   "header": {
     "account": "{{name}}"
@@ -40,6 +43,10 @@
     "wishesTitle": "Vœux",
     "wishesText": "Historique, liste de souhaits, et bientôt l'ascension.",
     "newsTitle": "Nouveautés",
+    "newsPlanner": "Création des outils de planification",
+    "newsProgress": "Création des outils de suivi de l'avancée",
+    "newsSideNav": "Déplacement des liens vers un menu latéral",
+    "newsAccount": "Connexion au compte et enregistrement des données en base",
     "newsWishHistory": "Ajout de l'historique de vœux et de la liste de souhaits",
     "newsRefactor": "Refonte du code et des styles"
   },
@@ -191,6 +198,74 @@
       "invalidCredentials": "E-mail ou mot de passe incorrect.",
       "alreadyRegistered": "Un compte existe déjà avec cet e-mail.",
       "emailNotConfirmed": "E-mail pas encore confirmé."
+    }
+  },
+  "planner": {
+    "characters": "Personnages",
+    "add": "Ajouter un personnage",
+    "addTitle": "Ajouter un personnage",
+    "editTitle": "Modifier le personnage",
+    "saveError": "Impossible d'enregistrer. Lance la requête SQL du planificateur dans Supabase, puis réessaie.",
+    "emptyRoster": "Aucun personnage pour l'instant.",
+    "currentLevel": "Niveau actuel",
+    "targetLevel": "Niveau cible",
+    "weapon": "Arme équipée",
+    "weaponLevel": "Niveau de l'arme",
+    "weaponNone": "Aucune arme",
+    "talentNormal": "Attaque normale",
+    "talentSkill": "Compétence",
+    "talentBurst": "Déchaînement",
+    "artifactSet": "Set d'artéfacts",
+    "artifactNone": "Aucun set",
+    "remove": "Retirer",
+    "materials": "Matériaux à farmer",
+    "materialsEmpty": "Rien à farmer pour l'instant.",
+    "materialsNeedRoster": "Ajoute un personnage pour voir les matériaux.",
+    "mora": "Moras",
+    "commonTier": "{{name}} · ★{{rarity}}",
+    "groups": {
+      "mora": "Moras",
+      "stone": "Pierres élémentaires",
+      "boss": "Matériaux de boss",
+      "local": "Spécialités locales",
+      "common": "Matériaux communs",
+      "talentBook": "Livres de talent",
+      "weekly": "Boss hebdomadaire",
+      "weaponMat": "Matériaux d'arme",
+      "elite": "Matériaux d'élite"
+    },
+    "stones": {
+      "label": "{{tier}} {{stone}}",
+      "tiers": {
+        "sliver": "Éclat",
+        "fragment": "Fragment",
+        "chunk": "Morceau",
+        "gemstone": "Pierre"
+      },
+      "names": {
+        "pyro": "d'agate agnidus",
+        "hydro": "de lazurite varunada",
+        "electro": "d'améthyste vajrada",
+        "cryo": "de jade shivada",
+        "anemo": "de turquoise vayuda",
+        "geo": "de topaze prithiva",
+        "dendro": "d'émeraude nagadus"
+      }
+    }
+  },
+  "advancement": {
+    "stats": "Progression",
+    "categories": "Catégories",
+    "done": "{{done}} / {{total}}",
+    "empty": "Rien de coché pour l'instant.",
+    "saveError": "Impossible d'enregistrer. Lance la requête SQL de la progression dans Supabase, puis réessaie.",
+    "todos": {
+      "story": "Extrait seulement. À remplacer par la liste complète des quêtes d'histoire via l'API.",
+      "world": "Extrait seulement. À remplacer par la liste complète des quêtes du monde via l'API.",
+      "hangouts": "Extrait seulement. À remplacer par la liste complète des anecdotes via l'API.",
+      "areas": "Zones incomplètes. À compléter quand une carte ou une API les publie.",
+      "viewpoints": "Extrait seulement. À remplacer par chaque panorama via l'API.",
+      "achievements": "Séries seulement. À remplacer par chaque succès via l'API."
     }
   }
 }

@@ -30,7 +30,7 @@ const Footer: React.FC = () => {
                         <DiscordLogo className="icon" size={20} /> Discord
                     </a>
                     <a href="mailto:laureenbelgrand.dev@gmail.com">
-                        <Envelope className="icon" size={20} /> laureenbelgrand.dev@gmail.com
+                        <Envelope className="icon" size={20} /> Email
                     </a>
                 </div>
 
@@ -42,11 +42,11 @@ const Footer: React.FC = () => {
                     </p>
                     <p className="credit">
                         <span>{t("footer.withHelp")}</span>
-                        <a href="https://github.com/Erlow38" target="_blank" rel="noreferrer">Erlow</a>
+                        <a href="https://erlinks.github.io/" target="_blank" rel="noreferrer">Erlow</a>
                     </p>
                     <p className="credit">
                         <span>{t("footer.logoBy")}</span>
-                        <a href="https://github.com/R4it0" target="_blank" rel="noreferrer">Raito</a>
+                        <a href="https://erlinks.github.io/raito/" target="_blank" rel="noreferrer">Raito</a>
                     </p>
                 </div>
             </div>

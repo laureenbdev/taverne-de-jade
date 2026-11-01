@@ -8,6 +8,7 @@ import { WISH_BANNERS, Wish, WishBanner, WishFormData } from '../../features/wis
 import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import ItemSelect from '../item-select/item-select.tsx';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 
 interface WishModalProps {
 	isOpen: boolean;
@@ -49,6 +50,7 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 		if (weapons.some((weapon) => weapon.name === wish.characterName)) setSubject('weapon');
 	}, [isOpen, wish, weapons]);
 
+	useLockBodyScroll(isOpen);
 	if (!isOpen) return null;
 
 	const mixedBanner = formData.banner === 'standard' || formData.banner === 'chronicled';
