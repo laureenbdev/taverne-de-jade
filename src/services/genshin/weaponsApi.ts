@@ -3,6 +3,7 @@ import { GENSHIN_API_ROOT } from './apiRoot.ts';
 export interface Weapon {
 	id: string;
 	name: string;
+	nameFr?: string;
 	type: string; // sword, bow, catalyst, claymore, polearm
 	rarity: number;
 	base_atk_lv90?: number;
@@ -21,6 +22,17 @@ export interface Weapon {
 }
 
 const API_URL = `${GENSHIN_API_ROOT}/weapons.json`;
+
+/** Les fichiers publiés avant la correction inversaient épées et armes d'hast. */
+function correctWeaponTypes(weapons: Weapon[]): Weapon[] {
+	const aquila = weapons.find((weapon) => weapon.name === 'Aquila Favonia');
+	if (aquila?.type !== 'polearm') return weapons;
+	return weapons.map((weapon) => {
+		if (weapon.type === 'sword') return { ...weapon, type: 'polearm' };
+		if (weapon.type === 'polearm') return { ...weapon, type: 'sword' };
+		return weapon;
+	});
+}
 
 /**
  * Service pour récupérer les armes depuis l'API GitHub
@@ -45,7 +57,7 @@ export class WeaponsApiService {
 		}
 
 		// Lancer le chargement
-		this.loadingPromise = fetch(API_URL)
+		this.loadingPromise = fetch(API_URL, { cache: 'no-cache' })
 			.then((response) => {
 				if (!response.ok) {
 					throw new Error(`HTTP Error: ${response.status}`);
@@ -53,9 +65,10 @@ export class WeaponsApiService {
 				return response.json();
 			})
 			.then((data: Weapon[]) => {
-				this.cache = data;
+				const fixed = correctWeaponTypes(data);
+				this.cache = fixed;
 				this.loadingPromise = null;
-				return data;
+				return fixed;
 			})
 			.catch((error) => {
 				this.loadingPromise = null;

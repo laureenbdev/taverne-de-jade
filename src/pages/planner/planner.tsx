@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, Star } from 'phosphor-react';
+import { ArrowRight, Check, Plus, Stack, Star, Table, User } from 'phosphor-react';
 
 import { ARTIFACT_SETS } from '../../features/planner/artifactSets.ts';
 import { ArtifactBuild, hasArtifactPlan, isPercentStat } from '../../features/planner/artifactBuild.ts';
@@ -13,7 +13,7 @@ import { useGameData } from '../../hooks/useGameData.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 import { usePlanner } from '../../hooks/usePlanner.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
-import { catalogIconUrl, characterIconUrl } from '../../services/genshin/images.ts';
+import { catalogIconUrl, characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
 import PlannerModal from './planner-modal.tsx';
 import './planner.scss';
 
@@ -33,10 +33,6 @@ function readFarmView(): FarmViewMode {
 	return 'source';
 }
 
-type ArtifactFocus =
-	| { kind: 'set'; setName: string }
-	| { kind: 'character'; setName: string; characterId: string };
-
 const ARTIFACT_SLOTS = ['sands', 'goblet', 'circlet'] as const;
 
 type KeptLine = { key: string; label: string; got: boolean };
@@ -53,19 +49,37 @@ function characterKeptLines(
 		lines.push({
 			key: `${slot}:${stat}`,
 			label: `${label(`planner.slots.${slot}`)} · ${label(`planner.stats.${stat}`)}`,
-			got: build[`${slot}Got`],
+			got: false,
 		});
 	});
 	build.subs.forEach((sub, index) => {
 		if (!sub.stat) return;
 		lines.push({
 			key: `sub:${index}:${sub.stat}`,
-			label: `${label(`planner.stats.${sub.stat}`)} · ${format(sub.stat, sub.current)} / ${format(sub.stat, sub.target)}`,
-			got: sub.target > 0 && sub.current >= sub.target,
+			label: `${label(`planner.stats.${sub.stat}`)} · ${format(sub.stat, sub.target)}`,
+			got: false,
 		});
 	});
 	return lines;
 }
+
+const FARM_VIEWS: { mode: FarmViewMode; icon: typeof Stack }[] = [
+	{ mode: 'source', icon: Stack },
+	{ mode: 'character', icon: User },
+	{ mode: 'table', icon: Table },
+];
+
+const LevelRange: React.FC<{ current: number; target: number }> = ({ current, target }) => (
+	<span className={`planner-range${current >= target ? ' is-done' : ''}`}>
+		<span>{current}</span>
+		{current < target && (
+			<>
+				<ArrowRight size={11} />
+				<span>{target}</span>
+			</>
+		)}
+	</span>
+);
 
 const RoundCheck: React.FC<{ checked: boolean; label: string; onClick: () => void }> = ({ checked, label, onClick }) => (
 	<button
@@ -91,7 +105,6 @@ const Planner: React.FC = () => {
 	const { plans, isLoading: plansLoading, loadError, savePlan, removeCharacter } = usePlanner();
 	const [modal, setModal] = useState<PlannerModalState | null>(null);
 	const [farmView, setFarmView] = useState<FarmViewMode>(readFarmView);
-	const [artifactFocus, setArtifactFocus] = useState<ArtifactFocus | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	useLockBodyScroll(Boolean(modal));
@@ -99,8 +112,33 @@ const Planner: React.FC = () => {
 	const byId = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
 	const editing = modal?.mode === 'edit' ? plans.find((plan) => plan.characterId === modal.characterId) ?? null : null;
 	const available = characters.filter((character) => !plans.some((plan) => plan.characterId === character.id));
+	const french = i18n.language.toLowerCase().startsWith('fr');
+	const namesFr = useMemo(() => {
+		const map = new Map<string, string>();
+		const add = (name: string | null | undefined, translated: string | null | undefined) => {
+			if (name && translated) map.set(name, translated);
+		};
+		catalog?.items.forEach((item) => {
+			add(item.name, item.nameFr);
+			add(item.family, item.familyFr);
+			add(item.sourceName, item.sourceNameFr);
+		});
+		artifacts.forEach((set) => {
+			add(set.name, set.nameFr);
+			add(set.domain, set.domainFr);
+		});
+		weapons.forEach((weapon) => add(weapon.name, weapon.nameFr));
+		return map;
+	}, [catalog, artifacts, weapons]);
+	const localize = (name: string) => (french ? namesFr.get(name) ?? name : name);
 	const artifactChoices = artifacts.length
-		? artifacts.map((set) => ({ id: set.id, name: set.name, rarity: Math.max(...set.rarities, 1), image: catalogIconUrl(set.image) }))
+		? artifacts.map((set) => ({
+			id: set.id,
+			name: set.name,
+			nameFr: set.nameFr,
+			rarity: Math.max(...set.rarities, 1),
+			image: catalogIconUrl(set.image),
+		}))
 		: ARTIFACT_SETS.map((name) => ({ id: name, name, rarity: 5 }));
 	const setsByName = useMemo(() => new Map(artifacts.map((set) => [set.name.toLowerCase(), set])), [artifacts]);
 
@@ -118,108 +156,6 @@ const Planner: React.FC = () => {
 
 	const builds = roster.filter((plan) => hasArtifactPlan(plan.artifactBuild));
 
-	const artifactDomains = useMemo(() => {
-		type Member = { plan: PlannedCharacter; name: string };
-		type SetGroup = { name: string; image?: string; members: Member[] };
-		type DomainGroup = { id: string; title: string; sets: SetGroup[] };
-		const domains = new Map<string, DomainGroup>();
-
-		builds.forEach((plan) => {
-			const build = plan.artifactBuild;
-			if (!build) return;
-			const names = [build.set, build.setB].filter((name): name is string => Boolean(name));
-			const setNames = names.length > 0 ? [...new Set(names)] : ['__none__'];
-			setNames.forEach((setName) => {
-				const info = setName === '__none__' ? undefined : setsByName.get(setName.toLowerCase());
-				const domainId = info?.domain || (info?.source === 'boss' ? 'boss' : 'other');
-				const title = domainId === 'boss'
-					? t('planner.artifactBoss')
-					: domainId === 'other'
-						? t('planner.artifactOther')
-						: domainId;
-				const domain = domains.get(domainId) ?? { id: domainId, title, sets: [] };
-				let group = domain.sets.find((set) => set.name === setName);
-				if (!group) {
-					group = {
-						name: setName,
-						image: info?.image,
-						members: [],
-					};
-					domain.sets.push(group);
-				}
-				if (!group.members.some((member) => member.plan.characterId === plan.characterId)) {
-					group.members.push({
-						plan,
-						name: byId.get(plan.characterId)?.name ?? plan.characterId,
-					});
-				}
-				domains.set(domainId, domain);
-			});
-		});
-
-		const rank = (id: string) => (id === 'boss' ? 1 : id === 'other' ? 2 : 0);
-		return [...domains.values()]
-			.map((domain) => ({
-				...domain,
-				sets: domain.sets
-					.map((set) => ({
-						...set,
-						members: [...set.members].sort((left, right) => {
-							if (left.plan.favorite !== right.plan.favorite) return left.plan.favorite ? -1 : 1;
-							return left.name.localeCompare(right.name, i18n.language);
-						}),
-					}))
-					.sort((left, right) => left.name.localeCompare(right.name, i18n.language)),
-			}))
-			.sort((left, right) => rank(left.id) - rank(right.id) || left.title.localeCompare(right.title, i18n.language));
-	}, [builds, setsByName, byId, t, i18n.language]);
-
-	const keptForSet = (members: { plan: PlannedCharacter }[]): KeptLine[] => {
-		const mains = new Map<string, { slot: typeof ARTIFACT_SLOTS[number]; stat: string; got: boolean }>();
-		const subs = new Map<string, boolean>();
-		members.forEach((member) => {
-			const build = member.plan.artifactBuild;
-			if (!build) return;
-			ARTIFACT_SLOTS.forEach((slot) => {
-				const stat = build[slot];
-				if (!stat) return;
-				const key = `${slot}:${stat}`;
-				const previous = mains.get(key);
-				mains.set(key, {
-					slot,
-					stat,
-					got: previous ? previous.got && build[`${slot}Got`] : build[`${slot}Got`],
-				});
-			});
-			build.subs.forEach((sub) => {
-				if (!sub.stat) return;
-				const reached = sub.target > 0 && sub.current >= sub.target;
-				subs.set(sub.stat, subs.has(sub.stat) ? Boolean(subs.get(sub.stat) && reached) : reached);
-			});
-		});
-		const lines: KeptLine[] = [...mains.entries()]
-			.sort((left, right) => ARTIFACT_SLOTS.indexOf(left[1].slot) - ARTIFACT_SLOTS.indexOf(right[1].slot))
-			.map(([key, entry]) => ({
-				key,
-				label: `${t(`planner.slots.${entry.slot}`)} · ${t(`planner.stats.${entry.stat}`)}`,
-				got: entry.got,
-			}));
-		subs.forEach((got, stat) => {
-			lines.push({ key: `sub:${stat}`, label: t(`planner.stats.${stat}`), got });
-		});
-		return lines;
-	};
-
-	const toggleArtifact = (next: ArtifactFocus) => {
-		setArtifactFocus((current) => (
-			current
-			&& current.kind === next.kind
-			&& current.setName === next.setName
-			&& (current.kind === 'set' || next.kind === 'set' || current.characterId === next.characterId)
-				? null
-				: next
-		));
-	};
 	const formatCount = (count: number) => count.toLocaleString(i18n.language);
 	const dayLabel = (count: number) => (count <= 1 ? t('planner.day') : t('planner.days', { count }));
 
@@ -244,19 +180,19 @@ const Planner: React.FC = () => {
 				stone: t(`planner.stones.names.${line.element}`, { defaultValue: line.element }),
 			});
 		}
-		return task.item?.name ?? line.name ?? line.id;
+		return localize(task.item?.name ?? line.name ?? line.id);
 	};
 
 	const clusterTitle = (cluster: FarmCluster) => {
 		if (cluster.title === 'mora') return t('planner.mora');
 		if (cluster.title === 'xp') return t('planner.heroWit');
-		return cluster.title;
+		return localize(cluster.title);
 	};
 
 	const sourceLabel = (name: string) => {
 		if (name === 'Blossom of Wealth') return t('planner.blossoms.wealth');
 		if (name === 'Blossom of Revelation') return t('planner.blossoms.revelation');
-		return name;
+		return localize(name);
 	};
 
 	const formatStat = (stat: string, value: number) => {
@@ -572,7 +508,7 @@ const Planner: React.FC = () => {
 					) : (
 						<>
 							<div className="planner-views" role="group" aria-label={t('planner.views.label')}>
-								{(['source', 'character', 'table'] as const).map((mode) => (
+								{FARM_VIEWS.map(({ mode, icon: Icon }) => (
 									<button
 										key={mode}
 										type="button"
@@ -580,6 +516,7 @@ const Planner: React.FC = () => {
 										aria-pressed={farmView === mode}
 										onClick={() => chooseFarmView(mode)}
 									>
+										<Icon size={16} />
 										{t(`planner.views.${mode}`)}
 									</button>
 								))}
@@ -594,12 +531,23 @@ const Planner: React.FC = () => {
 										<thead>
 											<tr>
 												<th>{t('planner.characters')}</th>
-												<th>{t('planner.views.resources')}</th>
+												<th>{t('planner.tabs.level')}</th>
+												<th>{t('planner.tabs.weapon')}</th>
+												<th>{t('planner.tabs.talents')}</th>
+												<th>{t('planner.tabs.artifacts')}</th>
 											</tr>
 										</thead>
 										<tbody>
 											{characterGroups.map((group) => {
 												const done = clusterDone(group.cluster);
+												const plan = plans.find((item) => item.characterId === group.characterId);
+												const weapon = plan?.weaponId ? weapons.find((item) => item.id === plan.weaponId) : undefined;
+												const setName = plan?.artifactBuild?.set ?? plan?.artifactSet ?? null;
+												const talents = plan ? [
+													['normal', plan.talentNormal, plan.talentNormalTarget],
+													['skill', plan.talentSkill, plan.talentSkillTarget],
+													['burst', plan.talentBurst, plan.talentBurstTarget],
+												] as const : [];
 												return (
 													<tr key={group.characterId} className={`${group.favorite ? 'is-favorite' : ''}${done ? ' is-done' : ''}`}>
 														<th scope="row">
@@ -608,18 +556,93 @@ const Planner: React.FC = () => {
 																	type="button"
 																	className={`planner-face${done ? ' is-checked' : ''}${group.favorite ? ' is-favorite' : ''}`}
 																	aria-label={group.cluster.title}
-																	onClick={() => editCharacter(group.characterId)}
+																	onClick={() => editCharacter(group.characterId, 'level')}
 																>
 																	<img src={characterIconUrl(group.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
 																</button>
-																<button type="button" className="planner-table-name" onClick={() => editCharacter(group.characterId)}>
+																<button type="button" className="planner-table-name" onClick={() => editCharacter(group.characterId, 'level')}>
 																	{group.cluster.title}
 																</button>
 															</span>
 														</th>
 														<td>
-															{renderTiles(group.cluster, true, true, false) ?? (
-																<span className="planner-table-empty">{t('planner.sections.overworld')}</span>
+															{plan && (
+																<div className="planner-table-level">
+																	<button type="button" className="planner-table-cell" onClick={() => editCharacter(group.characterId, 'level')}>
+																		<LevelRange current={plan.currentLevel} target={plan.targetLevel} />
+																	</button>
+																	{renderTiles({
+																		...group.cluster,
+																		tasks: group.cluster.tasks.filter((task) => plannerTabForLine(
+																			plan,
+																			byId.get(plan.characterId),
+																			weapon,
+																			task.line,
+																		) === 'level'),
+																	}, true, true, false)}
+																</div>
+															)}
+														</td>
+														<td>
+															{plan && (
+																<div className="planner-table-level">
+																	<button type="button" className="planner-table-weapon" onClick={() => editCharacter(group.characterId, 'weapon')}>
+																		{weapon ? (
+																			<>
+																				<img src={weaponIconUrl(weapon.id)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+																				<span>
+																					<strong>{localize(weapon.name)}</strong>
+																					{plan.weaponCurrentLevel != null && plan.weaponTargetLevel != null && (
+																						<LevelRange current={plan.weaponCurrentLevel} target={plan.weaponTargetLevel} />
+																					)}
+																				</span>
+																			</>
+																		) : (
+																			<span className="planner-table-missing">{t('planner.weaponNone')}</span>
+																		)}
+																	</button>
+																	{renderTiles({
+																		...group.cluster,
+																		tasks: group.cluster.tasks.filter((task) => plannerTabForLine(
+																			plan,
+																			byId.get(plan.characterId),
+																			weapon,
+																			task.line,
+																		) === 'weapon'),
+																	}, true, true, false)}
+																</div>
+															)}
+														</td>
+														<td>
+															{plan && (
+																<div className="planner-table-level">
+																	<button type="button" className="planner-table-talents" onClick={() => editCharacter(group.characterId, 'talents')}>
+																		{talents.map(([key, current, target]) => (
+																			<span key={key}>
+																				<small>{t(`planner.talentShort.${key}`)}</small>
+																				<LevelRange current={current} target={target} />
+																			</span>
+																		))}
+																	</button>
+																	{renderTiles({
+																		...group.cluster,
+																		tasks: group.cluster.tasks.filter((task) => plannerTabForLine(
+																			plan,
+																			byId.get(plan.characterId),
+																			weapon,
+																			task.line,
+																		) === 'talents'),
+																	}, true, true, false)}
+																</div>
+															)}
+														</td>
+														<td>
+															{plan && (
+																<button type="button" className="planner-table-cell" onClick={() => editCharacter(group.characterId, 'artifacts')}>
+																	{setName ? <span className="planner-table-set">{localize(setName)}</span> : (
+																		<span className="planner-table-missing">{t('planner.artifactNone')}</span>
+																	)}
+																</button>
 															)}
 														</td>
 													</tr>
@@ -632,12 +655,7 @@ const Planner: React.FC = () => {
 								<p className="planner-empty">{t('planner.materialsEmpty')}</p>
 							) : (
 								<div className="planner-farm">
-									{[...farm.sections].sort((left, right) => {
-										if (left.id === 'overworld') return 1;
-										if (right.id === 'overworld') return -1;
-										const done = (section: { clusters: FarmCluster[] }) => section.clusters.length > 0 && section.clusters.every(clusterDone);
-										return Number(done(left)) - Number(done(right));
-									}).map((section) => renderSection(
+									{farm.sections.map((section) => renderSection(
 										section.id,
 										section.clusters,
 										section.id === 'overworld' ? farm.idleCharacterIds : [],
@@ -654,74 +672,50 @@ const Planner: React.FC = () => {
 				<div className="section-container">
 					<h2>{t('planner.artifactsTitle')}</h2>
 					{builds.length === 0 ? <p className="planner-empty">{t('planner.artifactsEmpty')}</p> : (
-						<div className="planner-farm">
-							{artifactDomains.map((domain) => (
-								<section key={domain.id} className="planner-farm-section">
-									<h3>{domain.title}</h3>
-									<article className="planner-cluster">
-										<ul className="planner-rows">
-											{domain.sets.map((set) => {
-												const setOpen = artifactFocus?.kind === 'set' && artifactFocus.setName === set.name;
-												const openCharacter = artifactFocus?.kind === 'character' && artifactFocus.setName === set.name
-													? set.members.find((member) => member.plan.characterId === artifactFocus.characterId)
-													: undefined;
-												const lines = setOpen
-													? keptForSet(set.members)
-													: openCharacter?.plan.artifactBuild
-														? characterKeptLines(openCharacter.plan.artifactBuild, t, formatStat)
-														: null;
-												const detailTitle = setOpen
-													? t('planner.keep')
-													: openCharacter
-														? t('planner.characterStats', { name: openCharacter.name })
-														: '';
-												const setFavorite = set.members.some((member) => member.plan.favorite);
-												return (
-													<li key={set.name} className={`planner-arti${setOpen || openCharacter ? ' is-open' : ''}${setFavorite ? ' is-favorite' : ''}`}>
-														<button
-															type="button"
-															className={`planner-arti-set${setOpen ? ' is-open' : ''}`}
-															aria-expanded={setOpen}
-															onClick={() => toggleArtifact({ kind: 'set', setName: set.name })}
-														>
-															{set.image && <img src={catalogIconUrl(set.image)} alt="" />}
-															<strong>{set.name === '__none__' ? t('planner.noBuild') : set.name}</strong>
-														</button>
-														<div className="planner-faces">
-															{set.members.map((member) => {
-																const open = openCharacter?.plan.characterId === member.plan.characterId;
-																return (
-																	<span key={member.plan.characterId} className="tooltip-anchor">
-																		<button
-																			type="button"
-																			className={`planner-face${member.plan.done ? ' is-checked' : ''}${member.plan.favorite ? ' is-favorite' : ''}${open ? ' is-open' : ''}`}
-																			aria-expanded={open}
-																			aria-label={member.name}
-																			onClick={() => toggleArtifact({ kind: 'character', setName: set.name, characterId: member.plan.characterId })}
-																		>
-																			<img src={characterIconUrl(member.plan.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
-																		</button>
-																		<span className="tooltip top" role="tooltip" aria-hidden="true">{member.name}</span>
-																	</span>
-																);
-															})}
-														</div>
-														{lines && (
-															<p className="planner-arti-stats">
-																<span>{detailTitle}</span>
-																{lines.length === 0
-																	? <span>{t('planner.keepEmpty')}</span>
-																	: lines.map((line) => <span key={line.key} className={line.got ? 'is-got' : ''}>{line.label}</span>)}
-															</p>
-														)}
-													</li>
-												);
-											})}
-										</ul>
-									</article>
-								</section>
-							))}
-						</div>
+						<ul className="planner-artifact-list">
+							{builds.map((plan) => {
+								const build = plan.artifactBuild;
+								if (!build) return null;
+								const name = byId.get(plan.characterId)?.name ?? plan.characterId;
+								const done = build.done === true;
+								const lines = characterKeptLines(build, t, formatStat);
+								const setNames = [build.set, build.setB].filter((entry): entry is string => Boolean(entry));
+								const domains = [...new Set(setNames.flatMap((setName) => {
+									const info = setsByName.get(setName.toLowerCase());
+									if (info?.domain) return [localize(info.domain)];
+									if (info?.source === 'boss') return [t('planner.artifactBoss')];
+									return [];
+								}))];
+								return (
+									<li key={plan.characterId} className={`planner-artifact${done ? ' is-done' : ''}${plan.favorite ? ' is-favorite' : ''}`}>
+										<div className="planner-artifact-head">
+											<RoundCheck
+												checked={done}
+												label={done ? t('planner.uncheck') : t('planner.check')}
+												onClick={() => void run(() => savePlan({ ...plan, artifactBuild: { ...build, done: !done } }))}
+											/>
+											<button type="button" className="planner-artifact-who" onClick={() => editCharacter(plan.characterId, 'artifacts')}>
+												<img src={characterIconUrl(plan.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+												<span>
+													<strong>{name}</strong>
+													<small>
+														{setNames.length > 0 ? setNames.map((setName) => localize(setName)).join(' · ') : t('planner.noBuild')}
+														{domains.length > 0 ? ` · ${domains.join(' · ')}` : ''}
+													</small>
+												</span>
+											</button>
+										</div>
+										{lines.length > 0 && (
+											<ul className="planner-artifact-lines">
+												{lines.map((line) => (
+													<li key={line.key} className={line.got || done ? 'is-got' : ''}>{line.label}</li>
+												))}
+											</ul>
+										)}
+									</li>
+								);
+							})}
+						</ul>
 					)}
 				</div>
 			</section>
@@ -740,6 +734,9 @@ const Planner: React.FC = () => {
 						initial={editing ?? null}
 						saving={saving}
 						saveError={saveError}
+						gameData={gameData}
+						catalog={catalog}
+						localize={localize}
 						onClose={() => { if (!saving) setModal(null); }}
 						onSubmit={(plan) => {
 							setSaving(true);

@@ -263,6 +263,7 @@
     "subs": "Stats",
     "current": "Actuelle",
     "target": "Cible",
+    "targetValue": "Valeur cible",
     "addStat": "Ajouter une stat",
     "removeStat": "Retirer la stat",
     "unreached": "Pas encore atteintes",
@@ -276,6 +277,11 @@
       "character": "Par personnage",
       "table": "Tableau",
       "resources": "Ressources"
+    },
+    "talentShort": {
+      "normal": "Atq.",
+      "skill": "Comp.",
+      "burst": "Décha."
     },
     "sections": {
       "today": "Donjons aujourd'hui",

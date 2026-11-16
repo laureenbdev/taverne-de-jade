@@ -98,12 +98,10 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 		};
 	}, [dropdown.present]);
 
-	// Focus sur l'input de recherche quand la dropdown s'ouvre
-	useEffect(() => {
-		if (isOpen && searchInputRef.current) {
-			searchInputRef.current.focus();
-		}
-	}, [isOpen]);
+	useLayoutEffect(() => {
+		if (!dropdown.present || !anchor) return;
+		searchInputRef.current?.focus();
+	}, [dropdown.present, anchor]);
 
 	// Gérer la navigation au clavier
 	const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -177,6 +175,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 			<div
 				ref={triggerRef}
 				className={`character-select-trigger ${isOpen ? 'open' : ''} ${!value ? 'placeholder' : ''}`}
+				onMouseDown={(event) => event.preventDefault()}
 				onClick={handleToggle}
 				onKeyDown={handleKeyDown}
 				role="combobox"

@@ -9,6 +9,7 @@ import { CaretDown, MagnifyingGlass } from 'phosphor-react';
 interface SelectableItem {
 	id: string;
 	name: string;
+	nameFr?: string;
 	rarity: number;
 	image?: string;
 }
@@ -33,7 +34,9 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 	placeholder,
 	required = false,
 }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
+	const french = i18n.language.toLowerCase().startsWith('fr');
+	const titleOf = (item: SelectableItem) => (french && item.nameFr ? item.nameFr : item.name);
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdown = usePresence(isOpen);
 	const [searchTerm, setSearchTerm] = useState('');
@@ -49,7 +52,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 
 	// Filtrer les éléments selon la recherche
 	const filteredItems = items.filter((item) =>
-		item.name.toLowerCase().includes(searchTerm.toLowerCase())
+		`${item.name} ${item.nameFr ?? ''}`.toLowerCase().includes(searchTerm.toLowerCase())
 	);
 
 	// Fermer la dropdown si on clique en dehors
@@ -165,6 +168,11 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		setHighlightedIndex(-1);
 	};
 
+	useLayoutEffect(() => {
+		if (!dropdown.present || !anchor) return;
+		searchInputRef.current?.focus();
+	}, [dropdown.present, anchor]);
+
 	useEffect(() => {
 		if (highlightedIndex < 0 || !dropdownRef.current) return;
 		const list = dropdownRef.current.querySelector('.item-select-options');
@@ -181,6 +189,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 			<div
 				ref={triggerRef}
 				className={`item-select-trigger ${isOpen ? 'open' : ''} ${!value ? 'placeholder' : ''}`}
+				onMouseDown={(event) => event.preventDefault()}
 				onClick={handleToggle}
 				onKeyDown={handleKeyDown}
 				role="combobox"
@@ -190,7 +199,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 			>
 				<span className="item-select-value">
 					{selectedItem?.image && <SelectIcon src={selectedItem.image} />}
-					<span>{value ? (selectedItem ? selectedItem.name : value) : (placeholder || t('itemSelect.placeholder'))}</span>
+					<span>{value ? (selectedItem ? titleOf(selectedItem) : value) : (placeholder || t('itemSelect.placeholder'))}</span>
 				</span>
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
@@ -235,7 +244,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 									aria-selected={item.name === value}
 								>
 									{item.image && <SelectIcon src={item.image} />}
-									<span className="item-name">{item.name}</span>
+									<span className="item-name">{titleOf(item)}</span>
 									<span className="item-rarity">⭐{item.rarity}</span>
 								</div>
 							))

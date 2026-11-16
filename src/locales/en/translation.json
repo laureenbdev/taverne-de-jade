@@ -263,6 +263,7 @@
     "subs": "Stats",
     "current": "Current",
     "target": "Target",
+    "targetValue": "Target value",
     "addStat": "Add a stat",
     "removeStat": "Remove stat",
     "unreached": "Not reached yet",
@@ -276,6 +277,11 @@
       "character": "By character",
       "table": "Table",
       "resources": "Resources"
+    },
+    "talentShort": {
+      "normal": "Atk",
+      "skill": "Skill",
+      "burst": "Burst"
     },
     "sections": {
       "today": "Domains today",

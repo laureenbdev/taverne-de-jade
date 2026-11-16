@@ -6,12 +6,15 @@ export type FarmSource = 'domain' | 'boss' | 'weekly' | 'leyline' | 'overworld';
 export interface CatalogItem {
 	id: string;
 	name: string;
+	nameFr?: string;
 	family: string;
+	familyFr?: string;
 	rarity: number;
 	tier: StoneTier | null;
 	kind: MaterialKind;
 	source: FarmSource;
 	sourceName: string;
+	sourceNameFr?: string;
 	days: string[];
 	resin: number;
 	dropMax: number;

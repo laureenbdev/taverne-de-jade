@@ -29,6 +29,7 @@ export interface ArtifactBuild {
 	gobletGot: boolean;
 	circletGot: boolean;
 	subs: ArtifactSubstat[];
+	done?: boolean;
 }
 
 export interface UnreachedStat {
@@ -84,6 +85,7 @@ export function readArtifactBuild(raw: unknown, legacySet?: string | null): Arti
 		gobletGot: record.gobletGot === true,
 		circletGot: record.circletGot === true,
 		subs,
+		done: record.done === true,
 	};
 }
 

@@ -16,7 +16,7 @@ export type FarmSectionId = 'today' | 'later' | 'boss' | 'weekly' | 'local' | 'c
 
 export const FARM_SECTIONS: FarmSectionId[] = ['today', 'later', 'boss', 'weekly', 'local', 'common', 'elite', 'overworld'];
 
-const SUMMARY_KINDS = new Set<MaterialKind>(['mora', 'xp', 'weaponMat']);
+const SUMMARY_KINDS = new Set<MaterialKind>(['mora', 'xp']);
 
 export interface FarmTask {
 	id: string;
@@ -70,7 +70,7 @@ function sourceOf(kind: MaterialKind, item?: CatalogItem): FarmSource {
 	return 'overworld';
 }
 
-function matchItem(items: CatalogItem[], line: FarmNeed): CatalogItem | undefined {
+export function catalogItemForNeed(items: CatalogItem[], line: FarmNeed): CatalogItem | undefined {
 	if (line.kind === 'mora') return items.find((item) => item.kind === 'mora');
 	if (line.kind === 'xp') return items.find((item) => item.name === "Hero's Wit");
 	if (line.kind === 'stone') return items.find((item) => item.kind === 'stone' && item.family === line.element && item.tier === line.tier);
@@ -154,7 +154,9 @@ function walkDays(buckets: { resin: number; open: string[] }[], resinPerDay: num
 }
 
 function sectionFor(task: FarmTask, today: string): FarmSectionId {
-	if (task.line.kind === 'talentBook') return (task.item?.days ?? []).includes(today) ? 'today' : 'later';
+	if (task.line.kind === 'talentBook' || task.line.kind === 'weaponMat') {
+		return (task.item?.days ?? []).includes(today) ? 'today' : 'later';
+	}
 	if (task.line.kind === 'boss' || task.line.kind === 'stone') return 'boss';
 	if (task.line.kind === 'weekly') return 'weekly';
 	if (task.line.kind === 'local') return 'local';
@@ -191,7 +193,7 @@ export function buildFarm(input: {
 		const character = characters.get(plan.characterId);
 		const weapon = plan.weaponId ? weapons.get(plan.weaponId) : undefined;
 		needsForCharacter(plan, character, weapon, input.gameData, experience).forEach((line) => {
-			const item = matchItem(catalogItems, line);
+			const item = catalogItemForNeed(catalogItems, line);
 			const source = sourceOf(line.kind, item);
 			tasks.push({
 				id: `${plan.characterId}:${line.id}`,
@@ -240,11 +242,7 @@ export function buildFarm(input: {
 			hidden.push(task);
 			return;
 		}
-		if (task.line.kind === 'weaponMat') {
-			stock.weaponStones += task.line.count;
-			hidden.push(task);
-			return;
-		}
+		if (task.line.kind === 'weaponMat') stock.weaponStones += task.line.count;
 		if (task.line.kind === 'stone') return;
 		const days = task.item?.days ?? [];
 		const section = sectionFor(task, todayName);

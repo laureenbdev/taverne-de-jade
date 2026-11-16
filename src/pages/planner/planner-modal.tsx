@@ -31,20 +31,25 @@ import {
 	GOBLET_STATS,
 	SANDS_STATS,
 	SUBSTATS,
-	unreachedStats,
 } from '../../features/planner/artifactBuild.ts';
+import { catalogItemForNeed } from '../../features/planner/farm.ts';
 import {
 	CHARACTER_LEVELS,
 	CharacterLevel,
+	FarmNeed,
 	isCharacterLevel,
 	isTalentLevel,
+	needsForCharacter,
 	PlannedCharacter,
 	PlannerTab,
+	plannerTabForLine,
 	TALENT_LEVELS,
 	TalentLevel,
 } from '../../features/planner/materials.ts';
 import { Character } from '../../services/genshin/charactersApi.ts';
-import { characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
+import { GameData } from '../../services/genshin/gameDataApi.ts';
+import { catalogIconUrl, characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
+import { MaterialCatalog } from '../../services/genshin/materialsApi.ts';
 import { Weapon } from '../../services/genshin/weaponsApi.ts';
 
 const ELEMENT_ICONS: Record<string, typeof Flame> = {
@@ -75,6 +80,7 @@ const TAB_ICONS = {
 interface Selectable {
 	id: string;
 	name: string;
+	nameFr?: string;
 	rarity: number;
 	image?: string;
 }
@@ -90,6 +96,9 @@ interface PlannerModalProps {
 	initialTab?: PlannerTab;
 	saving: boolean;
 	saveError: string | null;
+	gameData: GameData | null;
+	catalog: MaterialCatalog | null;
+	localize: (name: string) => string;
 	onClose: () => void;
 	onSubmit: (plan: PlannedCharacter) => void;
 	onRemove: () => void;
@@ -106,11 +115,15 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	initialTab = 'level',
 	saving,
 	saveError,
+	gameData,
+	catalog,
+	localize,
 	onClose,
 	onSubmit,
 	onRemove,
 }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
+	const french = i18n.language.toLowerCase().startsWith('fr');
 	const [draftName, setDraftName] = useState('');
 	const [currentLevel, setCurrentLevel] = useState<CharacterLevel>(initial?.currentLevel ?? 1);
 	const [targetLevel, setTargetLevel] = useState<CharacterLevel>(initial?.targetLevel ?? 90);
@@ -133,7 +146,6 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		selected ? weapons.filter((weapon) => weapon.type === selected.weapon) : []
 	), [weapons, selected]);
 	const weaponName = weapons.find((weapon) => weapon.id === weaponId)?.name ?? '';
-	const missed = unreachedStats(build);
 
 	const patchBuild = (patch: Partial<ArtifactBuild>) => setBuild((current) => ({ ...current, ...patch }));
 
@@ -234,6 +246,68 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	};
 
 	const showBuild = mode === 'edit' || draftName !== '';
+	const resourceLines = useMemo(() => {
+		if (!showBuild || !selected || !gameData || tab === 'artifacts') return [];
+		const weapon = weapons.find((item) => item.id === weaponId);
+		const plan: PlannedCharacter = {
+			characterId: selected.id,
+			currentLevel,
+			targetLevel,
+			weaponId,
+			weaponCurrentLevel: weaponId ? weaponCurrent : null,
+			weaponTargetLevel: weaponId ? weaponTarget : null,
+			talentNormal,
+			talentNormalTarget,
+			talentSkill,
+			talentSkillTarget,
+			talentBurst,
+			talentBurstTarget,
+			artifactSet: build.set,
+			favorite: false,
+			done: false,
+			taskSignature: '',
+			checkedTasks: [],
+			artifactBuild: build,
+		};
+		const labelOf = (line: FarmNeed) => {
+			if (line.kind === 'xp') return t('planner.heroWit');
+			if (line.kind === 'stone' && line.element && line.tier) {
+				return t('planner.stones.label', {
+					tier: t(`planner.stones.tiers.${line.tier}`),
+					stone: t(`planner.stones.names.${line.element}`, { defaultValue: line.element }),
+				});
+			}
+			const item = catalogItemForNeed(catalog?.items ?? [], line);
+			return localize(item?.name ?? line.name ?? line.id);
+		};
+		return needsForCharacter(plan, selected, weapon, gameData, catalog?.experience)
+			.filter((line) => line.kind !== 'mora' && plannerTabForLine(plan, selected, weapon, line) === tab)
+			.map((line) => {
+				const item = catalogItemForNeed(catalog?.items ?? [], line);
+				return { id: line.id, name: labelOf(line), count: line.count, image: item?.image };
+			});
+	}, [
+		showBuild,
+		selected,
+		gameData,
+		catalog,
+		tab,
+		weapons,
+		weaponId,
+		weaponCurrent,
+		weaponTarget,
+		currentLevel,
+		targetLevel,
+		talentNormal,
+		talentNormalTarget,
+		talentSkill,
+		talentSkillTarget,
+		talentBurst,
+		talentBurstTarget,
+		build,
+		localize,
+		t,
+	]);
 	const ElementIcon = selected ? (ELEMENT_ICONS[selected.element] ?? Sparkle) : Sparkle;
 	const WeaponTypeIcon = selected ? (WEAPON_ICONS[selected.weapon] ?? Sword) : Sword;
 	const statOptions = (stats: readonly string[]) => stats.map((stat) => (
@@ -326,7 +400,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 						{tab === 'weapon' && (
 						<section className="planner-form-block">
 							<ItemSelect
-								items={weaponChoices.map((weapon) => ({ id: weapon.id, name: weapon.name, rarity: weapon.rarity, image: weaponIconUrl(weapon.id) }))}
+								items={weaponChoices.map((weapon) => ({ id: weapon.id, name: weapon.name, nameFr: weapon.nameFr, rarity: weapon.rarity, image: weaponIconUrl(weapon.id) }))}
 								isLoading={weaponsLoading}
 								value={weaponName}
 								onChange={chooseWeapon}
@@ -336,7 +410,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 								<>
 									<div className="planner-weapon-picked">
 										<img src={weaponIconUrl(weaponId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
-										<span>{weaponName}</span>
+										<span>{french ? (weapons.find((weapon) => weapon.name === weaponName)?.nameFr ?? weaponName) : weaponName}</span>
 										<button type="button" onClick={() => chooseWeapon('')}>{t('planner.weaponNone')}</button>
 									</div>
 									<div className="planner-level-fields">
@@ -426,27 +500,16 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									['circlet', CIRCLET_STATS],
 								] as const).map(([slot, stats]) => (
 									<div key={slot} className="planner-main-stat">
-										<label>
-											<span className="planner-slot-label">
-												{slot === 'sands' && <Hourglass size={15} />}
-												{slot === 'goblet' && <Drop size={15} />}
-												{slot === 'circlet' && <Crown size={15} />}
-												{t(`planner.slots.${slot}`)}
-											</span>
-											<select value={build[slot]} onChange={(event) => patchBuild({ [slot]: event.target.value })}>
-												<option value="">{t('planner.any')}</option>
-												{statOptions(stats)}
-											</select>
-										</label>
-										<label className="planner-got">
-											<input
-												type="checkbox"
-												checked={build[`${slot}Got`]}
-												disabled={!build[slot]}
-												onChange={(event) => patchBuild({ [`${slot}Got`]: event.target.checked })}
-											/>
-											{t('planner.got')}
-										</label>
+										<span className="planner-slot-label">
+											{slot === 'sands' && <Hourglass size={15} />}
+											{slot === 'goblet' && <Drop size={15} />}
+											{slot === 'circlet' && <Crown size={15} />}
+											{t(`planner.slots.${slot}`)}
+										</span>
+										<select aria-label={t(`planner.slots.${slot}`)} value={build[slot]} onChange={(event) => patchBuild({ [slot]: event.target.value })}>
+											<option value="">{t('planner.any')}</option>
+											{statOptions(stats)}
+										</select>
 									</div>
 								))}
 							</div>
@@ -462,28 +525,21 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 										>
 											{statOptions(SUBSTATS)}
 										</select>
-										<input
-											type="number"
-											min={0}
-											step="0.1"
-											aria-label={t('planner.current')}
-											value={sub.current}
-											onChange={(event) => patchBuild({
-												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, current: Number(event.target.value) } : entry)),
-											})}
-										/>
-										<input
-											type="number"
-											min={0}
-											step="0.1"
-											aria-label={t('planner.target')}
-											value={sub.target}
-											onChange={(event) => patchBuild({
-												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, target: Number(event.target.value) } : entry)),
-											})}
-										/>
-										<button type="button" onClick={() => patchBuild({ subs: build.subs.filter((_, entryIndex) => entryIndex !== index) })} aria-label={t('planner.removeStat')}>
-											<X size={16} />
+										<label>
+											<span>{t('planner.targetValue')}</span>
+											<input
+												type="number"
+												min={0}
+												step="0.1"
+												aria-label={t('planner.targetValue')}
+												value={sub.target}
+												onChange={(event) => patchBuild({
+													subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, target: Number(event.target.value) } : entry)),
+												})}
+											/>
+										</label>
+										<button type="button" className="planner-sub-remove" onClick={() => patchBuild({ subs: build.subs.filter((_, entryIndex) => entryIndex !== index) })} aria-label={t('planner.removeStat')}>
+											<X size={14} />
 										</button>
 									</div>
 								))}
@@ -492,23 +548,23 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									{t('planner.addStat')}
 								</button>
 							</div>
-							<div className="planner-unreached">
-								<span>{t('planner.unreached')}</span>
-								{missed.length === 0 ? <p>{t('planner.unreachedEmpty')}</p> : (
-									<ul>
-										{missed.map((entry) => (
-											<li key={entry.key}>
-												{entry.slot ? `${t(`planner.slots.${entry.slot}`)} · ` : ''}
-												{t(`planner.stats.${entry.stat}`)}
-												{entry.target != null ? ` · ${entry.current} / ${entry.target}` : ''}
-											</li>
-										))}
-									</ul>
-								)}
-							</div>
 						</section>
 						)}
 					</>
+				)}
+				{resourceLines.length > 0 && (
+					<div className="planner-modal-resources">
+						<h3>{t('planner.views.resources')}</h3>
+						<ul>
+							{resourceLines.map((line) => (
+								<li key={line.id}>
+									{line.image && <img src={catalogIconUrl(line.image)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
+									<span>{line.name}</span>
+									<strong>× {line.count.toLocaleString(i18n.language)}</strong>
+								</li>
+							))}
+						</ul>
+					</div>
 				)}
 				{saveError && <p className="planner-save-error">{t('planner.saveError')}</p>}
 				<div className="planner-modal-actions">
