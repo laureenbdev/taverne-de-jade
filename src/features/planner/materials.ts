@@ -1,6 +1,7 @@
 import { Character } from '../../services/genshin/charactersApi.ts';
 import { GameData, MaterialBag } from '../../services/genshin/gameDataApi.ts';
 import { Weapon } from '../../services/genshin/weaponsApi.ts';
+import { ArtifactBuild, readArtifactBuild } from './artifactBuild.ts';
 
 /** Paliers de niveau : on ne dépasse un cap qu'après l'ascension correspondante. */
 export const CHARACTER_LEVELS = [1, 20, 40, 50, 60, 70, 80, 90] as const;
@@ -26,7 +27,7 @@ const PHASES_DONE: Record<CharacterLevel, number> = {
 	90: 6,
 };
 
-export type MaterialKind = 'mora' | 'stone' | 'boss' | 'local' | 'common' | 'talentBook' | 'weekly' | 'weaponMat' | 'elite';
+export type MaterialKind = 'mora' | 'xp' | 'stone' | 'boss' | 'local' | 'common' | 'talentBook' | 'weekly' | 'weaponMat' | 'elite';
 
 export type StoneTier = 'sliver' | 'fragment' | 'chunk' | 'gemstone';
 
@@ -47,7 +48,20 @@ const STONE_TIER: Record<string, StoneTier> = {
 	rarity5: 'gemstone',
 };
 
-const KIND_ORDER: MaterialKind[] = ['mora', 'stone', 'boss', 'local', 'common', 'talentBook', 'weekly', 'weaponMat', 'elite'];
+const KIND_ORDER: MaterialKind[] = ['mora', 'xp', 'stone', 'boss', 'local', 'common', 'talentBook', 'weekly', 'weaponMat', 'elite'];
+
+/** EXP entre deux paliers d'ascension. Le total 1 → 90 vaut 8 362 650. */
+export const CHARACTER_EXPERIENCE: { from: CharacterLevel; to: CharacterLevel; exp: number }[] = [
+	{ from: 1, to: 20, exp: 120175 },
+	{ from: 20, to: 40, exp: 578325 },
+	{ from: 40, to: 50, exp: 579100 },
+	{ from: 50, to: 60, exp: 854125 },
+	{ from: 60, to: 70, exp: 1195925 },
+	{ from: 70, to: 80, exp: 1611875 },
+	{ from: 80, to: 90, exp: 3423125 },
+];
+
+export const HERO_WITS_EXP = 20000;
 
 export function isCharacterLevel(value: number): value is CharacterLevel {
 	return (CHARACTER_LEVELS as readonly number[]).includes(value);
@@ -79,6 +93,11 @@ export interface PlannedCharacter {
 	talentBurst: TalentLevel;
 	talentBurstTarget: TalentLevel;
 	artifactSet: string | null;
+	favorite: boolean;
+	done: boolean;
+	taskSignature: string;
+	checkedTasks: string[];
+	artifactBuild: ArtifactBuild | null;
 }
 
 type LegacyPlan = Partial<PlannedCharacter> & {
@@ -157,6 +176,9 @@ export function planFromLegacy(raw: LegacyPlan): PlannedCharacter | null {
 	const skill = talent(raw.talentSkill, raw.talentSkillTarget);
 	const burst = talent(raw.talentBurst, raw.talentBurstTarget);
 	const artifactSet = typeof raw.artifactSet === 'string' && raw.artifactSet.trim() !== '' ? raw.artifactSet : null;
+	const checkedTasks = Array.isArray(raw.checkedTasks)
+		? raw.checkedTasks.filter((id): id is string => typeof id === 'string')
+		: [];
 	return {
 		characterId: raw.characterId,
 		currentLevel,
@@ -171,18 +193,68 @@ export function planFromLegacy(raw: LegacyPlan): PlannedCharacter | null {
 		talentBurst: burst.current,
 		talentBurstTarget: burst.target,
 		artifactSet,
+		favorite: raw.favorite === true,
+		done: raw.done === true,
+		taskSignature: typeof raw.taskSignature === 'string' ? raw.taskSignature : '',
+		checkedTasks,
+		artifactBuild: readArtifactBuild(raw.artifactBuild, artifactSet),
 	};
 }
 
-export function materialsForPlan(
-	plans: PlannedCharacter[],
-	characters: Character[],
-	weapons: Weapon[],
+export function farmingSignature(plan: PlannedCharacter): string {
+	return [
+		plan.currentLevel,
+		plan.targetLevel,
+		plan.weaponId ?? '',
+		plan.weaponCurrentLevel ?? '',
+		plan.weaponTargetLevel ?? '',
+		plan.talentNormal,
+		plan.talentNormalTarget,
+		plan.talentSkill,
+		plan.talentSkillTarget,
+		plan.talentBurst,
+		plan.talentBurstTarget,
+	].join('|');
+}
+
+export function experienceBetween(
+	current: CharacterLevel,
+	target: CharacterLevel,
+	brackets: { from: number; to: number; exp: number }[] = CHARACTER_EXPERIENCE,
+): number {
+	return brackets.reduce((total, bracket) => (
+		bracket.from >= current && bracket.to <= target ? total + bracket.exp : total
+	), 0);
+}
+
+/** Garde les coches tant que les niveaux, l'arme et les talents n'ont pas changé. */
+export function mergeSavedPlan(previous: PlannedCharacter | undefined, next: PlannedCharacter): PlannedCharacter {
+	const raised = withRaisedTargets(next);
+	const signature = farmingSignature(raised);
+	const sameFarm = Boolean(previous && previous.taskSignature === signature);
+	return {
+		...raised,
+		favorite: next.favorite ?? previous?.favorite ?? false,
+		done: sameFarm ? (next.done ?? previous?.done ?? false) : false,
+		checkedTasks: sameFarm ? (next.checkedTasks ?? previous?.checkedTasks ?? []) : [],
+		taskSignature: signature,
+		artifactSet: next.artifactBuild?.set ?? next.artifactSet ?? null,
+		artifactBuild: next.artifactBuild === undefined ? (previous?.artifactBuild ?? null) : next.artifactBuild,
+	};
+}
+
+export interface FarmNeed extends FarmLine {
+	characterId: string;
+}
+
+function linesForCharacter(
+	plan: PlannedCharacter,
+	character: Character,
+	weapon: Weapon | undefined,
 	gameData: GameData,
+	experience: { from: number; to: number; exp: number }[],
 ): FarmLine[] {
 	const totals = new Map<string, FarmLine>();
-	const byId = new Map(characters.map((character) => [character.id, character]));
-	const weaponsById = new Map(weapons.map((weapon) => [weapon.id, weapon]));
 	const phases = gameData.ascension_values.character_level;
 	const talentCosts = gameData.ascension_values.talents ?? {};
 	const weaponCosts = gameData.ascension_values.weapons ?? {};
@@ -202,11 +274,7 @@ export function materialsForPlan(
 		});
 	};
 
-	plans.forEach((plan) => {
-		const character = byId.get(plan.characterId);
-		if (!character) return;
-
-		phasesBetween(plan.currentLevel, plan.targetLevel).forEach((phase) => {
+	phasesBetween(plan.currentLevel, plan.targetLevel).forEach((phase) => {
 			const cost = phases[`phase_${phase}`];
 			if (!cost) return;
 
@@ -271,7 +339,6 @@ export function materialsForPlan(
 			}
 		});
 
-		const weapon = plan.weaponId ? weaponsById.get(plan.weaponId) : undefined;
 		const weaponMats = weapon?.ascension_materials;
 		if (weapon && weaponMats && plan.weaponCurrentLevel && plan.weaponTargetLevel) {
 			phasesBetween(plan.weaponCurrentLevel, plan.weaponTargetLevel).forEach((phase) => {
@@ -283,6 +350,103 @@ export function materialsForPlan(
 				addBag('common', 'common', weaponMats.common_enemy_drops, cost.common_enemy_drops);
 			});
 		}
+
+	const exp = experienceBetween(plan.currentLevel, plan.targetLevel, experience);
+	if (exp > 0) {
+		add({ id: 'mora', kind: 'mora', count: Math.floor(exp / 5) });
+		add({ id: 'xp:heros-wit', kind: 'xp', name: "Hero's Wit", count: Math.ceil(exp / HERO_WITS_EXP) });
+	}
+
+	return [...totals.values()];
+}
+
+export const PLANNER_TABS = ['level', 'weapon', 'talents', 'artifacts'] as const;
+
+export type PlannerTab = typeof PLANNER_TABS[number];
+
+function talentGap(plan: PlannedCharacter): boolean {
+	return plan.talentNormal < plan.talentNormalTarget
+		|| plan.talentSkill < plan.talentSkillTarget
+		|| plan.talentBurst < plan.talentBurstTarget;
+}
+
+/** Premier onglet dont les réglages produisent encore cette ressource. */
+export function plannerTabForLine(
+	plan: PlannedCharacter,
+	character: Character | undefined,
+	weapon: Weapon | undefined,
+	line: Pick<FarmLine, 'kind' | 'name'>,
+): PlannerTab {
+	if (!character) return 'level';
+	const leveling = plan.currentLevel < plan.targetLevel;
+	const weaponLeveling = Boolean(
+		weapon
+		&& plan.weaponCurrentLevel != null
+		&& plan.weaponTargetLevel != null
+		&& plan.weaponCurrentLevel < plan.weaponTargetLevel,
+	);
+	const talents = talentGap(plan);
+	const common = character.ascension_materials.common_enemy_drops;
+	const weaponCommon = weapon?.ascension_materials?.common_enemy_drops;
+	const concerned = new Set<PlannerTab>();
+
+	if (line.kind === 'boss' || line.kind === 'local' || line.kind === 'stone' || line.kind === 'xp') concerned.add('level');
+	if (line.kind === 'weaponMat' || line.kind === 'elite') concerned.add('weapon');
+	if (line.kind === 'talentBook' || line.kind === 'weekly') concerned.add('talents');
+	if (line.kind === 'common') {
+		if (line.name === common) {
+			concerned.add('level');
+			concerned.add('talents');
+		}
+		if (line.name && line.name === weaponCommon) concerned.add('weapon');
+	}
+	if (line.kind === 'mora') {
+		concerned.add('level');
+		concerned.add('weapon');
+		concerned.add('talents');
+	}
+
+	const progressing = (tab: PlannerTab) => (
+		(tab === 'level' && leveling)
+		|| (tab === 'weapon' && weaponLeveling)
+		|| (tab === 'talents' && talents)
+	);
+	return PLANNER_TABS.find((tab) => concerned.has(tab) && progressing(tab))
+		?? PLANNER_TABS.find((tab) => concerned.has(tab))
+		?? 'level';
+}
+
+export function needsForCharacter(
+	plan: PlannedCharacter,
+	character: Character | undefined,
+	weapon: Weapon | undefined,
+	gameData: GameData,
+	experience: { from: number; to: number; exp: number }[] = CHARACTER_EXPERIENCE,
+): FarmNeed[] {
+	if (!character) return [];
+	return linesForCharacter(plan, character, weapon, gameData, experience).map((line) => ({
+		...line,
+		characterId: plan.characterId,
+	}));
+}
+
+export function materialsForPlan(
+	plans: PlannedCharacter[],
+	characters: Character[],
+	weapons: Weapon[],
+	gameData: GameData,
+): FarmLine[] {
+	const totals = new Map<string, FarmLine>();
+	const byId = new Map(characters.map((character) => [character.id, character]));
+	const weaponsById = new Map(weapons.map((weapon) => [weapon.id, weapon]));
+
+	plans.forEach((plan) => {
+		const weapon = plan.weaponId ? weaponsById.get(plan.weaponId) : undefined;
+		needsForCharacter(plan, byId.get(plan.characterId), weapon, gameData).forEach((line) => {
+			const existing = totals.get(line.id);
+			if (existing) existing.count += line.count;
+			else totals.set(line.id, { id: line.id, kind: line.kind, count: line.count, name: line.name, element: line.element, tier: line.tier, rarity: line.rarity });
+		});
 	});
 
 	return [...totals.values()].sort((a, b) => {

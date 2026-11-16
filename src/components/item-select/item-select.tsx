@@ -10,6 +10,7 @@ interface SelectableItem {
 	id: string;
 	name: string;
 	rarity: number;
+	image?: string;
 }
 
 interface ItemSelectProps {
@@ -41,7 +42,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 	const triggerRef = useRef<HTMLDivElement>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-	const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(null);
+	const [anchor, setAnchor] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
 
 	// Trouver l'élément sélectionné
 	const selectedItem = items.find((item) => item.name === value);
@@ -79,7 +80,17 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		const place = () => {
 			const rect = triggerRef.current?.getBoundingClientRect();
 			if (!rect) return;
-			setAnchor({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+			const gap = 4;
+			const spaceBelow = window.innerHeight - rect.bottom - gap - 8;
+			const spaceAbove = rect.top - gap - 8;
+			const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+			setAnchor({
+				left: rect.left,
+				width: rect.width,
+				maxHeight: Math.max(160, Math.min(320, openUp ? spaceAbove : spaceBelow)),
+				top: openUp ? undefined : rect.bottom + gap,
+				bottom: openUp ? window.innerHeight - rect.top + gap : undefined,
+			});
 		};
 
 		place();
@@ -178,7 +189,8 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 				tabIndex={0}
 			>
 				<span className="item-select-value">
-					{value ? (selectedItem ? selectedItem.name : value) : (placeholder || t('itemSelect.placeholder'))}
+					{selectedItem?.image && <SelectIcon src={selectedItem.image} />}
+					<span>{value ? (selectedItem ? selectedItem.name : value) : (placeholder || t('itemSelect.placeholder'))}</span>
 				</span>
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
@@ -187,9 +199,9 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 				<div
 					className={`item-select-dropdown${dropdown.shown ? ' is-open' : ''}`}
 					ref={dropdownRef}
-					style={{ top: anchor.top, left: anchor.left, width: anchor.width }}
+					style={{ top: anchor.top, bottom: anchor.bottom, left: anchor.left, width: anchor.width }}
 				>
-					<div className="item-select-panel">
+					<div className="item-select-panel" style={{ maxHeight: anchor.maxHeight }}>
 					<div className="item-select-search">
 						<MagnifyingGlass size={16} />
 						<input
@@ -222,6 +234,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 									role="option"
 									aria-selected={item.name === value}
 								>
+									{item.image && <SelectIcon src={item.image} />}
 									<span className="item-name">{item.name}</span>
 									<span className="item-rarity">⭐{item.rarity}</span>
 								</div>
@@ -235,5 +248,9 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		</div>
 	);
 };
+
+const SelectIcon: React.FC<{ src: string }> = ({ src }) => (
+	<img src={src} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+);
 
 export default ItemSelect;

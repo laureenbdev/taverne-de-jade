@@ -1,3 +1,5 @@
+import { GENSHIN_API_ROOT } from './apiRoot.ts';
+
 export interface Character {
 	id: string;
 	name: string;
@@ -14,7 +16,7 @@ export interface Character {
 	};
 }
 
-const API_URL = 'https://raw.githubusercontent.com/laureenbdev/genshin-api/main/characters.json';
+const API_URL = `${GENSHIN_API_ROOT}/characters.json`;
 
 /**
  * Service pour récupérer les personnages depuis l'API GitHub

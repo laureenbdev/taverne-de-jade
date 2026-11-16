@@ -120,6 +120,34 @@
         }
     }
 
+    .api {
+        align-items: center;
+        text-align: center;
+        padding: 8px 36px 28px;
+
+        p {
+            max-width: 42rem;
+            margin-top: 14px;
+        }
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 100%;
+            margin-top: 14px;
+            color: var(--color-primary-deep);
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            overflow-wrap: anywhere;
+        }
+
+        a:hover {
+            color: var(--color-heading);
+        }
+    }
+
     .news {
         padding: 8px 36px 28px;
         flex-direction: column;

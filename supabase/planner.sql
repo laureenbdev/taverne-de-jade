@@ -102,6 +102,13 @@ alter table public.planner_characters drop constraint if exists planner_talent_b
 alter table public.planner_characters add constraint planner_talent_burst_target_check
   check (talent_burst_target between 1 and 10);
 
+alter table public.planner_characters
+  add column if not exists favorite boolean not null default false,
+  add column if not exists done boolean not null default false,
+  add column if not exists task_signature text,
+  add column if not exists checked_tasks jsonb not null default '[]'::jsonb,
+  add column if not exists artifact_build jsonb;
+
 alter table public.planner_characters enable row level security;
 
 grant select, insert, update, delete on table public.planner_characters to authenticated;

@@ -39,7 +39,6 @@ const Header: React.FC = () => {
                 <NavLink
                     to="/settings"
                     className="header_account"
-                    title={email ? `${profile.displayName || name} · ${email}` : name}
                 >
                     <UserCircle size={22} weight="duotone" />
                     <span className="header_account_text">

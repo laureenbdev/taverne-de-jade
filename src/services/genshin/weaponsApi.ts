@@ -1,3 +1,5 @@
+import { GENSHIN_API_ROOT } from './apiRoot.ts';
+
 export interface Weapon {
 	id: string;
 	name: string;
@@ -18,7 +20,7 @@ export interface Weapon {
 	};
 }
 
-const API_URL = 'https://raw.githubusercontent.com/laureenbdev/genshin-api/main/weapons.json';
+const API_URL = `${GENSHIN_API_ROOT}/weapons.json`;
 
 /**
  * Service pour récupérer les armes depuis l'API GitHub

@@ -24,6 +24,11 @@ type PlannerRow = {
 	talent_burst_current: number | null;
 	talent_burst_target: number | null;
 	artifact_set: string | null;
+	favorite?: boolean | null;
+	done?: boolean | null;
+	task_signature?: string | null;
+	checked_tasks?: string[] | null;
+	artifact_build?: unknown;
 };
 
 function requireClient() {
@@ -51,6 +56,11 @@ function toPlan(row: PlannerRow): PlannedCharacter | null {
 		talentBurst: burst.current,
 		talentBurstTarget: burst.target,
 		artifactSet: row.artifact_set,
+		favorite: row.favorite === true,
+		done: row.done === true,
+		taskSignature: row.task_signature ?? '',
+		checkedTasks: Array.isArray(row.checked_tasks) ? row.checked_tasks : [],
+		artifactBuild: row.artifact_build ?? null,
 	});
 }
 
@@ -72,7 +82,12 @@ function toRow(plan: PlannedCharacter) {
 		talent_skill_target: plan.talentSkillTarget,
 		talent_burst_current: plan.talentBurst,
 		talent_burst_target: plan.talentBurstTarget,
-		artifact_set: plan.artifactSet,
+		artifact_set: plan.artifactBuild?.set ?? plan.artifactSet,
+		favorite: plan.favorite,
+		done: plan.done,
+		task_signature: plan.taskSignature,
+		checked_tasks: plan.checkedTasks,
+		artifact_build: plan.artifactBuild,
 	};
 }
 
@@ -94,15 +109,46 @@ const PLANNER_COLUMNS = [
 	'talent_burst_current',
 	'talent_burst_target',
 	'artifact_set',
+	'favorite',
+	'done',
+	'task_signature',
+	'checked_tasks',
+	'artifact_build',
+].join(', ');
+
+const LEGACY_COLUMNS = [
+	'character_id',
+	'current_level',
+	'target_level',
+	'weapon_id',
+	'weapon_level',
+	'weapon_current_level',
+	'weapon_target_level',
+	'talent_normal',
+	'talent_skill',
+	'talent_burst',
+	'talent_normal_current',
+	'talent_normal_target',
+	'talent_skill_current',
+	'talent_skill_target',
+	'talent_burst_current',
+	'talent_burst_target',
+	'artifact_set',
 ].join(', ');
 
 export async function listPlanner(userId: string): Promise<PlannedCharacter[]> {
 	const client = requireClient();
-	const { data, error } = await client
+	const full = await client
 		.from('planner_characters')
 		.select(PLANNER_COLUMNS)
 		.eq('user_id', userId);
-	if (error) throw new Error(error.message);
+	let data = full.data;
+	if (full.error) {
+		if (!/column/i.test(full.error.message)) throw new Error(full.error.message);
+		const legacy = await client.from('planner_characters').select(LEGACY_COLUMNS).eq('user_id', userId);
+		if (legacy.error) throw new Error(legacy.error.message);
+		data = legacy.data;
+	}
 	return ((data ?? []) as PlannerRow[]).flatMap((row) => {
 		const plan = toPlan(row);
 		return plan ? [plan] : [];

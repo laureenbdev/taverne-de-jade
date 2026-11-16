@@ -1,7 +1,9 @@
 import React from "react";
 import "./home.scss";
 import { useTranslation } from "react-i18next";
-import { ChartBar, ListChecks, Sparkle } from "phosphor-react";
+import { ChartBar, GithubLogo, ListChecks, Sparkle } from "phosphor-react";
+
+import { changelogPreview } from "../../data/changelog.ts";
 
 const PageHome: React.FC = () => {
     const { t, i18n } = useTranslation();
@@ -56,30 +58,26 @@ const PageHome: React.FC = () => {
                     </article>
                 </div>
 
+                <div className="section-container api">
+                    <h3>{t("home.apiTitle")}</h3>
+                    <p>{t("home.apiText")}</p>
+                    <a href="https://github.com/meihwg/genshin-api" target="_blank" rel="noreferrer">
+                        <GithubLogo size={18} />
+                        {t("home.apiLink")}
+                    </a>
+                </div>
+
                 <div className="section-container news">
                     <h3>{t("home.newsTitle")}</h3>
                     <ul>
-                        <li>
-                            <time dateTime="2026-11-01">2026-11-01</time>
-                            <ul>
-                                <li>{t("home.newsPlanner")}</li>
-                                <li>{t("home.newsProgress")}</li>
-                                <li>{t("home.newsSideNav")}</li>
-                            </ul>
-                        </li>
-                        <li>
-                            <time dateTime="2026-10-09">2026-10-09</time>
-                            <ul>
-                                <li>{t("home.newsAccount")}</li>
-                            </ul>
-                        </li>
-                        <li>
-                            <time dateTime="2025-01-22">2025-01-22</time>
-                            <ul>
-                                <li>{t("home.newsWishHistory")}</li>
-                                <li>{t("home.newsRefactor")}</li>
-                            </ul>
-                        </li>
+                        {changelogPreview(i18n.resolvedLanguage ?? i18n.language).map((entry) => (
+                            <li key={entry.date}>
+                                <time dateTime={entry.date}>{entry.date}</time>
+                                <ul>
+                                    {entry.lines.map((line) => <li key={line}>{line}</li>)}
+                                </ul>
+                            </li>
+                        ))}
                     </ul>
                 </div>
             </section>

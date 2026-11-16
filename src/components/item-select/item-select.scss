@@ -35,8 +35,27 @@
 		}
 
 		.item-select-value {
+			display: flex;
 			flex: 1;
+			align-items: center;
+			gap: 8px;
+			min-width: 0;
 			text-align: left;
+
+			span {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			img {
+				width: 28px;
+				height: 28px;
+				flex: none;
+				object-fit: contain;
+				background: #1c2823;
+				border-radius: 6px;
+			}
 		}
 
 		.caret {
@@ -104,15 +123,26 @@
 	}
 
 	.item-select-options {
+		flex: 1;
 		overflow-y: auto;
-		max-height: 250px;
+		min-height: 0;
 	}
 
 	.item-select-option {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 10px 15px;
+		gap: 8px;
+		padding: 6px 10px;
+
+		img {
+			width: 32px;
+			height: 32px;
+			flex: none;
+			object-fit: contain;
+			background: #1c2823;
+			border-radius: 6px;
+		}
 		cursor: pointer;
 		color: var(--color-text);
 		transition: background-color 0.15s;
@@ -135,6 +165,7 @@
 
 		&.loading,
 		&.no-results {
+			justify-content: center;
 			text-align: center;
 			color: #999;
 			cursor: default;
@@ -147,6 +178,10 @@
 
 		.item-name {
 			flex: 1;
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 
 		.item-rarity {

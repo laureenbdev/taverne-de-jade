@@ -1,0 +1,15 @@
+---
+description: Infobulles du site à la place de l'attribut title
+alwaysApply: true
+---
+
+# Infobulles
+
+Ne pas utiliser l'attribut HTML `title` pour une information au survol.
+
+Réutiliser le tooltip déjà défini dans `src/index.css`, comme le menu latéral fermé :
+
+- l'élément survolé porte la classe `tooltip-anchor`
+- le texte est un enfant direct : `<span class="tooltip top|bottom|left|right" role="tooltip">`
+- le CSS n'affiche que `:hover > .tooltip` et `:focus-within > .tooltip`
+- si le contenu a `overflow: hidden` (portrait rond, image rognée), poser l'ancre sur un parent sans découpe, pas sur l'élément rogné

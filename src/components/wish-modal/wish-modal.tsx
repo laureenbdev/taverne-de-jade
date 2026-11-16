@@ -8,6 +8,7 @@ import { WISH_BANNERS, Wish, WishBanner, WishFormData } from '../../features/wis
 import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import ItemSelect from '../item-select/item-select.tsx';
+import { characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 
 interface WishModalProps {
@@ -55,7 +56,9 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 
 	const mixedBanner = formData.banner === 'standard' || formData.banner === 'chronicled';
 	const usesWeapons = formData.banner === 'weapon' || (mixedBanner && subject === 'weapon');
-	const items = (usesWeapons ? weapons : characters).filter((item) => item.rarity === 5);
+	const items = (usesWeapons ? weapons : characters)
+		.filter((item) => item.rarity === 5)
+		.map((item) => ({ ...item, image: usesWeapons ? weaponIconUrl(item.id) : characterIconUrl(item.id) }));
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();

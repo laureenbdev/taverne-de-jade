@@ -1,3 +1,5 @@
+import { GENSHIN_API_ROOT } from './apiRoot.ts';
+
 export interface MaterialBag {
 	[rarity: string]: number;
 }
@@ -32,7 +34,7 @@ export interface GameData {
 	};
 }
 
-const API_URL = 'https://raw.githubusercontent.com/laureenbdev/genshin-api/main/game-data.json';
+const API_URL = `${GENSHIN_API_ROOT}/game-data.json`;
 
 /**
  * Coûts d'ascension (personnage, talents, armes) depuis l'API GitHub.

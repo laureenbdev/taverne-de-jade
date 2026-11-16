@@ -8,6 +8,7 @@ import { WishlistItem, WishlistItemFormData } from '../../features/wishlist/type
 import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import ItemSelect from '../item-select/item-select.tsx';
+import { characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 
 interface WishlistFormProps {
@@ -53,7 +54,10 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 		}
 	}, [isOpen, item]);
 
-	const availableItems = formData.type === 'character' ? characters : weapons;
+	const availableItems = (formData.type === 'character' ? characters : weapons).map((item) => ({
+		...item,
+		image: formData.type === 'character' ? characterIconUrl(item.id) : weaponIconUrl(item.id),
+	}));
 	const isLoading = formData.type === 'character' ? isLoadingCharacters : isLoadingWeapons;
 	useLockBodyScroll(isOpen);
 	if (!isOpen) return null;
