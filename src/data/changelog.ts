@@ -6,6 +6,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
 	{
+		date: '2026-11-18',
+		fr: [
+			'Corrections de bugs dans le planner',
+			"Amélioration de l'affichage des artéfacts à farmer dans le planner",
+		],
+		en: [
+			'Bug fixes in the planner',
+			'Improved the artifact farming display in the planner',
+		],
+	},
+	{
 		date: '2026-11-16',
 		fr: [
 			'Amélioration du planner et organisation par tâches',

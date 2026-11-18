@@ -33,7 +33,6 @@ import {
 	hasArtifactPlan,
 	SANDS_STATS,
 	SUBSTATS,
-	unreachedStats,
 } from '../../features/planner/artifactBuild.ts';
 import { catalogItemForNeed } from '../../features/planner/farm.ts';
 import {
@@ -401,7 +400,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			|| talentSkill < talentSkillTarget
 			|| talentBurst < talentBurstTarget;
 		const artifactsMissing = !hasArtifactPlan(build);
-		const artifactsTodo = !artifactsMissing && unreachedStats(build).length > 0;
+		const artifactsTodo = !artifactsMissing && build.done !== true;
 		return {
 			level: levelTodo ? 'todo' as const : null,
 			weapon: weaponMissing ? 'missing' as const : weaponTodo ? 'todo' as const : null,

@@ -6,12 +6,11 @@ export const GOBLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'pyro', 'hydro', 'elec
 
 export const CIRCLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'cr', 'cd', 'cr_cd', 'heal'] as const;
 
-export type ArtifactStatId = typeof SUBSTATS[number] | typeof GOBLET_STATS[number] | typeof CIRCLET_STATS[number];
+export const ARTIFACT_SLOTS = ['sands', 'goblet', 'circlet'] as const;
 
-const PERCENT_STATS = new Set<string>([
-	'hp_', 'atk_', 'def_', 'er', 'cr', 'cd', 'heal',
-	'pyro', 'hydro', 'electro', 'cryo', 'anemo', 'geo', 'dendro', 'physical',
-]);
+export type ArtifactSlot = typeof ARTIFACT_SLOTS[number];
+
+export type ArtifactStatId = typeof SUBSTATS[number] | typeof GOBLET_STATS[number] | typeof CIRCLET_STATS[number];
 
 export interface ArtifactSubstat {
 	stat: string;
@@ -32,21 +31,6 @@ export interface ArtifactBuild {
 	done?: boolean;
 }
 
-export interface UnreachedStat {
-	key: string;
-	stat: string;
-	slot?: 'sands' | 'goblet' | 'circlet';
-	current?: number;
-	target?: string;
-}
-
-function parseStatValue(raw: unknown): number | null {
-	if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-	if (typeof raw !== 'string') return null;
-	const parsed = Number.parseFloat(raw.replace(',', '.').replace(/%/g, '').trim());
-	return Number.isFinite(parsed) ? parsed : null;
-}
-
 function textOrEmpty(value: unknown): string {
 	if (typeof value === 'string') return value;
 	if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -65,10 +49,6 @@ export function emptyArtifactBuild(set: string | null = null): ArtifactBuild {
 		circletGot: false,
 		subs: [],
 	};
-}
-
-export function isPercentStat(stat: string): boolean {
-	return PERCENT_STATS.has(stat);
 }
 
 function numberOr(value: unknown, fallback = 0): number {
@@ -114,21 +94,25 @@ function asRecord(raw: unknown): Record<string, unknown> | null {
 	return raw as Record<string, unknown>;
 }
 
-export function unreachedStats(build: ArtifactBuild | null): UnreachedStat[] {
-	if (!build) return [];
-	const missed: UnreachedStat[] = [];
-	(['sands', 'goblet', 'circlet'] as const).forEach((slot) => {
+/** Labels des stats renseignées (mains + substats) pour tooltips / listes. */
+export function artifactStatLines(
+	build: ArtifactBuild,
+	label: (key: string) => string,
+): string[] {
+	const lines: string[] = [];
+	ARTIFACT_SLOTS.forEach((slot) => {
 		const stat = build[slot];
-		const got = build[`${slot}Got`];
-		if (stat && !got) missed.push({ key: slot, stat, slot });
+		if (!stat) return;
+		lines.push(`${label(`planner.slots.${slot}`)} · ${label(`planner.stats.${stat}`)}`);
 	});
-	build.subs.forEach((sub, index) => {
-		if (!sub.stat || !sub.target.trim()) return;
-		const targetValue = parseStatValue(sub.target);
-		if (targetValue !== null && sub.current >= targetValue) return;
-		missed.push({ key: `sub-${index}`, stat: sub.stat, current: sub.current, target: sub.target });
+	build.subs.forEach((sub) => {
+		if (!sub.stat) return;
+		const value = sub.target.trim();
+		lines.push(value
+			? `${label(`planner.stats.${sub.stat}`)} · ${value}`
+			: label(`planner.stats.${sub.stat}`));
 	});
-	return missed;
+	return lines;
 }
 
 export function hasArtifactPlan(build: ArtifactBuild | null): boolean {
