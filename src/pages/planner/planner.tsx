@@ -137,7 +137,6 @@ const Planner: React.FC = () => {
 					onEdit={editCharacter}
 					onAdd={() => { setSaveError(null); setModal({ mode: 'add' }); }}
 					onToggleFavorite={(plan) => void run(() => savePlan({ ...plan, favorite: !plan.favorite }))}
-					onToggleDone={(plan) => void run(() => savePlan({ ...plan, done: !plan.done }))}
 				/>
 
 				<PlannerMaterials

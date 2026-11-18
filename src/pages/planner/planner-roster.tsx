@@ -6,7 +6,6 @@ import { PlannedCharacter } from '../../features/planner/materials.ts';
 import Unfold from '../../components/unfold/unfold.tsx';
 import { Character } from '../../services/genshin/charactersApi.ts';
 import { characterIconUrl } from '../../services/genshin/images.ts';
-import { RoundCheck } from './planner-shared.tsx';
 
 interface PlannerRosterProps {
 	roster: PlannedCharacter[];
@@ -17,7 +16,6 @@ interface PlannerRosterProps {
 	onEdit: (characterId: string) => void;
 	onAdd: () => void;
 	onToggleFavorite: (plan: PlannedCharacter) => void;
-	onToggleDone: (plan: PlannedCharacter) => void;
 }
 
 const PlannerRoster: React.FC<PlannerRosterProps> = ({
@@ -29,7 +27,6 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 	onEdit,
 	onAdd,
 	onToggleFavorite,
-	onToggleDone,
 }) => {
 	const { t } = useTranslation();
 	const [rosterOpen, setRosterOpen] = useState(false);
@@ -95,11 +92,6 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 					>
 						<Star size={11} weight={plan.favorite ? 'fill' : 'regular'} />
 					</button>
-					<RoundCheck
-						checked={plan.done}
-						label={plan.done ? t('planner.uncheck') : t('planner.check')}
-						onClick={() => onToggleDone(plan)}
-					/>
 				</div>
 				<button type="button" className="planner-character-name" onClick={() => onEdit(plan.characterId)}>
 					{name}

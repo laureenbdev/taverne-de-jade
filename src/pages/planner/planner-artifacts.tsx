@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { artifactStatLines } from '../../features/planner/artifactBuild.ts';
 import {
 	ArtifactFarmCluster,
 	ArtifactFarmSet,
@@ -76,9 +75,6 @@ const PlannerArtifacts: React.FC<PlannerArtifactsProps> = ({
 									<div className="planner-faces">
 										{cluster.characters.map((character) => {
 											const plan = plans.find((item) => item.characterId === character.characterId);
-											const build = plan?.artifactBuild ?? character.build;
-											const lines = artifactStatLines(build, t);
-											const tooltip = lines.length > 0 ? lines.join('\n') : t('planner.keepEmpty');
 											return (
 												<span key={character.characterId} className="tooltip-anchor planner-artifact-face">
 													<span className="planner-artifact-face-wrap">
@@ -102,7 +98,7 @@ const PlannerArtifacts: React.FC<PlannerArtifactsProps> = ({
 															/>
 														)}
 													</span>
-													<span className="tooltip top" role="tooltip" aria-hidden="true">{tooltip}</span>
+													<span className="tooltip top" role="tooltip" aria-hidden="true">{character.characterName}</span>
 												</span>
 											);
 										})}

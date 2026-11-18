@@ -6,10 +6,6 @@ export const GOBLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'pyro', 'hydro', 'elec
 
 export const CIRCLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'cr', 'cd', 'cr_cd', 'heal'] as const;
 
-export const ARTIFACT_SLOTS = ['sands', 'goblet', 'circlet'] as const;
-
-export type ArtifactSlot = typeof ARTIFACT_SLOTS[number];
-
 export type ArtifactStatId = typeof SUBSTATS[number] | typeof GOBLET_STATS[number] | typeof CIRCLET_STATS[number];
 
 export interface ArtifactSubstat {
@@ -92,27 +88,6 @@ function asRecord(raw: unknown): Record<string, unknown> | null {
 	}
 	if (!raw || typeof raw !== 'object') return null;
 	return raw as Record<string, unknown>;
-}
-
-/** Labels des stats renseignées (mains + substats) pour tooltips / listes. */
-export function artifactStatLines(
-	build: ArtifactBuild,
-	label: (key: string) => string,
-): string[] {
-	const lines: string[] = [];
-	ARTIFACT_SLOTS.forEach((slot) => {
-		const stat = build[slot];
-		if (!stat) return;
-		lines.push(`${label(`planner.slots.${slot}`)} · ${label(`planner.stats.${stat}`)}`);
-	});
-	build.subs.forEach((sub) => {
-		if (!sub.stat) return;
-		const value = sub.target.trim();
-		lines.push(value
-			? `${label(`planner.stats.${sub.stat}`)} · ${value}`
-			: label(`planner.stats.${sub.stat}`));
-	});
-	return lines;
 }
 
 export function hasArtifactPlan(build: ArtifactBuild | null): boolean {

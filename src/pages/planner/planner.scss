@@ -14,8 +14,9 @@
 	}
 
 	.section-container > h2 {
-		padding: 8px 0 6px;
-		font-size: 1.3rem;
+		padding: 10px 0 6px;
+		font-size: 1.15rem;
+		letter-spacing: 0.02em;
 	}
 }
 
@@ -574,7 +575,7 @@
 	justify-content: center;
 	padding: 28px 16px;
 	overflow: hidden;
-	background: #0c100e;
+	background: rgba(12, 16, 14, 0.62);
 }
 
 body.modal-open .planner-add {
@@ -718,8 +719,8 @@ body.modal-open .planner-add {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 16px 24px;
-	margin: 14px 0;
+	gap: 12px 20px;
+	margin: 8px 0 10px;
 }
 
 .planner-views {
@@ -1014,21 +1015,34 @@ body.modal-open .planner-add {
 .planner-farm {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 18px;
 	min-width: 0;
-	padding-top: 4px;
+	padding-top: 2px;
 }
 
-.planner-farm-section {
+#planner .planner-farm-section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	min-width: 0;
 
-	h3 {
-		justify-content: flex-start;
-		margin: 0 0 6px;
+	> h3 {
+		display: block;
+		flex: none;
+		width: auto;
+		height: auto;
+		min-height: 0;
+		margin: 0;
 		padding: 0;
+		border: 0;
 		text-align: left;
-		font-size: 1.15rem;
+		font-family: Poppins, "Segoe UI", sans-serif;
+		font-size: 0.82rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
 		line-height: 1.2;
+		text-transform: uppercase;
+		color: var(--color-text);
 	}
 
 	&.is-today {
@@ -1415,13 +1429,6 @@ body.modal-open .planner-add {
 		min-height: 56px;
 		cursor: pointer;
 		font: inherit;
-	}
-
-	.planner-artifact-face {
-		.tooltip.top {
-			white-space: pre-line;
-			max-width: min(280px, 70vw);
-		}
 	}
 
 	.planner-artifact-face-wrap {
