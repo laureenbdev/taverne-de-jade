@@ -23,7 +23,9 @@ export interface CatalogItem {
 
 export interface MaterialCatalog {
 	resinImage?: string;
+	condensedResinImage?: string;
 	weaponOreImage?: string;
+	fortunaImage?: string;
 	resinPerDay: number;
 	craftRatio: number;
 	experience: { from: number; to: number; exp: number }[];

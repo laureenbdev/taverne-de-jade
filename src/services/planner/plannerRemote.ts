@@ -9,11 +9,15 @@ import { supabase } from '../../lib/supabase.js';
 type PlannerRow = {
 	character_id: string;
 	current_level: number;
+	current_ascended?: boolean | null;
 	target_level: number;
+	target_ascended?: boolean | null;
 	weapon_id: string | null;
 	weapon_level: number | null;
 	weapon_current_level: number | null;
+	weapon_current_ascended?: boolean | null;
 	weapon_target_level: number | null;
+	weapon_target_ascended?: boolean | null;
 	talent_normal: number | null;
 	talent_skill: number | null;
 	talent_burst: number | null;
@@ -36,19 +40,42 @@ function requireClient() {
 	return supabase;
 }
 
+function readCheckedTasks(raw: unknown): string[] {
+	if (Array.isArray(raw)) return raw.filter((id): id is string => typeof id === 'string');
+	if (typeof raw === 'string') {
+		try {
+			return readCheckedTasks(JSON.parse(raw));
+		} catch {
+			return [];
+		}
+	}
+	return [];
+}
+
 function toPlan(row: PlannerRow): PlannedCharacter | null {
 	const weaponId = typeof row.weapon_id === 'string' && row.weapon_id.trim() !== '' ? row.weapon_id : null;
-	const weapon = readWeaponLevels(weaponId, row.weapon_current_level, row.weapon_target_level, row.weapon_level);
+	const weapon = readWeaponLevels(
+		weaponId,
+		row.weapon_current_level,
+		row.weapon_target_level,
+		row.weapon_level,
+		row.weapon_current_ascended,
+		row.weapon_target_ascended,
+	);
 	const normal = readTalentPair(row.talent_normal_current, row.talent_normal_target, row.talent_normal);
 	const skill = readTalentPair(row.talent_skill_current, row.talent_skill_target, row.talent_skill);
 	const burst = readTalentPair(row.talent_burst_current, row.talent_burst_target, row.talent_burst);
 	return planFromLegacy({
 		characterId: row.character_id,
 		currentLevel: Number(row.current_level) as PlannedCharacter['currentLevel'],
+		currentAscended: row.current_ascended === true,
 		targetLevel: Number(row.target_level) as PlannedCharacter['targetLevel'],
+		targetAscended: row.target_ascended === true,
 		weaponId,
 		weaponCurrentLevel: weapon.current,
+		weaponCurrentAscended: weapon.currentAscended,
 		weaponTargetLevel: weapon.target,
+		weaponTargetAscended: weapon.targetAscended,
 		talentNormal: normal.current,
 		talentNormalTarget: normal.target,
 		talentSkill: skill.current,
@@ -59,7 +86,7 @@ function toPlan(row: PlannerRow): PlannedCharacter | null {
 		favorite: row.favorite === true,
 		done: row.done === true,
 		taskSignature: row.task_signature ?? '',
-		checkedTasks: Array.isArray(row.checked_tasks) ? row.checked_tasks : [],
+		checkedTasks: readCheckedTasks(row.checked_tasks),
 		artifactBuild: row.artifact_build ?? null,
 	});
 }
@@ -68,11 +95,15 @@ function toRow(plan: PlannedCharacter) {
 	return {
 		character_id: plan.characterId,
 		current_level: plan.currentLevel,
+		current_ascended: plan.currentAscended,
 		target_level: plan.targetLevel,
+		target_ascended: plan.targetAscended,
 		weapon_id: plan.weaponId,
 		weapon_level: plan.weaponTargetLevel,
 		weapon_current_level: plan.weaponCurrentLevel,
+		weapon_current_ascended: plan.weaponId ? plan.weaponCurrentAscended : null,
 		weapon_target_level: plan.weaponTargetLevel,
+		weapon_target_ascended: plan.weaponId ? plan.weaponTargetAscended : null,
 		talent_normal: plan.talentNormalTarget,
 		talent_skill: plan.talentSkillTarget,
 		talent_burst: plan.talentBurstTarget,
@@ -94,11 +125,15 @@ function toRow(plan: PlannedCharacter) {
 const PLANNER_COLUMNS = [
 	'character_id',
 	'current_level',
+	'current_ascended',
 	'target_level',
+	'target_ascended',
 	'weapon_id',
 	'weapon_level',
 	'weapon_current_level',
+	'weapon_current_ascended',
 	'weapon_target_level',
+	'weapon_target_ascended',
 	'talent_normal',
 	'talent_skill',
 	'talent_burst',
@@ -136,20 +171,34 @@ const LEGACY_COLUMNS = [
 	'artifact_set',
 ].join(', ');
 
+const TASK_COLUMNS = [
+	LEGACY_COLUMNS,
+	'favorite',
+	'done',
+	'task_signature',
+	'checked_tasks',
+	'artifact_build',
+].join(', ');
+
 export async function listPlanner(userId: string): Promise<PlannedCharacter[]> {
 	const client = requireClient();
-	const full = await client
-		.from('planner_characters')
-		.select(PLANNER_COLUMNS)
-		.eq('user_id', userId);
-	let data = full.data;
-	if (full.error) {
-		if (!/column/i.test(full.error.message)) throw new Error(full.error.message);
-		const legacy = await client.from('planner_characters').select(LEGACY_COLUMNS).eq('user_id', userId);
-		if (legacy.error) throw new Error(legacy.error.message);
-		data = legacy.data;
+	const attempts = [PLANNER_COLUMNS, TASK_COLUMNS, LEGACY_COLUMNS];
+	let data: PlannerRow[] | null = null;
+	let lastError: string | null = null;
+	for (const columns of attempts) {
+		const result = await client
+			.from('planner_characters')
+			.select(columns)
+			.eq('user_id', userId);
+		if (!result.error) {
+			data = (result.data ?? []) as PlannerRow[];
+			break;
+		}
+		lastError = result.error.message;
+		if (!/column/i.test(result.error.message)) throw new Error(result.error.message);
 	}
-	return ((data ?? []) as PlannerRow[]).flatMap((row) => {
+	if (data == null) throw new Error(lastError ?? 'Impossible de charger le planificateur');
+	return data.flatMap((row) => {
 		const plan = toPlan(row);
 		return plan ? [plan] : [];
 	});

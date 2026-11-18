@@ -1,18 +1,20 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Check, Plus, Stack, Star, Table, User } from 'phosphor-react';
+import { ArrowRight, CaretDown, CaretUp, Check, Plus, Stack, Star, Table, User } from 'phosphor-react';
 
+import { useAuth } from '../../features/auth/AuthContext.tsx';
 import { ARTIFACT_SETS } from '../../features/planner/artifactSets.ts';
-import { ArtifactBuild, hasArtifactPlan, isPercentStat } from '../../features/planner/artifactBuild.ts';
+import { ArtifactBuild, hasArtifactPlan } from '../../features/planner/artifactBuild.ts';
 import { buildFarm, FarmCluster, FarmSectionId, FarmTask } from '../../features/planner/farm.ts';
-import { FarmLine, PLANNER_TABS, PlannedCharacter, PlannerTab, plannerTabForLine } from '../../features/planner/materials.ts';
+import { CharacterLevel, FarmLine, PLANNER_TABS, PlannedCharacter, PlannerTab, plannerTabForLine, rankIndex } from '../../features/planner/materials.ts';
 import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useFarmCatalog } from '../../hooks/useFarmCatalog.ts';
 import { useGameData } from '../../hooks/useGameData.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 import { usePlanner } from '../../hooks/usePlanner.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
+import Unfold from '../../components/unfold/unfold.tsx';
 import { catalogIconUrl, characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
 import PlannerModal from './planner-modal.tsx';
 import './planner.scss';
@@ -20,17 +22,39 @@ import './planner.scss';
 type PlannerModalState = { mode: 'add' } | { mode: 'edit'; characterId: string; tab: PlannerTab };
 
 type FarmViewMode = 'source' | 'character' | 'table';
+type TableSortKey = 'character' | 'level' | 'weapon' | 'talents' | 'artifacts';
+type TableSort = { key: TableSortKey; dir: 'asc' | 'desc' };
 
 const FARM_VIEW_KEY = 'planner_farm_view';
+const TABLE_SORT_KEYS: TableSortKey[] = ['character', 'level', 'weapon', 'talents', 'artifacts'];
 
-function readFarmView(): FarmViewMode {
+function isFarmViewMode(value: string | null | undefined): value is FarmViewMode {
+	return value === 'character' || value === 'table' || value === 'source';
+}
+
+function farmViewStorageKey(userId: string | null | undefined) {
+	return userId ? `${FARM_VIEW_KEY}:${userId}` : FARM_VIEW_KEY;
+}
+
+function readFarmView(userId?: string | null): FarmViewMode {
 	try {
-		const value = localStorage.getItem(FARM_VIEW_KEY);
-		if (value === 'character' || value === 'table' || value === 'source') return value;
+		const scoped = localStorage.getItem(farmViewStorageKey(userId));
+		if (isFarmViewMode(scoped)) return scoped;
+		const legacy = localStorage.getItem(FARM_VIEW_KEY);
+		if (isFarmViewMode(legacy)) return legacy;
 	} catch {
 		/* navigation privée */
 	}
 	return 'source';
+}
+
+function writeFarmView(mode: FarmViewMode, userId?: string | null) {
+	try {
+		localStorage.setItem(farmViewStorageKey(userId), mode);
+		localStorage.setItem(FARM_VIEW_KEY, mode);
+	} catch {
+		/* navigation privée */
+	}
 }
 
 const ARTIFACT_SLOTS = ['sands', 'goblet', 'circlet'] as const;
@@ -40,7 +64,6 @@ type KeptLine = { key: string; label: string; got: boolean };
 function characterKeptLines(
 	build: ArtifactBuild,
 	label: (key: string) => string,
-	format: (stat: string, value: number) => string,
 ): KeptLine[] {
 	const lines: KeptLine[] = [];
 	ARTIFACT_SLOTS.forEach((slot) => {
@@ -54,9 +77,12 @@ function characterKeptLines(
 	});
 	build.subs.forEach((sub, index) => {
 		if (!sub.stat) return;
+		const value = sub.target.trim();
 		lines.push({
 			key: `sub:${index}:${sub.stat}`,
-			label: `${label(`planner.stats.${sub.stat}`)} · ${format(sub.stat, sub.target)}`,
+			label: value
+				? `${label(`planner.stats.${sub.stat}`)} · ${value}`
+				: label(`planner.stats.${sub.stat}`),
 			got: false,
 		});
 	});
@@ -69,17 +95,30 @@ const FARM_VIEWS: { mode: FarmViewMode; icon: typeof Stack }[] = [
 	{ mode: 'table', icon: Table },
 ];
 
-const LevelRange: React.FC<{ current: number; target: number }> = ({ current, target }) => (
-	<span className={`planner-range${current >= target ? ' is-done' : ''}`}>
-		<span>{current}</span>
-		{current < target && (
-			<>
-				<ArrowRight size={11} />
-				<span>{target}</span>
-			</>
-		)}
-	</span>
-);
+const formatRank = (level: number, ascended?: boolean) => (ascended ? `${level}+` : String(level));
+
+const LevelRange: React.FC<{
+	current: number;
+	currentAscended?: boolean;
+	target: number;
+	targetAscended?: boolean;
+}> = ({ current, currentAscended, target, targetAscended }) => {
+	const ranked = currentAscended !== undefined || targetAscended !== undefined;
+	const done = ranked
+		? rankIndex(current as CharacterLevel, Boolean(currentAscended)) >= rankIndex(target as CharacterLevel, Boolean(targetAscended))
+		: current >= target;
+	return (
+		<span className={`planner-range${done ? ' is-done' : ''}`}>
+			<span>{formatRank(current, currentAscended)}</span>
+			{!done && (
+				<>
+					<ArrowRight size={11} />
+					<span>{formatRank(target, targetAscended)}</span>
+				</>
+			)}
+		</span>
+	);
+};
 
 const RoundCheck: React.FC<{ checked: boolean; label: string; onClick: () => void }> = ({ checked, label, onClick }) => (
 	<button
@@ -98,16 +137,27 @@ const RoundCheck: React.FC<{ checked: boolean; label: string; onClick: () => voi
 
 const Planner: React.FC = () => {
 	const { t, i18n } = useTranslation();
+	const { session } = useAuth();
+	const userId = session?.user.id ?? null;
 	const { characters, isLoading: charactersLoading } = useCharacters();
 	const { weapons, isLoading: weaponsLoading } = useWeapons();
 	const { gameData, isLoading: gameDataLoading } = useGameData();
 	const { catalog, artifacts, isLoading: catalogLoading } = useFarmCatalog();
 	const { plans, isLoading: plansLoading, loadError, savePlan, removeCharacter } = usePlanner();
 	const [modal, setModal] = useState<PlannerModalState | null>(null);
-	const [farmView, setFarmView] = useState<FarmViewMode>(readFarmView);
+	const [farmView, setFarmView] = useState<FarmViewMode>(() => readFarmView(userId));
+	const [tableSort, setTableSort] = useState<TableSort>({ key: 'character', dir: 'asc' });
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
+	const [rosterOpen, setRosterOpen] = useState(false);
+	const [rosterOverflow, setRosterOverflow] = useState(false);
+	const [rosterRowCap, setRosterRowCap] = useState<number | null>(null);
+	const rosterRef = useRef<HTMLDivElement>(null);
 	useLockBodyScroll(Boolean(modal));
+
+	useEffect(() => {
+		setFarmView(readFarmView(userId));
+	}, [userId]);
 
 	const byId = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
 	const editing = modal?.mode === 'edit' ? plans.find((plan) => plan.characterId === modal.characterId) ?? null : null;
@@ -130,6 +180,10 @@ const Planner: React.FC = () => {
 		weapons.forEach((weapon) => add(weapon.name, weapon.nameFr));
 		return map;
 	}, [catalog, artifacts, weapons]);
+	const shortDomainName = (name: string) => name
+		.replace(/^Domain of (?:Mastery|Forgery|Blessing)\s*:\s*/i, '')
+		.replace(/^Donjon (?:de la maîtrise|d['’]entraînement|de la bénédiction)\s*:\s*/i, '')
+		.trim();
 	const localize = (name: string) => (french ? namesFr.get(name) ?? name : name);
 	const artifactChoices = artifacts.length
 		? artifacts.map((set) => ({
@@ -154,6 +208,40 @@ const Planner: React.FC = () => {
 		return left.localeCompare(right, i18n.language);
 	}), [plans, byId, i18n.language]);
 
+	useLayoutEffect(() => {
+		const wrap = rosterRef.current;
+		if (!wrap) {
+			setRosterOverflow(false);
+			setRosterRowCap(null);
+			return;
+		}
+		const measure = () => {
+			const line = wrap.querySelector<HTMLElement>(':scope > .planner-roster');
+			const styles = line ? getComputedStyle(line) : null;
+			const gap = Number.parseFloat(styles?.columnGap || styles?.gap || '') || 6;
+			const charWidth = 96;
+			const width = wrap.clientWidth;
+			let capacity = Math.max(1, Math.floor((width + gap) / (charWidth + gap)));
+			while (capacity > 0 && capacity * charWidth + (capacity - 1) * gap > width + 0.5) {
+				capacity -= 1;
+			}
+			const overflows = roster.length > capacity;
+			if (overflows) {
+				const lineWidth = capacity * charWidth + Math.max(0, capacity - 1) * gap;
+				wrap.style.setProperty('--roster-line-width', `${lineWidth}px`);
+			} else {
+				wrap.style.removeProperty('--roster-line-width');
+			}
+			setRosterRowCap(capacity);
+			setRosterOverflow(overflows);
+			if (!overflows) setRosterOpen(false);
+		};
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(wrap);
+		return () => observer.disconnect();
+	}, [roster.length]);
+
 	const builds = roster.filter((plan) => hasArtifactPlan(plan.artifactBuild));
 
 	const formatCount = (count: number) => count.toLocaleString(i18n.language);
@@ -174,6 +262,7 @@ const Planner: React.FC = () => {
 		const line: FarmLine = task.line;
 		if (line.kind === 'mora') return t('planner.mora');
 		if (line.kind === 'xp') return t('planner.heroWit');
+		if (line.kind === 'fortuna') return t('planner.stellaFortuna');
 		if (line.kind === 'stone' && line.element && line.tier) {
 			return t('planner.stones.label', {
 				tier: t(`planner.stones.tiers.${line.tier}`),
@@ -186,18 +275,15 @@ const Planner: React.FC = () => {
 	const clusterTitle = (cluster: FarmCluster) => {
 		if (cluster.title === 'mora') return t('planner.mora');
 		if (cluster.title === 'xp') return t('planner.heroWit');
-		return localize(cluster.title);
+		if (cluster.title === 'stones') return t('planner.stones.group');
+		if (cluster.title === 'Masterless Stella Fortuna') return t('planner.stellaFortuna');
+		return shortDomainName(localize(cluster.title));
 	};
 
 	const sourceLabel = (name: string) => {
 		if (name === 'Blossom of Wealth') return t('planner.blossoms.wealth');
 		if (name === 'Blossom of Revelation') return t('planner.blossoms.revelation');
-		return localize(name);
-	};
-
-	const formatStat = (stat: string, value: number) => {
-		const text = value.toLocaleString(i18n.language, { maximumFractionDigits: 1 });
-		return isPercentStat(stat) ? `${text} %` : text;
+		return shortDomainName(localize(name));
 	};
 
 	const checked = (plan: PlannedCharacter, taskId: string) => plan.checkedTasks.includes(taskId);
@@ -212,11 +298,7 @@ const Planner: React.FC = () => {
 
 	const chooseFarmView = (mode: FarmViewMode) => {
 		setFarmView(mode);
-		try {
-			localStorage.setItem(FARM_VIEW_KEY, mode);
-		} catch {
-			/* navigation privée */
-		}
+		writeFarmView(mode, userId);
 	};
 
 	const characterGroups = (() => {
@@ -254,13 +336,79 @@ const Planner: React.FC = () => {
 		return groups;
 	})();
 
-	const renderIdle = (ids: string[]) => (
-		ids.length > 0 ? (
-			<ul className="planner-idle">
-				{ids.map((id) => <li key={id}>{byId.get(id)?.name ?? id}</li>)}
-			</ul>
-		) : null
-	);
+	const toggleTableSort = (key: TableSortKey) => {
+		setTableSort((previous) => (
+			previous.key === key
+				? { key, dir: previous.dir === 'asc' ? 'desc' : 'asc' }
+				: { key, dir: 'asc' }
+		));
+	};
+
+	const tableGroups = useMemo(() => {
+		const direction = tableSort.dir === 'asc' ? 1 : -1;
+		const byName = (left: string, right: string) => left.localeCompare(right, i18n.language);
+		const planOf = (characterId: string) => plans.find((item) => item.characterId === characterId);
+		const weaponName = (plan: PlannedCharacter | undefined) => {
+			if (!plan?.weaponId) return '';
+			const weapon = weapons.find((item) => item.id === plan.weaponId);
+			return weapon ? localize(weapon.name) : '';
+		};
+		const setName = (plan: PlannedCharacter | undefined) => {
+			const name = plan?.artifactBuild?.set ?? plan?.artifactSet ?? '';
+			return name ? localize(name) : '';
+		};
+		const emptyLast = (left: string, right: string) => Number(!left) - Number(!right);
+
+		return [...characterGroups].sort((left, right) => {
+			const favorite = Number(right.favorite) - Number(left.favorite);
+			if (favorite) return favorite;
+
+			const leftPlan = planOf(left.characterId);
+			const rightPlan = planOf(right.characterId);
+			let compare = 0;
+
+			if (tableSort.key === 'character') {
+				compare = byName(left.cluster.title, right.cluster.title);
+			} else if (tableSort.key === 'level') {
+				compare = (leftPlan && rightPlan)
+					? (
+						rankIndex(leftPlan.currentLevel, leftPlan.currentAscended)
+						- rankIndex(rightPlan.currentLevel, rightPlan.currentAscended)
+						|| rankIndex(leftPlan.targetLevel, leftPlan.targetAscended)
+						- rankIndex(rightPlan.targetLevel, rightPlan.targetAscended)
+					)
+					: 0;
+			} else if (tableSort.key === 'weapon') {
+				const leftWeapon = weaponName(leftPlan);
+				const rightWeapon = weaponName(rightPlan);
+				const empty = emptyLast(leftWeapon, rightWeapon);
+				if (empty) return empty;
+				compare = byName(leftWeapon, rightWeapon);
+			} else if (tableSort.key === 'talents') {
+				const talentGap = (plan: PlannedCharacter | undefined) => {
+					if (!plan) return 0;
+					return Math.max(0, plan.talentNormalTarget - plan.talentNormal)
+						+ Math.max(0, plan.talentSkillTarget - plan.talentSkill)
+						+ Math.max(0, plan.talentBurstTarget - plan.talentBurst);
+				};
+				compare = talentGap(leftPlan) - talentGap(rightPlan);
+			} else {
+				const needsArtifactFarm = (plan: PlannedCharacter | undefined) => {
+					const build = plan?.artifactBuild ?? null;
+					return hasArtifactPlan(build) && build?.done !== true;
+				};
+				const farmOrder = Number(needsArtifactFarm(rightPlan)) - Number(needsArtifactFarm(leftPlan));
+				if (farmOrder) return farmOrder;
+				const leftSet = setName(leftPlan);
+				const rightSet = setName(rightPlan);
+				const empty = emptyLast(leftSet, rightSet);
+				if (empty) return empty;
+				compare = byName(leftSet, rightSet);
+			}
+
+			return compare * direction || byName(left.cluster.title, right.cluster.title);
+		});
+	}, [characterGroups, tableSort, plans, weapons, i18n.language, localize]);
 
 	const editCharacter = (characterId: string, tab: PlannerTab = 'level') => {
 		setSaveError(null);
@@ -302,28 +450,21 @@ const Planner: React.FC = () => {
 		});
 	};
 
-	const renderTiles = (cluster: FarmCluster, hideStones: boolean, foldGems: boolean, singleBoss: boolean) => {
+	const renderTiles = (cluster: FarmCluster) => {
 		const rows = materialRows(cluster);
-		const kept = hideStones ? rows.filter((row) => row[0].line.kind !== 'stone') : rows;
-		const visible = kept.length > 0 ? kept : rows.slice(0, 1);
-		if (visible.length === 0) return null;
+		if (rows.length === 0) return null;
 		return (
 			<ul className="planner-task-tiles">
-				{visible.map((row) => {
+				{rows.map((row) => {
 					const sample = row[0];
-					const scope = singleBoss && cluster.section === 'boss'
-						? cluster.tasks
-						: foldGems && sample.line.kind === 'boss'
-							? cluster.tasks.filter((task) => task.line.kind === 'boss' || task.line.kind === 'stone')
-							: row;
 					const count = row.reduce((total, task) => total + task.line.count, 0);
-					const doneCount = scope.filter((task) => {
+					const doneCount = row.filter((task) => {
 						const plan = plans.find((item) => item.characterId === task.characterId);
 						return plan ? checked(plan, task.id) : false;
 					}).length;
-					const done = doneCount === scope.length;
+					const done = doneCount === row.length;
 					const name = taskName(sample);
-					const favorite = scope.some((task) => task.favorite);
+					const favorite = row.some((task) => task.favorite);
 					return (
 						<li key={sample.line.id} className="tooltip-anchor">
 							<div className={`planner-task-tile${done ? ' is-checked' : ''}${!done && doneCount > 0 ? ' is-partial' : ''}${favorite ? ' is-favorite' : ''}`}>
@@ -334,7 +475,7 @@ const Planner: React.FC = () => {
 								<RoundCheck
 									checked={done}
 									label={`${name}, ${done ? t('planner.uncheck') : t('planner.check')}`}
-									onClick={() => toggleRow(scope)}
+									onClick={() => toggleRow(row)}
 								/>
 							</div>
 							<span className="tooltip top" role="tooltip" aria-hidden="true">{name}</span>
@@ -355,7 +496,7 @@ const Planner: React.FC = () => {
 		const groupFavorite = byCharacter
 			? plans.some((plan) => plan.characterId === cluster.key && plan.favorite)
 			: cluster.tasks.some((task) => task.favorite);
-		const tiles = renderTiles(cluster, single || byCharacter, byCharacter, single);
+		const tiles = renderTiles(cluster);
 		const portraitDone = byCharacter && clusterDone(cluster);
 		return (
 			<article key={cluster.key} className={`planner-cluster${single ? ' is-single' : ''}${groupFavorite ? ' is-favorite' : ''}`}>
@@ -379,7 +520,7 @@ const Planner: React.FC = () => {
 						</p>
 					)}
 				</header>
-				{tiles ?? (byCharacter ? <p className="planner-cluster-empty">{t('planner.sections.overworld')}</p> : null)}
+				{tiles}
 				{!byCharacter && (
 					<div className="planner-faces">
 						{people.map((task) => {
@@ -410,7 +551,16 @@ const Planner: React.FC = () => {
 		);
 	};
 
-	const renderSection = (id: FarmSectionId, clusters: FarmCluster[], idleIds: string[] = []) => {
+	const renderEnemyGroups = (common: FarmCluster[], elite: FarmCluster[]) => (
+		<section className="planner-farm-section">
+			<h3>{t('planner.sections.enemies')}</h3>
+			<div className="planner-cluster-grid">
+				{orderClusters([...common, ...elite]).map((cluster) => renderCluster(cluster))}
+			</div>
+		</section>
+	);
+
+	const renderSection = (id: FarmSectionId, clusters: FarmCluster[]) => {
 		const single = id === 'boss' || id === 'local';
 		return (
 		<section key={id} className={`planner-farm-section${id === 'today' ? ' is-today' : ''}`}>
@@ -418,7 +568,6 @@ const Planner: React.FC = () => {
 			<div className={`planner-cluster-grid${single ? ' is-single' : ''}`}>
 				{orderClusters(clusters).map((cluster) => renderCluster(cluster, single))}
 			</div>
-			{id === 'overworld' && renderIdle(idleIds)}
 		</section>
 		);
 	};
@@ -430,115 +579,196 @@ const Planner: React.FC = () => {
 					<h2>{t('planner.characters')}</h2>
 					{(loadError || saveError) && <p className="planner-save-error">{saveError ? t('planner.saveError') : loadError}</p>}
 					{plans.length === 0 && !plansLoading && !loadError && <p className="planner-empty">{t('planner.emptyRoster')}</p>}
-					<div className="planner-roster">
-						{roster.map((plan) => {
-							const character = byId.get(plan.characterId);
-							const name = character?.name ?? plan.characterId;
-							return (
-								<div key={plan.characterId} className={`planner-character${character ? ` rarity-${character.rarity}` : ''}${plan.done ? ' is-done' : ''}${plan.favorite ? ' is-favorite' : ''}`}>
-									<div className="planner-portrait-wrap">
-										<button type="button" className="planner-portrait" onClick={() => editCharacter(plan.characterId)}>
-											<img src={characterIconUrl(plan.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+					<div ref={rosterRef} className="planner-roster-wrap">
+						{(() => {
+							const head = rosterRowCap === null ? roster : roster.slice(0, rosterRowCap);
+							const rest = rosterRowCap === null ? [] : roster.slice(rosterRowCap);
+							const renderCharacter = (plan: PlannedCharacter) => {
+								const character = byId.get(plan.characterId);
+								const name = character?.name ?? plan.characterId;
+								return (
+									<div
+										key={plan.characterId}
+										className={`planner-character${character ? ` rarity-${character.rarity}` : ''}${plan.done ? ' is-done' : ''}${plan.favorite ? ' is-favorite' : ''}`}
+									>
+										<div className="planner-portrait-wrap">
+											<button type="button" className="planner-portrait" onClick={() => editCharacter(plan.characterId)}>
+												<img src={characterIconUrl(plan.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+											</button>
+											<button
+												type="button"
+												className={`planner-fav${plan.favorite ? ' is-on' : ''}`}
+												aria-pressed={plan.favorite}
+												aria-label={plan.favorite ? t('planner.favoriteOn') : t('planner.favoriteOff')}
+												onClick={() => void run(() => savePlan({ ...plan, favorite: !plan.favorite }))}
+											>
+												<Star size={11} weight={plan.favorite ? 'fill' : 'regular'} />
+											</button>
+											<RoundCheck
+												checked={plan.done}
+												label={plan.done ? t('planner.uncheck') : t('planner.check')}
+												onClick={() => void run(() => savePlan({ ...plan, done: !plan.done }))}
+											/>
+										</div>
+										<button type="button" className="planner-character-name" onClick={() => editCharacter(plan.characterId)}>
+											{name}
 										</button>
+									</div>
+								);
+							};
+							const addButton = (
+								<button
+									type="button"
+									className="planner-add"
+									aria-label={t('planner.add')}
+									onClick={() => { setSaveError(null); setModal({ mode: 'add' }); }}
+								>
+									<Plus size={18} />
+								</button>
+							);
+							return (
+								<>
+									<div className="planner-roster">
+										{head.map(renderCharacter)}
+										{!rosterOverflow && addButton}
+									</div>
+									{rosterOverflow && (
+										<Unfold open={rosterOpen} className="planner-roster-extra">
+											<div className="planner-roster">
+												{rest.map(renderCharacter)}
+												{addButton}
+											</div>
+										</Unfold>
+									)}
+									{rosterOverflow && (
 										<button
 											type="button"
-											className={`planner-fav${plan.favorite ? ' is-on' : ''}`}
-											aria-pressed={plan.favorite}
-											aria-label={plan.favorite ? t('planner.favoriteOn') : t('planner.favoriteOff')}
-											onClick={() => void run(() => savePlan({ ...plan, favorite: !plan.favorite }))}
+											className={`planner-roster-toggle${rosterOpen ? ' is-open' : ''}`}
+											aria-expanded={rosterOpen}
+											aria-label={rosterOpen ? t('planner.rosterLess') : t('planner.rosterMore')}
+											onClick={() => setRosterOpen((open) => !open)}
 										>
-											<Star size={11} weight={plan.favorite ? 'fill' : 'regular'} />
+											<CaretDown size={16} weight="bold" />
 										</button>
-										<RoundCheck
-											checked={plan.done}
-											label={plan.done ? t('planner.uncheck') : t('planner.check')}
-											onClick={() => void run(() => savePlan({ ...plan, done: !plan.done }))}
-										/>
-									</div>
-									<button type="button" className="planner-character-name" onClick={() => editCharacter(plan.characterId)}>
-										{name}
-									</button>
-								</div>
+									)}
+								</>
 							);
-						})}
-						<button type="button" className="planner-add" aria-label={t('planner.add')} onClick={() => { setSaveError(null); setModal({ mode: 'add' }); }}>
-							<Plus size={18} />
-						</button>
+						})()}
 					</div>
 				</div>
 
 				<div className="section-container">
 					<h2>{t('planner.materials')}</h2>
-					{farm && plans.length > 0 && (
-						<ul className="planner-stats">
-							{farm.resin > 0 && (
-								<li>
-									{farm.stock.resinImage && <img src={catalogIconUrl(farm.stock.resinImage)} alt="" />}
-									<strong>{formatCount(farm.resin)}</strong>
-									<span>{t('planner.resin')} · {t('planner.inDays', { days: dayLabel(farm.days) })}</span>
-								</li>
-							)}
-							{farm.stock.mora > 0 && (
-								<li>
-									{farm.stock.moraImage && <img src={catalogIconUrl(farm.stock.moraImage)} alt="" />}
-									<strong>{formatCount(farm.stock.mora)}</strong>
-									<span>{t('planner.mora')}</span>
-								</li>
-							)}
-							{farm.stock.xp > 0 && (
-								<li>
-									{farm.stock.xpImage && <img src={catalogIconUrl(farm.stock.xpImage)} alt="" />}
-									<strong>{formatCount(farm.stock.xp)}</strong>
-									<span>{t('planner.heroWit')}</span>
-								</li>
-							)}
-							{farm.stock.weaponStones > 0 && (
-								<li>
-									{farm.stock.weaponImage && <img src={catalogIconUrl(farm.stock.weaponImage)} alt="" />}
-									<strong>{formatCount(farm.stock.weaponStones)}</strong>
-									<span>{t('planner.weaponStones')}</span>
-								</li>
-							)}
-						</ul>
-					)}
 					{plans.length === 0 ? (
 						<p className="planner-empty">{t('planner.materialsNeedRoster')}</p>
 					) : gameDataLoading || charactersLoading || plansLoading || catalogLoading || !farm ? (
 						<p className="planner-empty">{t('common.loading')}</p>
 					) : (
 						<>
-							<div className="planner-views" role="group" aria-label={t('planner.views.label')}>
-								{FARM_VIEWS.map(({ mode, icon: Icon }) => (
-									<button
-										key={mode}
-										type="button"
-										className={farmView === mode ? 'is-on' : ''}
-										aria-pressed={farmView === mode}
-										onClick={() => chooseFarmView(mode)}
-									>
-										<Icon size={16} />
-										{t(`planner.views.${mode}`)}
-									</button>
-								))}
+							<div className="planner-materials-bar">
+								<ul className="planner-stats">
+									{farm.resin > 0 && (
+										<li>
+											{farm.stock.resinImage && <img src={catalogIconUrl(farm.stock.resinImage)} alt="" />}
+											<div className="planner-stat">
+												<strong>{formatCount(farm.resin)}</strong>
+												<span>
+													{formatCount(Math.ceil(farm.resin / 40))} {t('planner.condensedResin')}
+													{' · '}
+													{dayLabel(farm.days)}
+												</span>
+											</div>
+										</li>
+									)}
+									{farm.stock.mora > 0 && (
+										<li>
+											{farm.stock.moraImage && <img src={catalogIconUrl(farm.stock.moraImage)} alt="" />}
+											<div className="planner-stat">
+												<strong>{formatCount(farm.stock.mora)}</strong>
+												<span>{t('planner.mora')}</span>
+											</div>
+										</li>
+									)}
+									{farm.stock.xp > 0 && (
+										<li>
+											{farm.stock.xpImage && <img src={catalogIconUrl(farm.stock.xpImage)} alt="" />}
+											<div className="planner-stat">
+												<strong>{formatCount(farm.stock.xp)}</strong>
+												<span>{t('planner.heroWit')}</span>
+											</div>
+										</li>
+									)}
+									{farm.stock.weaponOre > 0 && (
+										<li>
+											{farm.stock.weaponOreImage && <img src={catalogIconUrl(farm.stock.weaponOreImage)} alt="" />}
+											<div className="planner-stat">
+												<strong>{formatCount(farm.stock.weaponOre)}</strong>
+												<span>{t('planner.mysticOre')}</span>
+											</div>
+										</li>
+									)}
+								</ul>
+								<div className="planner-views" role="group" aria-label={t('planner.views.label')}>
+									{FARM_VIEWS.map(({ mode, icon: Icon }) => (
+										<button
+											key={mode}
+											type="button"
+											className={farmView === mode ? 'is-on' : ''}
+											aria-pressed={farmView === mode}
+											onClick={() => chooseFarmView(mode)}
+										>
+											<Icon size={16} />
+											{t(`planner.views.${mode}`)}
+										</button>
+									))}
+								</div>
 							</div>
 							{farmView === 'character' ? (
-								<div className="planner-cluster-grid">
-									{characterGroups.map((group) => renderCluster(group.cluster, false, true))}
-								</div>
+								characterGroups.some((group) => group.cluster.tasks.length > 0) ? (
+									<div className="planner-cluster-grid">
+										{characterGroups
+											.filter((group) => group.cluster.tasks.length > 0)
+											.map((group) => renderCluster(group.cluster, false, true))}
+									</div>
+								) : (
+									<p className="planner-empty">{t('planner.materialsEmpty')}</p>
+								)
 							) : farmView === 'table' ? (
 								<div className="planner-table-wrap">
 									<table className="planner-table">
 										<thead>
 											<tr>
-												<th>{t('planner.characters')}</th>
-												<th>{t('planner.tabs.level')}</th>
-												<th>{t('planner.tabs.weapon')}</th>
-												<th>{t('planner.tabs.talents')}</th>
-												<th>{t('planner.tabs.artifacts')}</th>
+												{TABLE_SORT_KEYS.map((key) => {
+													const active = tableSort.key === key;
+													const label = key === 'character'
+														? t('planner.characters')
+														: t(`planner.tabs.${key}`);
+													return (
+														<th
+															key={key}
+															aria-sort={active ? (tableSort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+														>
+															<button
+																type="button"
+																className={`planner-table-sort${active ? ' is-active' : ''}`}
+																onClick={() => toggleTableSort(key)}
+															>
+																{label}
+																{active ? (
+																	tableSort.dir === 'asc'
+																		? <CaretUp size={12} weight="bold" aria-hidden="true" />
+																		: <CaretDown size={12} weight="bold" aria-hidden="true" />
+																) : (
+																	<span className="planner-table-sort-placeholder" aria-hidden="true" />
+																)}
+															</button>
+														</th>
+													);
+												})}
 											</tr>
 										</thead>
 										<tbody>
-											{characterGroups.map((group) => {
+											{tableGroups.map((group) => {
 												const done = clusterDone(group.cluster);
 												const plan = plans.find((item) => item.characterId === group.characterId);
 												const weapon = plan?.weaponId ? weapons.find((item) => item.id === plan.weaponId) : undefined;
@@ -569,7 +799,7 @@ const Planner: React.FC = () => {
 															{plan && (
 																<div className="planner-table-level">
 																	<button type="button" className="planner-table-cell" onClick={() => editCharacter(group.characterId, 'level')}>
-																		<LevelRange current={plan.currentLevel} target={plan.targetLevel} />
+																		<LevelRange current={plan.currentLevel} currentAscended={plan.currentAscended} target={plan.targetLevel} targetAscended={plan.targetAscended} />
 																	</button>
 																	{renderTiles({
 																		...group.cluster,
@@ -579,7 +809,7 @@ const Planner: React.FC = () => {
 																			weapon,
 																			task.line,
 																		) === 'level'),
-																	}, true, true, false)}
+																	})}
 																</div>
 															)}
 														</td>
@@ -593,7 +823,7 @@ const Planner: React.FC = () => {
 																				<span>
 																					<strong>{localize(weapon.name)}</strong>
 																					{plan.weaponCurrentLevel != null && plan.weaponTargetLevel != null && (
-																						<LevelRange current={plan.weaponCurrentLevel} target={plan.weaponTargetLevel} />
+																						<LevelRange current={plan.weaponCurrentLevel} currentAscended={plan.weaponCurrentAscended} target={plan.weaponTargetLevel} targetAscended={plan.weaponTargetAscended} />
 																					)}
 																				</span>
 																			</>
@@ -609,7 +839,7 @@ const Planner: React.FC = () => {
 																			weapon,
 																			task.line,
 																		) === 'weapon'),
-																	}, true, true, false)}
+																	})}
 																</div>
 															)}
 														</td>
@@ -632,7 +862,7 @@ const Planner: React.FC = () => {
 																			weapon,
 																			task.line,
 																		) === 'talents'),
-																	}, true, true, false)}
+																	})}
 																</div>
 															)}
 														</td>
@@ -651,18 +881,20 @@ const Planner: React.FC = () => {
 										</tbody>
 									</table>
 								</div>
-							) : farm.sections.length === 0 && farm.idleCharacterIds.length === 0 ? (
+							) : farm.sections.length === 0 ? (
 								<p className="planner-empty">{t('planner.materialsEmpty')}</p>
 							) : (
 								<div className="planner-farm">
-									{farm.sections.map((section) => renderSection(
-										section.id,
-										section.clusters,
-										section.id === 'overworld' ? farm.idleCharacterIds : [],
-									))}
-									{farm.idleCharacterIds.length > 0 && !farm.sections.some((section) => section.id === 'overworld') && (
-										renderSection('overworld', [], farm.idleCharacterIds)
-									)}
+									{farm.sections.flatMap((section, index) => {
+										if (section.id !== 'common' && section.id !== 'elite') {
+											return [renderSection(section.id, section.clusters)];
+										}
+										if (farm.sections.slice(0, index).some((item) => item.id === 'common' || item.id === 'elite')) return [];
+										return [renderEnemyGroups(
+											farm.sections.find((item) => item.id === 'common')?.clusters ?? [],
+											farm.sections.find((item) => item.id === 'elite')?.clusters ?? [],
+										)];
+									})}
 								</div>
 							)}
 						</>
@@ -678,11 +910,11 @@ const Planner: React.FC = () => {
 								if (!build) return null;
 								const name = byId.get(plan.characterId)?.name ?? plan.characterId;
 								const done = build.done === true;
-								const lines = characterKeptLines(build, t, formatStat);
+								const lines = characterKeptLines(build, t);
 								const setNames = [build.set, build.setB].filter((entry): entry is string => Boolean(entry));
 								const domains = [...new Set(setNames.flatMap((setName) => {
 									const info = setsByName.get(setName.toLowerCase());
-									if (info?.domain) return [localize(info.domain)];
+									if (info?.domain) return [shortDomainName(localize(info.domain))];
 									if (info?.source === 'boss') return [t('planner.artifactBoss')];
 									return [];
 								}))];
@@ -739,10 +971,9 @@ const Planner: React.FC = () => {
 						localize={localize}
 						onClose={() => { if (!saving) setModal(null); }}
 						onSubmit={(plan) => {
-							setSaving(true);
 							void run(() => savePlan(plan)).then((ok) => {
-								setSaving(false);
-								if (ok) setModal(null);
+								if (!ok || modal.mode !== 'add') return;
+								setModal({ mode: 'edit', characterId: plan.characterId, tab: 'level' });
 							});
 						}}
 						onRemove={() => {

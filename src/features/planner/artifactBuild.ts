@@ -4,7 +4,7 @@ export const SANDS_STATS = ['hp_', 'atk_', 'def_', 'er', 'em'] as const;
 
 export const GOBLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'pyro', 'hydro', 'electro', 'cryo', 'anemo', 'geo', 'dendro', 'physical'] as const;
 
-export const CIRCLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'cr', 'cd', 'heal'] as const;
+export const CIRCLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'cr', 'cd', 'cr_cd', 'heal'] as const;
 
 export type ArtifactStatId = typeof SUBSTATS[number] | typeof GOBLET_STATS[number] | typeof CIRCLET_STATS[number];
 
@@ -16,7 +16,7 @@ const PERCENT_STATS = new Set<string>([
 export interface ArtifactSubstat {
 	stat: string;
 	current: number;
-	target: number;
+	target: string;
 }
 
 export interface ArtifactBuild {
@@ -37,7 +37,20 @@ export interface UnreachedStat {
 	stat: string;
 	slot?: 'sands' | 'goblet' | 'circlet';
 	current?: number;
-	target?: number;
+	target?: string;
+}
+
+function parseStatValue(raw: unknown): number | null {
+	if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+	if (typeof raw !== 'string') return null;
+	const parsed = Number.parseFloat(raw.replace(',', '.').replace(/%/g, '').trim());
+	return Number.isFinite(parsed) ? parsed : null;
+}
+
+function textOrEmpty(value: unknown): string {
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+	return '';
 }
 
 export function emptyArtifactBuild(set: string | null = null): ArtifactBuild {
@@ -73,7 +86,7 @@ export function readArtifactBuild(raw: unknown, legacySet?: string | null): Arti
 	const subs = Array.isArray(record.subs) ? record.subs.flatMap((entry) => {
 		const sub = asRecord(entry);
 		if (!sub || typeof sub.stat !== 'string' || sub.stat.trim() === '') return [];
-		return [{ stat: sub.stat, current: numberOr(sub.current), target: numberOr(sub.target) }];
+		return [{ stat: sub.stat, current: numberOr(sub.current), target: textOrEmpty(sub.target) }];
 	}) : [];
 	return {
 		set: textOrNull(record.set) ?? legacySet ?? null,
@@ -110,7 +123,9 @@ export function unreachedStats(build: ArtifactBuild | null): UnreachedStat[] {
 		if (stat && !got) missed.push({ key: slot, stat, slot });
 	});
 	build.subs.forEach((sub, index) => {
-		if (!sub.stat || sub.current >= sub.target) return;
+		if (!sub.stat || !sub.target.trim()) return;
+		const targetValue = parseStatValue(sub.target);
+		if (targetValue !== null && sub.current >= targetValue) return;
 		missed.push({ key: `sub-${index}`, stat: sub.stat, current: sub.current, target: sub.target });
 	});
 	return missed;
@@ -118,5 +133,5 @@ export function unreachedStats(build: ArtifactBuild | null): UnreachedStat[] {
 
 export function hasArtifactPlan(build: ArtifactBuild | null): boolean {
 	if (!build) return false;
-	return Boolean(build.set || build.setB || build.sands || build.goblet || build.circlet || build.subs.length);
+	return Boolean(build.set || build.setB || build.sands || build.goblet || build.circlet || build.subs.some((sub) => sub.stat));
 }

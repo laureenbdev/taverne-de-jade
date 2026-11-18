@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { usePresence } from '../unfold/unfold.tsx';
 import './item-select.scss';
 
-import { CaretDown, MagnifyingGlass } from 'phosphor-react';
+import { CaretDown, MagnifyingGlass, X } from 'phosphor-react';
 
 interface SelectableItem {
 	id: string;
@@ -50,10 +50,11 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 	// Trouver l'élément sélectionné
 	const selectedItem = items.find((item) => item.name === value);
 
-	// Filtrer les éléments selon la recherche
-	const filteredItems = items.filter((item) =>
-		`${item.name} ${item.nameFr ?? ''}`.toLowerCase().includes(searchTerm.toLowerCase())
-	);
+	// Filtrer puis trier selon le libellé affiché (FR ou EN), pas le nom EN source
+	const needle = searchTerm.toLowerCase();
+	const filteredItems = items
+		.filter((item) => `${item.name} ${item.nameFr ?? ''}`.toLowerCase().includes(needle))
+		.sort((left, right) => titleOf(left).localeCompare(titleOf(right), i18n.language, { sensitivity: 'base' }));
 
 	// Fermer la dropdown si on clique en dehors
 	useEffect(() => {
@@ -105,13 +106,6 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		};
 	}, [dropdown.present]);
 
-	// Focus sur l'input de recherche quand la dropdown s'ouvre
-	useEffect(() => {
-		if (isOpen && searchInputRef.current) {
-			searchInputRef.current.focus();
-		}
-	}, [isOpen]);
-
 	// Gérer la navigation au clavier
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (!isOpen) {
@@ -155,6 +149,15 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		setHighlightedIndex(-1);
 	};
 
+	const handleClear = (event: React.MouseEvent) => {
+		event.preventDefault();
+		event.stopPropagation();
+		onChange('');
+		setIsOpen(false);
+		setSearchTerm('');
+		setHighlightedIndex(-1);
+	};
+
 	const handleToggle = () => {
 		setIsOpen(!isOpen);
 		if (!isOpen) {
@@ -168,10 +171,13 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 		setHighlightedIndex(-1);
 	};
 
-	useLayoutEffect(() => {
-		if (!dropdown.present || !anchor) return;
-		searchInputRef.current?.focus();
-	}, [dropdown.present, anchor]);
+	useEffect(() => {
+		if (!dropdown.present || !dropdown.shown || !anchor) return;
+		const frame = window.requestAnimationFrame(() => {
+			searchInputRef.current?.focus({ preventScroll: true });
+		});
+		return () => window.cancelAnimationFrame(frame);
+	}, [dropdown.present, dropdown.shown, anchor]);
 
 	useEffect(() => {
 		if (highlightedIndex < 0 || !dropdownRef.current) return;
@@ -201,6 +207,17 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 					{selectedItem?.image && <SelectIcon src={selectedItem.image} />}
 					<span>{value ? (selectedItem ? titleOf(selectedItem) : value) : (placeholder || t('itemSelect.placeholder'))}</span>
 				</span>
+				{value && !required && (
+					<button
+						type="button"
+						className="item-select-clear"
+						aria-label={t('itemSelect.clear')}
+						onMouseDown={(event) => event.preventDefault()}
+						onClick={handleClear}
+					>
+						<X size={14} weight="bold" />
+					</button>
+				)}
 				<CaretDown size={16} className={`caret ${isOpen ? 'open' : ''}`} />
 			</div>
 

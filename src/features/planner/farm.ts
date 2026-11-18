@@ -16,8 +16,6 @@ export type FarmSectionId = 'today' | 'later' | 'boss' | 'weekly' | 'local' | 'c
 
 export const FARM_SECTIONS: FarmSectionId[] = ['today', 'later', 'boss', 'weekly', 'local', 'common', 'elite', 'overworld'];
 
-const SUMMARY_KINDS = new Set<MaterialKind>(['mora', 'xp']);
-
 export interface FarmTask {
 	id: string;
 	characterId: string;
@@ -44,11 +42,14 @@ export interface FarmCluster {
 export interface FarmStock {
 	mora: number;
 	xp: number;
-	weaponStones: number;
+	weaponOre: number;
+	fortuna: number;
 	resinImage?: string;
+	condensedResinImage?: string;
 	moraImage?: string;
 	xpImage?: string;
-	weaponImage?: string;
+	weaponOreImage?: string;
+	fortunaImage?: string;
 }
 
 export interface FarmView {
@@ -56,7 +57,6 @@ export interface FarmView {
 	resin: number;
 	days: number;
 	stock: FarmStock;
-	idleCharacterIds: string[];
 }
 
 const ALL_DAYS = [...WEEK_DAYS];
@@ -73,6 +73,8 @@ function sourceOf(kind: MaterialKind, item?: CatalogItem): FarmSource {
 export function catalogItemForNeed(items: CatalogItem[], line: FarmNeed): CatalogItem | undefined {
 	if (line.kind === 'mora') return items.find((item) => item.kind === 'mora');
 	if (line.kind === 'xp') return items.find((item) => item.name === "Hero's Wit");
+	if (line.kind === 'weaponXp') return undefined;
+	if (line.kind === 'fortuna') return items.find((item) => item.kind === 'fortuna' || item.name === 'Masterless Stella Fortuna');
 	if (line.kind === 'stone') return items.find((item) => item.kind === 'stone' && item.family === line.element && item.tier === line.tier);
 	if (line.kind === 'boss' || line.kind === 'local' || line.kind === 'weekly') {
 		return items.find((item) => item.kind === line.kind && item.family === line.name);
@@ -80,15 +82,23 @@ export function catalogItemForNeed(items: CatalogItem[], line: FarmNeed): Catalo
 	return items.find((item) => item.kind === line.kind && item.family === line.name && item.rarity === line.rarity);
 }
 
-function minRuns(needs: Map<number, number>, drops: Map<number, number>): number {
-	let runs = 0;
-	[...needs.keys()].sort((a, b) => b - a).forEach((rarity) => {
-		const count = needs.get(rarity) ?? 0;
-		if (count <= 0) return;
-		const perRun = drops.get(rarity) || 1;
-		runs += Math.ceil(count / perRun);
-	});
-	return runs;
+/**
+ * Nombre de runs : convertit les besoins en équivalent de la rareté la plus haute
+ * (3 verts = 1 bleu, etc.) puis divise par le drop de cette rareté.
+ * Additionner les raretés séparément surestimait fortement la résine.
+ */
+function minRuns(needs: Map<number, number>, drops: Map<number, number>, craftRatio = 3): number {
+	const entries = [...needs.entries()].filter(([, count]) => count > 0);
+	if (entries.length === 0) return 0;
+	const highest = Math.max(...entries.map(([rarity]) => rarity));
+	const ratio = craftRatio > 1 ? craftRatio : 1;
+	const equivalent = entries.reduce((total, [rarity, count]) => (
+		total + count / ratio ** (highest - rarity)
+	), 0);
+	const perRun = drops.get(highest)
+		?? [...drops.entries()].sort((left, right) => right[0] - left[0])[0]?.[1]
+		?? 1;
+	return Math.ceil(equivalent / Math.max(perRun, 1));
 }
 
 function defaultDrop(kind: MaterialKind): number {
@@ -131,33 +141,12 @@ function calendarDays(resin: number, open: string[], resinPerDay: number, start:
 	return 400;
 }
 
-function walkDays(buckets: { resin: number; open: string[] }[], resinPerDay: number, start: Date): number {
-	const left = buckets.filter((bucket) => bucket.resin > 0).map((bucket) => ({ ...bucket }));
-	if (left.length === 0) return 0;
-	const cursor = new Date(start);
-	cursor.setHours(12, 0, 0, 0);
-	for (let span = 1; span < 400; span += 1) {
-		let budget = resinPerDay;
-		const available = left
-			.filter((bucket) => bucket.resin > 0 && (bucket.open.length === 0 || bucket.open.includes(WEEK_DAYS[cursor.getDay()])))
-			.sort((a, b) => (a.open.length || 7) - (b.open.length || 7));
-		available.forEach((bucket) => {
-			if (budget <= 0) return;
-			const spend = Math.min(budget, bucket.resin);
-			bucket.resin -= spend;
-			budget -= spend;
-		});
-		if (left.every((bucket) => bucket.resin <= 0)) return span;
-		cursor.setDate(cursor.getDate() + 1);
-	}
-	return 400;
-}
-
 function sectionFor(task: FarmTask, today: string): FarmSectionId {
 	if (task.line.kind === 'talentBook' || task.line.kind === 'weaponMat') {
 		return (task.item?.days ?? []).includes(today) ? 'today' : 'later';
 	}
-	if (task.line.kind === 'boss' || task.line.kind === 'stone') return 'boss';
+	if (task.line.kind === 'boss') return 'boss';
+	if (task.line.kind === 'stone' || task.line.kind === 'fortuna') return 'overworld';
 	if (task.line.kind === 'weekly') return 'weekly';
 	if (task.line.kind === 'local') return 'local';
 	if (task.line.kind === 'common') return 'common';
@@ -165,10 +154,17 @@ function sectionFor(task: FarmTask, today: string): FarmSectionId {
 	return 'overworld';
 }
 
+function isDomainKind(kind: MaterialKind): boolean {
+	return kind === 'talentBook' || kind === 'weaponMat';
+}
+
 function clusterTitle(task: FarmTask): string {
 	if (task.line.kind === 'mora') return 'mora';
 	if (task.line.kind === 'xp') return 'xp';
-	if (task.line.kind === 'stone') return task.bossFamily || task.family;
+	if (task.line.kind === 'stone') return 'stones';
+	if (isDomainKind(task.line.kind)) {
+		return task.item?.sourceName || task.item?.family || task.line.name || task.family;
+	}
 	return task.item?.family || task.line.name || task.family;
 }
 
@@ -183,10 +179,14 @@ export function buildFarm(input: {
 	const today = input.today ?? new Date();
 	const todayName = WEEK_DAYS[today.getDay()];
 	const resinPerDay = input.catalog?.resinPerDay ?? 180;
+	const craftRatio = input.catalog?.craftRatio ?? 3;
 	const experience = input.catalog?.experience?.length ? input.catalog.experience : CHARACTER_EXPERIENCE;
 	const catalogItems = input.catalog?.items ?? [];
 	const characters = new Map(input.characters.map((character) => [character.id, character]));
 	const weapons = new Map(input.weapons.map((weapon) => [weapon.id, weapon]));
+
+	const checked = new Set(input.plans.flatMap((plan) => plan.checkedTasks));
+	const isOpen = (task: FarmTask) => !checked.has(task.id);
 
 	const tasks: FarmTask[] = [];
 	input.plans.forEach((plan) => {
@@ -212,19 +212,21 @@ export function buildFarm(input: {
 	const stock: FarmStock = {
 		mora: 0,
 		xp: 0,
-		weaponStones: 0,
+		weaponOre: 0,
+		fortuna: 0,
 		resinImage: input.catalog?.resinImage,
+		condensedResinImage: input.catalog?.condensedResinImage,
 		moraImage: catalogItems.find((item) => item.kind === 'mora')?.image,
 		xpImage: catalogItems.find((item) => item.name === "Hero's Wit")?.image,
-		weaponImage: input.catalog?.weaponOreImage,
+		weaponOreImage: input.catalog?.weaponOreImage,
+		fortunaImage: input.catalog?.fortunaImage,
 	};
-	const hidden: FarmTask[] = [];
-
 	const clusters = new Map<string, FarmCluster>();
 	const ensure = (key: string, sample: FarmTask, section: FarmSectionId, title: string, days: string[]): FarmCluster => {
 		const existing = clusters.get(key);
 		if (existing) return existing;
-		const cluster: FarmCluster = { key, section, title, subtitle: sample.item?.sourceName ?? '', days, resin: 0, dayCount: 0, tasks: [] };
+		const subtitle = isDomainKind(sample.line.kind) ? '' : (sample.item?.sourceName ?? '');
+		const cluster: FarmCluster = { key, section, title, subtitle, days, resin: 0, dayCount: 0, tasks: [] };
 		clusters.set(key, cluster);
 		return cluster;
 	};
@@ -233,52 +235,79 @@ export function buildFarm(input: {
 		if (task.line.kind === 'mora') {
 			stock.mora += task.line.count;
 			if (task.item?.image) stock.moraImage = task.item.image;
-			hidden.push(task);
 			return;
 		}
 		if (task.line.kind === 'xp') {
 			stock.xp += task.line.count;
 			if (task.item?.image) stock.xpImage = task.item.image;
-			hidden.push(task);
 			return;
 		}
-		if (task.line.kind === 'weaponMat') stock.weaponStones += task.line.count;
-		if (task.line.kind === 'stone') return;
+		if (task.line.kind === 'weaponXp') {
+			stock.weaponOre += task.line.count;
+			return;
+		}
 		const days = task.item?.days ?? [];
 		const section = sectionFor(task, todayName);
-		const key = `${section}|${task.family}|${days.join(',')}`;
-		ensure(key, task, section, clusterTitle(task), days).tasks.push(task);
-	});
-
-	tasks.filter((task) => task.line.kind === 'stone').forEach((task) => {
-		const key = `boss|${task.bossFamily || task.family}`;
-		const host = [...clusters.values()].find((cluster) => cluster.tasks.some((entry) => entry.characterId === task.characterId && entry.line.kind === 'boss'));
-		const cluster = host ?? ensure(key, task, 'boss', task.bossFamily || task.family, []);
-		cluster.tasks.push(task);
+		const title = clusterTitle(task);
+		const domain = task.item?.sourceName || task.family;
+		const key = task.line.kind === 'stone'
+			? `${section}|stones|`
+			: isDomainKind(task.line.kind)
+				? `${section}|domain|${domain}|${days.join(',')}`
+				: `${section}|${task.family}|${days.join(',')}`;
+		ensure(key, task, section, title, days).tasks.push(task);
 	});
 
 	clusters.forEach((cluster) => {
 		const sample = cluster.tasks.find((task) => task.item) ?? cluster.tasks[0];
-		const resinEach = sample.item?.resin ?? (sample.source === 'overworld' ? 0 : 20);
-		if (resinEach <= 0 || sample.source === 'overworld') {
+		const open = cluster.tasks.filter(isOpen);
+		const resinEach = sample.item?.resin ?? (sample.source === 'overworld' || sample.line.kind === 'fortuna' ? 0 : 20);
+		if (open.length === 0 || resinEach <= 0 || sample.line.kind === 'fortuna') {
 			cluster.resin = 0;
 			cluster.dayCount = 0;
 			return;
 		}
-		if (sample.source === 'boss' || cluster.tasks.some((task) => task.line.kind === 'stone')) {
-			const bossTasks = cluster.tasks.filter((task) => task.line.kind === 'boss');
-			const gemTasks = cluster.tasks.filter((task) => task.line.kind === 'stone');
-			const bossFamily = bossTasks[0]?.family ?? gemTasks[0]?.bossFamily ?? '';
+		if (sample.line.kind === 'boss') {
+			const bossTasks = open.filter((task) => task.line.kind === 'boss');
+			const characterIds = new Set(cluster.tasks.map((task) => task.characterId));
+			const gemTasks = tasks.filter((task) => (
+				task.line.kind === 'stone' && characterIds.has(task.characterId) && isOpen(task)
+			));
+			const bossFamily = bossTasks[0]?.family ?? sample.family;
 			const gemFamily = gemTasks[0]?.item?.family ?? gemTasks[0]?.line.element ?? '';
-			const bossRuns = bossTasks.length ? minRuns(needMap(bossTasks), dropTable(catalogItems, 'boss', bossFamily)) : 0;
-			const gemRuns = gemTasks.length ? minRuns(needMap(gemTasks), dropTable(catalogItems, 'stone', gemFamily)) : 0;
+			const bossRuns = bossTasks.length ? minRuns(needMap(bossTasks), dropTable(catalogItems, 'boss', bossFamily), craftRatio) : 0;
+			const gemRuns = gemTasks.length ? minRuns(needMap(gemTasks), dropTable(catalogItems, 'stone', gemFamily), craftRatio) : 0;
 			const runs = Math.max(bossRuns, gemRuns);
 			cluster.resin = runs * 40;
 			cluster.dayCount = calendarDays(cluster.resin, ALL_DAYS, resinPerDay, today);
 			return;
 		}
+		if (sample.line.kind === 'stone') {
+			const uncovered = open.filter((task) => !tasks.some((entry) => (
+				entry.line.kind === 'boss' && entry.characterId === task.characterId && isOpen(entry)
+			)));
+			if (uncovered.length === 0) {
+				cluster.resin = 0;
+				cluster.dayCount = 0;
+				return;
+			}
+			const byFamily = new Map<string, FarmTask[]>();
+			uncovered.forEach((task) => {
+				const family = task.item?.family ?? task.line.element ?? task.family;
+				const list = byFamily.get(family) ?? [];
+				list.push(task);
+				byFamily.set(family, list);
+			});
+			let runs = 0;
+			byFamily.forEach((list, family) => {
+				runs += minRuns(needMap(list), dropTable(catalogItems, 'stone', family), craftRatio);
+			});
+			cluster.resin = runs * 40;
+			cluster.dayCount = calendarDays(cluster.resin, ALL_DAYS, resinPerDay, today);
+			return;
+		}
 		const family = sample.family;
-		const runs = minRuns(needMap(cluster.tasks), dropTable(catalogItems, sample.line.kind, family));
+		const runs = minRuns(needMap(open), dropTable(catalogItems, sample.line.kind, family), craftRatio);
 		cluster.resin = runs * resinEach;
 		if (sample.source === 'weekly') {
 			const claims = runs;
@@ -301,44 +330,8 @@ export function buildFarm(input: {
 		return [{ id, clusters: list }];
 	});
 
-	const hiddenBuckets = new Map<string, FarmTask[]>();
-	hidden.forEach((task) => {
-		const key = `${task.line.kind}|${task.family}`;
-		const list = hiddenBuckets.get(key) ?? [];
-		list.push(task);
-		hiddenBuckets.set(key, list);
-	});
-	const hiddenRuns: { resin: number; open: string[] }[] = [];
-	hiddenBuckets.forEach((list) => {
-		const sample = list[0];
-		const runs = minRuns(needMap(list), dropTable(catalogItems, sample.line.kind, sample.family));
-		const resinEach = sample.item?.resin ?? 20;
-		const resin = runs * resinEach;
-		if (resin <= 0) return;
-		hiddenRuns.push({ resin, open: sample.item?.days ?? [] });
-	});
+	const resin = ordered.reduce((total, cluster) => total + cluster.resin, 0);
+	const days = resin <= 0 ? 0 : Math.ceil(resin / resinPerDay);
 
-	const weeklyClaims = ordered.filter((cluster) => cluster.section === 'weekly').map((cluster) => (
-		cluster.resin > 0 && cluster.tasks[0]?.item?.resin ? cluster.resin / cluster.tasks[0].item.resin : 0
-	));
-	const weeklyWeeks = weeklyClaims.length
-		? Math.max(...weeklyClaims, Math.ceil(weeklyClaims.reduce((total, claims) => total + claims, 0) / 3))
-		: 0;
-	const weeklySpan = weeklyWeeks === 0 ? 0 : 1 + (weeklyWeeks - 1) * 7;
-	const flexible = [
-		...ordered.filter((cluster) => cluster.resin > 0).map((cluster) => ({
-			resin: cluster.resin,
-			open: cluster.section === 'today' || cluster.section === 'later' ? cluster.days : ALL_DAYS,
-		})),
-		...hiddenRuns,
-	];
-	const resin = flexible.reduce((total, bucket) => total + bucket.resin, 0);
-	const days = Math.max(walkDays(flexible, resinPerDay, today), weeklySpan);
-
-	const busy = new Set(tasks.filter((task) => !SUMMARY_KINDS.has(task.line.kind)).map((task) => task.characterId));
-	const idleCharacterIds = input.plans
-		.map((plan) => plan.characterId)
-		.filter((id) => !busy.has(id));
-
-	return { sections, resin, days, stock, idleCharacterIds };
+	return { sections, resin, days, stock };
 }

@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	ArrowRight,
 	ChartLineUp,
-	Check,
+	CircleDashed,
 	Crown,
 	Diamond,
 	Drop,
@@ -18,6 +18,7 @@ import {
 	Sword,
 	Target,
 	Trash,
+	WarningCircle,
 	Wind,
 	X,
 } from 'phosphor-react';
@@ -29,20 +30,25 @@ import {
 	CIRCLET_STATS,
 	emptyArtifactBuild,
 	GOBLET_STATS,
+	hasArtifactPlan,
 	SANDS_STATS,
 	SUBSTATS,
+	unreachedStats,
 } from '../../features/planner/artifactBuild.ts';
 import { catalogItemForNeed } from '../../features/planner/farm.ts';
 import {
-	CHARACTER_LEVELS,
 	CharacterLevel,
 	FarmNeed,
-	isCharacterLevel,
 	isTalentLevel,
+	LEVEL_RANKS,
 	needsForCharacter,
 	PlannedCharacter,
 	PlannerTab,
 	plannerTabForLine,
+	rankIndex,
+	rankKey,
+	ranksFrom,
+	WEAPON_LEVEL_RANKS,
 	TALENT_LEVELS,
 	TalentLevel,
 } from '../../features/planner/materials.ts';
@@ -126,10 +132,14 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	const french = i18n.language.toLowerCase().startsWith('fr');
 	const [draftName, setDraftName] = useState('');
 	const [currentLevel, setCurrentLevel] = useState<CharacterLevel>(initial?.currentLevel ?? 1);
+	const [currentAscended, setCurrentAscended] = useState(initial?.currentAscended ?? false);
 	const [targetLevel, setTargetLevel] = useState<CharacterLevel>(initial?.targetLevel ?? 90);
+	const [targetAscended, setTargetAscended] = useState(initial?.targetAscended ?? false);
 	const [weaponId, setWeaponId] = useState<string | null>(initial?.weaponId ?? null);
 	const [weaponCurrent, setWeaponCurrent] = useState<CharacterLevel>(initial?.weaponCurrentLevel ?? 1);
+	const [weaponCurrentAscended, setWeaponCurrentAscended] = useState(initial?.weaponCurrentAscended ?? false);
 	const [weaponTarget, setWeaponTarget] = useState<CharacterLevel>(initial?.weaponTargetLevel ?? 1);
+	const [weaponTargetAscended, setWeaponTargetAscended] = useState(initial?.weaponTargetAscended ?? false);
 	const [talentNormal, setTalentNormal] = useState<TalentLevel>(initial?.talentNormal ?? 1);
 	const [talentNormalTarget, setTalentNormalTarget] = useState<TalentLevel>(initial?.talentNormalTarget ?? 1);
 	const [talentSkill, setTalentSkill] = useState<TalentLevel>(initial?.talentSkill ?? 1);
@@ -138,6 +148,9 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	const [talentBurstTarget, setTalentBurstTarget] = useState<TalentLevel>(initial?.talentBurstTarget ?? 1);
 	const [build, setBuild] = useState<ArtifactBuild>(initial?.artifactBuild ?? emptyArtifactBuild(initial?.artifactSet ?? null));
 	const [tab, setTab] = useState<PlannerTab>(initialTab);
+	const skipSave = useRef(true);
+	const onSubmitRef = useRef(onSubmit);
+	onSubmitRef.current = onSubmit;
 
 	const selected = mode === 'add'
 		? characters.find((character) => character.name === draftName)
@@ -146,33 +159,107 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		selected ? weapons.filter((weapon) => weapon.type === selected.weapon) : []
 	), [weapons, selected]);
 	const weaponName = weapons.find((weapon) => weapon.id === weaponId)?.name ?? '';
+	const characterId = mode === 'add' ? selected?.id : initial?.characterId;
 
 	const patchBuild = (patch: Partial<ArtifactBuild>) => setBuild((current) => ({ ...current, ...patch }));
 
+	const metaRef = useRef({
+		favorite: initial?.favorite ?? false,
+		done: initial?.done ?? false,
+		taskSignature: initial?.taskSignature ?? '',
+		checkedTasks: initial?.checkedTasks ?? [],
+	});
+	metaRef.current = {
+		favorite: initial?.favorite ?? false,
+		done: initial?.done ?? false,
+		taskSignature: initial?.taskSignature ?? '',
+		checkedTasks: initial?.checkedTasks ?? [],
+	};
+
+	useEffect(() => {
+		if (skipSave.current) {
+			skipSave.current = false;
+			return;
+		}
+		if (!characterId) return;
+		onSubmitRef.current({
+			characterId,
+			currentLevel,
+			currentAscended,
+			targetLevel,
+			targetAscended,
+			weaponId,
+			weaponCurrentLevel: weaponId ? weaponCurrent : null,
+			weaponCurrentAscended: weaponId ? weaponCurrentAscended : false,
+			weaponTargetLevel: weaponId ? weaponTarget : null,
+			weaponTargetAscended: weaponId ? weaponTargetAscended : false,
+			talentNormal,
+			talentNormalTarget,
+			talentSkill,
+			talentSkillTarget,
+			talentBurst,
+			talentBurstTarget,
+			artifactSet: build.set,
+			favorite: metaRef.current.favorite,
+			done: metaRef.current.done,
+			taskSignature: metaRef.current.taskSignature,
+			checkedTasks: metaRef.current.checkedTasks,
+			artifactBuild: build,
+		});
+	}, [
+		characterId,
+		currentLevel,
+		currentAscended,
+		targetLevel,
+		targetAscended,
+		weaponId,
+		weaponCurrent,
+		weaponCurrentAscended,
+		weaponTarget,
+		weaponTargetAscended,
+		talentNormal,
+		talentNormalTarget,
+		talentSkill,
+		talentSkillTarget,
+		talentBurst,
+		talentBurstTarget,
+		build,
+	]);
+
 	const changeCurrent = (value: string) => {
-		const level = Number(value);
-		if (!isCharacterLevel(level)) return;
-		setCurrentLevel(level);
-		if (targetLevel < level) setTargetLevel(level);
+		const rank = LEVEL_RANKS.find((item) => rankKey(item) === value);
+		if (!rank) return;
+		setCurrentLevel(rank.level);
+		setCurrentAscended(rank.ascended);
+		if (rankIndex(targetLevel, targetAscended) < rankIndex(rank.level, rank.ascended)) {
+			setTargetLevel(rank.level);
+			setTargetAscended(rank.ascended);
+		}
 	};
 
 	const changeTarget = (value: string) => {
-		const level = Number(value);
-		if (!isCharacterLevel(level) || level < currentLevel) return;
-		setTargetLevel(level);
+		const rank = LEVEL_RANKS.find((item) => rankKey(item) === value);
+		if (!rank || rankIndex(rank.level, rank.ascended) < rankIndex(currentLevel, currentAscended)) return;
+		setTargetLevel(rank.level);
+		setTargetAscended(rank.ascended);
 	};
 
 	const changeWeaponCurrent = (value: string) => {
-		const level = Number(value);
-		if (!isCharacterLevel(level)) return;
-		setWeaponCurrent(level);
-		if (weaponTarget < level) setWeaponTarget(level);
+		const rank = WEAPON_LEVEL_RANKS.find((item) => rankKey(item) === value);
+		if (!rank) return;
+		setWeaponCurrent(rank.level);
+		setWeaponCurrentAscended(rank.ascended);
+		if (rankIndex(weaponTarget, weaponTargetAscended, WEAPON_LEVEL_RANKS) < rankIndex(rank.level, rank.ascended, WEAPON_LEVEL_RANKS)) {
+			setWeaponTarget(rank.level);
+			setWeaponTargetAscended(rank.ascended);
+		}
 	};
 
 	const changeWeaponTarget = (value: string) => {
-		const level = Number(value);
-		if (!isCharacterLevel(level) || level < weaponCurrent) return;
-		setWeaponTarget(level);
+		const rank = WEAPON_LEVEL_RANKS.find((item) => rankKey(item) === value);
+		if (!rank || rankIndex(rank.level, rank.ascended, WEAPON_LEVEL_RANKS) < rankIndex(weaponCurrent, weaponCurrentAscended, WEAPON_LEVEL_RANKS)) return;
+		setWeaponTarget(rank.level);
+		setWeaponTargetAscended(rank.ascended);
 	};
 
 	const changeTalentCurrent = (
@@ -200,7 +287,9 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		if (!next || (weapon && weapon.type !== next.weapon)) {
 			setWeaponId(null);
 			setWeaponCurrent(1);
+			setWeaponCurrentAscended(false);
 			setWeaponTarget(1);
+			setWeaponTargetAscended(false);
 		}
 	};
 
@@ -209,40 +298,15 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		setWeaponId(weapon?.id ?? null);
 		if (!weapon) {
 			setWeaponCurrent(1);
+			setWeaponCurrentAscended(false);
 			setWeaponTarget(1);
+			setWeaponTargetAscended(false);
 		}
 	};
 
 	const chooseSet = (field: 'set' | 'setB', name: string) => {
 		const found = artifactChoices.find((item) => item.name === name);
 		patchBuild({ [field]: found?.name ?? null });
-	};
-
-	const submit = (event: React.FormEvent) => {
-		event.preventDefault();
-		const characterId = mode === 'add' ? selected?.id : initial?.characterId;
-		if (!characterId) return;
-		const plan: PlannedCharacter = {
-			characterId,
-			currentLevel,
-			targetLevel,
-			weaponId,
-			weaponCurrentLevel: weaponId ? weaponCurrent : null,
-			weaponTargetLevel: weaponId ? weaponTarget : null,
-			talentNormal,
-			talentNormalTarget,
-			talentSkill,
-			talentSkillTarget,
-			talentBurst,
-			talentBurstTarget,
-			artifactSet: build.set,
-			favorite: initial?.favorite ?? false,
-			done: initial?.done ?? false,
-			taskSignature: initial?.taskSignature ?? '',
-			checkedTasks: initial?.checkedTasks ?? [],
-			artifactBuild: build,
-		};
-		onSubmit(plan);
 	};
 
 	const showBuild = mode === 'edit' || draftName !== '';
@@ -252,10 +316,14 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		const plan: PlannedCharacter = {
 			characterId: selected.id,
 			currentLevel,
+			currentAscended,
 			targetLevel,
+			targetAscended,
 			weaponId,
 			weaponCurrentLevel: weaponId ? weaponCurrent : null,
+			weaponCurrentAscended: weaponId ? weaponCurrentAscended : false,
 			weaponTargetLevel: weaponId ? weaponTarget : null,
+			weaponTargetAscended: weaponId ? weaponTargetAscended : false,
 			talentNormal,
 			talentNormalTarget,
 			talentSkill,
@@ -271,6 +339,8 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		};
 		const labelOf = (line: FarmNeed) => {
 			if (line.kind === 'xp') return t('planner.heroWit');
+			if (line.kind === 'weaponXp') return t('planner.mysticOre');
+			if (line.kind === 'fortuna') return t('planner.stellaFortuna');
 			if (line.kind === 'stone' && line.element && line.tier) {
 				return t('planner.stones.label', {
 					tier: t(`planner.stones.tiers.${line.tier}`),
@@ -284,7 +354,12 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			.filter((line) => line.kind !== 'mora' && plannerTabForLine(plan, selected, weapon, line) === tab)
 			.map((line) => {
 				const item = catalogItemForNeed(catalog?.items ?? [], line);
-				return { id: line.id, name: labelOf(line), count: line.count, image: item?.image };
+				const image = line.kind === 'weaponXp'
+					? catalog?.weaponOreImage
+					: line.kind === 'fortuna'
+						? catalog?.fortunaImage
+						: item?.image;
+				return { id: line.id, name: labelOf(line), count: line.count, image };
 			});
 	}, [
 		showBuild,
@@ -295,9 +370,13 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		weapons,
 		weaponId,
 		weaponCurrent,
+		weaponCurrentAscended,
 		weaponTarget,
+		weaponTargetAscended,
 		currentLevel,
+		currentAscended,
 		targetLevel,
+		targetAscended,
 		talentNormal,
 		talentNormalTarget,
 		talentSkill,
@@ -310,6 +389,43 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	]);
 	const ElementIcon = selected ? (ELEMENT_ICONS[selected.element] ?? Sparkle) : Sparkle;
 	const WeaponTypeIcon = selected ? (WEAPON_ICONS[selected.weapon] ?? Sword) : Sword;
+	const tabStatus = useMemo(() => {
+		const levelTodo = rankIndex(currentLevel, currentAscended) < rankIndex(targetLevel, targetAscended);
+		const weaponMissing = !weaponId;
+		const weaponTodo = Boolean(
+			weaponId
+			&& rankIndex(weaponCurrent, weaponCurrentAscended, WEAPON_LEVEL_RANKS)
+				< rankIndex(weaponTarget, weaponTargetAscended, WEAPON_LEVEL_RANKS),
+		);
+		const talentsTodo = talentNormal < talentNormalTarget
+			|| talentSkill < talentSkillTarget
+			|| talentBurst < talentBurstTarget;
+		const artifactsMissing = !hasArtifactPlan(build);
+		const artifactsTodo = !artifactsMissing && unreachedStats(build).length > 0;
+		return {
+			level: levelTodo ? 'todo' as const : null,
+			weapon: weaponMissing ? 'missing' as const : weaponTodo ? 'todo' as const : null,
+			talents: talentsTodo ? 'todo' as const : null,
+			artifacts: artifactsMissing ? 'missing' as const : artifactsTodo ? 'todo' as const : null,
+		};
+	}, [
+		currentLevel,
+		currentAscended,
+		targetLevel,
+		targetAscended,
+		weaponId,
+		weaponCurrent,
+		weaponCurrentAscended,
+		weaponTarget,
+		weaponTargetAscended,
+		talentNormal,
+		talentNormalTarget,
+		talentSkill,
+		talentSkillTarget,
+		talentBurst,
+		talentBurstTarget,
+		build,
+	]);
 	const statOptions = (stats: readonly string[]) => stats.map((stat) => (
 		<option key={stat} value={stat}>{t(`planner.stats.${stat}`)}</option>
 	));
@@ -322,7 +438,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 					<X size={22} />
 				</button>
 			</div>
-			<form onSubmit={submit}>
+			<div className="planner-modal-body">
 				<div className={`planner-modal-identity${selected ? ` rarity-${selected.rarity}` : ''}`}>
 					{selected && (
 						<div className="planner-modal-portrait">
@@ -358,22 +474,45 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 							</p>
 						)}
 					</div>
+					{mode === 'edit' && (
+						<button
+							type="button"
+							className="planner-modal-remove tooltip-anchor"
+							onClick={onRemove}
+							disabled={saving}
+							aria-label={t('planner.remove')}
+						>
+							<Trash size={18} />
+							<span className="tooltip left" role="tooltip">{t('planner.remove')}</span>
+						</button>
+					)}
 				</div>
 				{showBuild && (
 					<>
 						<div className="planner-tabs" role="tablist">
 							{(['level', 'weapon', 'talents', 'artifacts'] as const).map((id) => {
 								const Icon = TAB_ICONS[id];
+								const status = tabStatus[id];
+								const StatusIcon = status === 'missing' ? CircleDashed : WarningCircle;
 								return (
 									<button
 										key={id}
 										type="button"
 										role="tab"
 										aria-selected={tab === id}
+										className={status ? `has-${status}` : undefined}
 										onClick={() => setTab(id)}
 									>
 										<Icon size={16} />
-										{t(`planner.tabs.${id}`)}
+										<span className="planner-tab-label">{t(`planner.tabs.${id}`)}</span>
+										{status && (
+											<span className={`planner-tab-status is-${status} tooltip-anchor`}>
+												<StatusIcon size={13} weight="fill" aria-hidden="true" />
+												<span className="tooltip top" role="tooltip">
+													{t(`planner.tabStatus.${status}`)}
+												</span>
+											</span>
+										)}
 									</button>
 								);
 							})}
@@ -383,15 +522,15 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 							<div className="planner-level-fields">
 								<label>
 									{t('planner.currentLevel')}
-									<select value={currentLevel} onChange={(event) => changeCurrent(event.target.value)}>
-										{CHARACTER_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+									<select value={rankKey({ level: currentLevel, ascended: currentAscended })} onChange={(event) => changeCurrent(event.target.value)}>
+										{LEVEL_RANKS.map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
 									</select>
 								</label>
 								<ArrowRight className="planner-level-arrow" size={18} />
 								<label>
 									{t('planner.targetLevel')}
-									<select value={targetLevel} onChange={(event) => changeTarget(event.target.value)}>
-										{CHARACTER_LEVELS.filter((level) => level >= currentLevel).map((level) => <option key={level} value={level}>{level}</option>)}
+									<select value={rankKey({ level: targetLevel, ascended: targetAscended })} onChange={(event) => changeTarget(event.target.value)}>
+										{ranksFrom(currentLevel, currentAscended).map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
 									</select>
 								</label>
 							</div>
@@ -416,15 +555,15 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									<div className="planner-level-fields">
 										<label>
 											{t('planner.currentLevel')}
-											<select value={weaponCurrent} onChange={(event) => changeWeaponCurrent(event.target.value)}>
-												{CHARACTER_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+											<select value={rankKey({ level: weaponCurrent, ascended: weaponCurrentAscended })} onChange={(event) => changeWeaponCurrent(event.target.value)}>
+												{WEAPON_LEVEL_RANKS.map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
 											</select>
 										</label>
 										<ArrowRight className="planner-level-arrow" size={18} />
 										<label>
 											{t('planner.targetLevel')}
-											<select value={weaponTarget} onChange={(event) => changeWeaponTarget(event.target.value)}>
-												{CHARACTER_LEVELS.filter((level) => level >= weaponCurrent).map((level) => <option key={level} value={level}>{level}</option>)}
+											<select value={rankKey({ level: weaponTarget, ascended: weaponTargetAscended })} onChange={(event) => changeWeaponTarget(event.target.value)}>
+												{ranksFrom(weaponCurrent, weaponCurrentAscended, WEAPON_LEVEL_RANKS).map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
 											</select>
 										</label>
 									</div>
@@ -484,14 +623,16 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 						</section>
 						)}
 						{tab === 'artifacts' && (
-						<section className="planner-form-block">
-							<div className="planner-field">
-								<span>{t('planner.set')}</span>
-								<ItemSelect items={artifactChoices} isLoading={false} value={build.set ?? ''} onChange={(name) => chooseSet('set', name)} placeholder={t('planner.artifactNone')} />
-							</div>
-							<div className="planner-field">
-								<span>{t('planner.setB')}</span>
-								<ItemSelect items={artifactChoices} isLoading={false} value={build.setB ?? ''} onChange={(name) => chooseSet('setB', name)} placeholder={t('planner.artifactNone')} />
+						<section className="planner-form-block planner-artifacts">
+							<div className="planner-artifact-sets">
+								<div className="planner-field">
+									<span>{t('planner.set')}</span>
+									<ItemSelect items={artifactChoices} isLoading={false} value={build.set ?? ''} onChange={(name) => chooseSet('set', name)} placeholder={t('planner.artifactNone')} />
+								</div>
+								<div className="planner-field">
+									<span>{t('planner.setB')}</span>
+									<ItemSelect items={artifactChoices} isLoading={false} value={build.setB ?? ''} onChange={(name) => chooseSet('setB', name)} placeholder={t('planner.artifactNone')} />
+								</div>
 							</div>
 							<div className="planner-main-stats">
 								{([
@@ -499,51 +640,50 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									['goblet', GOBLET_STATS],
 									['circlet', CIRCLET_STATS],
 								] as const).map(([slot, stats]) => (
-									<div key={slot} className="planner-main-stat">
+									<label key={slot} className="planner-main-stat">
 										<span className="planner-slot-label">
-											{slot === 'sands' && <Hourglass size={15} />}
-											{slot === 'goblet' && <Drop size={15} />}
-											{slot === 'circlet' && <Crown size={15} />}
+											{slot === 'sands' && <Hourglass size={14} />}
+											{slot === 'goblet' && <Drop size={14} />}
+											{slot === 'circlet' && <Crown size={14} />}
 											{t(`planner.slots.${slot}`)}
 										</span>
-										<select aria-label={t(`planner.slots.${slot}`)} value={build[slot]} onChange={(event) => patchBuild({ [slot]: event.target.value })}>
+										<select value={build[slot]} onChange={(event) => patchBuild({ [slot]: event.target.value })}>
 											<option value="">{t('planner.any')}</option>
 											{statOptions(stats)}
 										</select>
-									</div>
+									</label>
 								))}
 							</div>
 							<div className="planner-subs">
-								<span>{t('planner.subs')}</span>
+								<span className="planner-subs-title">{t('planner.subs')}</span>
 								{build.subs.map((sub, index) => (
-									<div key={`${sub.stat}-${index}`} className="planner-sub">
+									<div key={`sub-${index}`} className="planner-sub">
 										<select
 											value={sub.stat}
+											aria-label={t('planner.chooseStat')}
 											onChange={(event) => patchBuild({
 												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, stat: event.target.value } : entry)),
 											})}
 										>
+											<option value="">{t('planner.chooseStat')}</option>
 											{statOptions(SUBSTATS)}
 										</select>
-										<label>
-											<span>{t('planner.targetValue')}</span>
-											<input
-												type="number"
-												min={0}
-												step="0.1"
-												aria-label={t('planner.targetValue')}
-												value={sub.target}
-												onChange={(event) => patchBuild({
-													subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, target: Number(event.target.value) } : entry)),
-												})}
-											/>
-										</label>
+										<input
+											type="text"
+											inputMode="decimal"
+											aria-label={t('planner.targetValue')}
+											placeholder={t('planner.targetValue')}
+											value={sub.target}
+											onChange={(event) => patchBuild({
+												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, target: event.target.value } : entry)),
+											})}
+										/>
 										<button type="button" className="planner-sub-remove" onClick={() => patchBuild({ subs: build.subs.filter((_, entryIndex) => entryIndex !== index) })} aria-label={t('planner.removeStat')}>
 											<X size={14} />
 										</button>
 									</div>
 								))}
-								<button type="button" className="planner-clear" onClick={() => patchBuild({ subs: [...build.subs, { stat: 'cr', current: 0, target: 0 }] })}>
+								<button type="button" className="planner-clear" onClick={() => patchBuild({ subs: [...build.subs, { stat: '', current: 0, target: '' }] })}>
 									<Plus size={14} />
 									{t('planner.addStat')}
 								</button>
@@ -567,20 +707,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 					</div>
 				)}
 				{saveError && <p className="planner-save-error">{t('planner.saveError')}</p>}
-				<div className="planner-modal-actions">
-					{mode === 'edit' && (
-						<button type="button" className="is-danger" onClick={onRemove} disabled={saving}>
-							<Trash size={16} />
-							{t('planner.remove')}
-						</button>
-					)}
-					<button type="button" onClick={onClose} disabled={saving}>{t('common.cancel')}</button>
-					<button type="submit" className="is-primary" disabled={saving || (mode === 'add' && !draftName)}>
-						{mode === 'add' ? <Plus size={16} /> : <Check size={16} />}
-						{mode === 'add' ? t('common.add') : t('common.save')}
-					</button>
-				</div>
-			</form>
+			</div>
 		</div>
 	);
 };

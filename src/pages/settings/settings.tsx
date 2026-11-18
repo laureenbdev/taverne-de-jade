@@ -66,12 +66,14 @@ const Settings: React.FC = () => {
 		}
 
 		setSaving(true);
-		const error = await saveProfile({ displayName: trimmedName, uid: trimmedUid, server });
+		const languageError = await setLanguage(language);
+		const error = languageError
+			?? await saveProfile({ displayName: trimmedName, uid: trimmedUid, server });
 		setSaving(false);
 		if (!error) dirty.current = false;
 		setStatus(error
 			? { type: 'error', text: error }
-			: { type: 'ok', text: t('settings.saved') });
+			: { type: 'ok', text: i18n.t('settings.saved', { lng: language }) });
 	};
 
 	useEffect(() => {
@@ -138,7 +140,6 @@ const Settings: React.FC = () => {
 						</div>
 						)}
 
-						{!session && (
 						<div className="setting-row">
 							<label htmlFor="player-language">{t('settings.language')}</label>
 							<select
@@ -153,7 +154,6 @@ const Settings: React.FC = () => {
 								<option value="fr">Français</option>
 							</select>
 						</div>
-						)}
 
 						{session && (
 						<>

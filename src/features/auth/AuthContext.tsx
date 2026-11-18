@@ -106,9 +106,9 @@ function currentLanguage(): Language {
 	return (i18n.resolvedLanguage || 'en').startsWith('fr') ? 'fr' : 'en';
 }
 
-function applyLanguage(language: Language) {
+async function applyLanguage(language: Language) {
 	if (currentLanguage() !== language) {
-		void i18n.changeLanguage(language);
+		await i18n.changeLanguage(language);
 	}
 	localStorage.setItem('taverne-lang', language);
 }
@@ -164,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		setProfile(remote);
 		writeLocalProfile(remote);
 		const language = readLanguage(row.language);
-		if (language) applyLanguage(language);
+		if (language) await applyLanguage(language);
 	}, []);
 
 	useEffect(() => {
@@ -284,7 +284,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 	}, [session, writeProfile]);
 
 	const setLanguage = useCallback(async (language: Language) => {
-		applyLanguage(language);
+		await applyLanguage(language);
 		if (!session) return null;
 		return writeProfile(profile, language, false);
 	}, [profile, session, writeProfile]);

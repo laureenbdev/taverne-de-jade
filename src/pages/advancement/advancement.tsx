@@ -3,16 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { CaretRight, ImageSquare } from 'phosphor-react';
 
 import {
-	ADVANCEMENT_CATEGORIES,
+	AdvancementCategory,
 	AdvancementGroup,
 	AdvancementItem,
+	buildAdvancementCatalog,
 	categoryItems,
 	countChecked,
 	labelOf,
 } from '../../features/advancement/catalog.ts';
-import { groupCover } from '../../features/advancement/covers.ts';
+import { categoryCover, groupCover } from '../../features/advancement/covers.ts';
 import Unfold from '../../components/unfold/unfold.tsx';
 import { useAdvancement } from '../../hooks/useAdvancement.ts';
+import { AdvancementApiService } from '../../services/genshin/advancementApi.ts';
 import './advancement.scss';
 
 const RING_SIZE = 96;
@@ -65,6 +67,9 @@ const ProgressRing: React.FC<ProgressRingProps> = ({ percent, label, className }
 const Advancement: React.FC = () => {
 	const { t, i18n } = useTranslation();
 	const { checked, isLoading, loadError, toggle } = useAdvancement();
+	const [categories, setCategories] = useState<AdvancementCategory[]>([]);
+	const [catalogLoading, setCatalogLoading] = useState(true);
+	const [catalogError, setCatalogError] = useState<string | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const [pendingId, setPendingId] = useState<string | null>(null);
 	const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
@@ -72,15 +77,37 @@ const Advancement: React.FC = () => {
 	const [openSeriesId, setOpenSeriesId] = useState<string | null>(null);
 	const detailRef = useRef<HTMLDivElement>(null);
 
+	useEffect(() => {
+		let cancelled = false;
+		setCatalogLoading(true);
+		AdvancementApiService.getAll()
+			.then((data) => {
+				if (cancelled) return;
+				setCategories(buildAdvancementCatalog(data));
+				setCatalogError(null);
+			})
+			.catch((error) => {
+				if (cancelled) return;
+				setCategories([]);
+				setCatalogError(error instanceof Error ? error.message : t('advancement.catalogError'));
+			})
+			.finally(() => {
+				if (!cancelled) setCatalogLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [t]);
+
 	const stats = useMemo(() => STAT_IDS.map((id) => {
-		const category = ADVANCEMENT_CATEGORIES.find((entry) => entry.id === id);
+		const category = categories.find((entry) => entry.id === id);
 		return {
 			id,
 			label: category ? labelOf(category, i18n.language) : id,
 			progress: countChecked(category ? categoryItems(category) : [], checked),
 		};
-	}), [checked, i18n.language]);
-	const openCategory = ADVANCEMENT_CATEGORIES.find((category) => category.id === (openCategoryId ?? shownCategoryId)) ?? null;
+	}), [categories, checked, i18n.language]);
+	const openCategory = categories.find((category) => category.id === (openCategoryId ?? shownCategoryId)) ?? null;
 	const openProgress = openCategory ? countChecked(categoryItems(openCategory), checked) : null;
 
 	const detail = (done: number, total: number) => (
@@ -105,7 +132,7 @@ const Advancement: React.FC = () => {
 			setOpenSeriesId(null);
 			return;
 		}
-		const category = ADVANCEMENT_CATEGORIES.find((entry) => entry.id === categoryId);
+		const category = categories.find((entry) => entry.id === categoryId);
 		setShownCategoryId(categoryId);
 		setOpenCategoryId(categoryId);
 		setOpenSeriesId(category?.groups[0]?.id ?? null);
@@ -116,18 +143,21 @@ const Advancement: React.FC = () => {
 		detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	}, [openCategoryId]);
 
+	const busy = isLoading || catalogLoading;
+	const errorMessage = catalogError || loadError || saveError;
+
 	return (
 		<div id="advancement" className="page">
 			<section>
 				<div className="section-container">
 					<h2>{t('advancement.stats')}</h2>
-					{(loadError || saveError) && <p className="advancement-error">{loadError || saveError}</p>}
+					{errorMessage && <p className="advancement-error">{errorMessage}</p>}
 					<div className="advancement-stats">
 						{stats.map((stat) => (
 							<article key={stat.id} className="stat-card">
 								<ProgressRing className={`is-${stat.id}`} percent={stat.progress.percent} label={`${stat.progress.percent}%`} />
 								<h3>{stat.label}</h3>
-								<p>{isLoading ? t('common.loading') : detail(stat.progress.done, stat.progress.total)}</p>
+								<p>{busy ? t('common.loading') : detail(stat.progress.done, stat.progress.total)}</p>
 							</article>
 						))}
 					</div>
@@ -135,56 +165,62 @@ const Advancement: React.FC = () => {
 
 				<div className="section-container">
 					<h2>{t('advancement.categories')}</h2>
-					<div className="advancement-board">
-						{ADVANCEMENT_CATEGORIES.map((category) => {
-							const progress = countChecked(categoryItems(category), checked);
-							return (
-								<button
-									key={category.id}
-									type="button"
-									className={`advancement-card${progress.percent === 100 ? ' is-complete' : ''}${openCategoryId === category.id ? ' is-selected' : ''}`}
-									aria-expanded={openCategoryId === category.id}
-									onClick={() => selectCategory(category.id)}
-								>
-									<span className="advancement-card-image">
-										<Cover src={null} size={36} />
-									</span>
-									<strong>{labelOf(category, i18n.language)}</strong>
-									<span className="advancement-bar" aria-hidden="true">
-										<span style={{ width: `${progress.percent}%` }} />
-									</span>
-									<small>{t('advancement.done', { done: progress.done, total: progress.total })}</small>
-								</button>
-							);
-						})}
-					</div>
-					<Unfold open={Boolean(openCategoryId)}>
-						{openCategory && (
-							<div className="advancement-detail" ref={detailRef}>
-								<div className="advancement-detail-head">
-									<h3>{labelOf(openCategory, i18n.language)}</h3>
-									<p>{t('advancement.done', { done: openProgress?.done ?? 0, total: openProgress?.total ?? 0 })}</p>
-								</div>
-								<span className="advancement-bar" aria-hidden="true">
-									<span style={{ width: `${openProgress?.percent ?? 0}%` }} />
-								</span>
-								<div className="advancement-series-list">
-									{openCategory.groups.map((group) => (
-										<SeriesBlock
-											key={group.id}
-											group={group}
-											language={i18n.language}
-											checked={checked}
-											pendingId={pendingId}
-											open={openSeriesId === group.id}
-											onOpen={() => setOpenSeriesId(openSeriesId === group.id ? null : group.id)}
-											onToggle={onToggle}
-										/>
-									))}
-								</div>
+					{catalogLoading ? (
+						<p className="advancement-loading">{t('common.loading')}</p>
+					) : (
+						<>
+							<div className="advancement-board">
+								{categories.map((category) => {
+									const progress = countChecked(categoryItems(category), checked);
+									return (
+										<button
+											key={category.id}
+											type="button"
+											className={`advancement-card${progress.percent === 100 ? ' is-complete' : ''}${openCategoryId === category.id ? ' is-selected' : ''}`}
+											aria-expanded={openCategoryId === category.id}
+											onClick={() => selectCategory(category.id)}
+										>
+											<span className="advancement-card-image">
+												<Cover src={categoryCover(category.image)} size={36} />
+											</span>
+											<strong>{labelOf(category, i18n.language)}</strong>
+											<span className="advancement-bar" aria-hidden="true">
+												<span style={{ width: `${progress.percent}%` }} />
+											</span>
+											<small>{t('advancement.done', { done: progress.done, total: progress.total })}</small>
+										</button>
+									);
+								})}
 							</div>
-						)}
-					</Unfold>
+							<Unfold open={Boolean(openCategoryId)}>
+								{openCategory && (
+									<div className="advancement-detail" ref={detailRef}>
+										<div className="advancement-detail-head">
+											<h3>{labelOf(openCategory, i18n.language)}</h3>
+											<p>{t('advancement.done', { done: openProgress?.done ?? 0, total: openProgress?.total ?? 0 })}</p>
+										</div>
+										<span className="advancement-bar" aria-hidden="true">
+											<span style={{ width: `${openProgress?.percent ?? 0}%` }} />
+										</span>
+										<div className="advancement-series-list">
+											{openCategory.groups.map((group) => (
+												<SeriesBlock
+													key={group.id}
+													group={group}
+													language={i18n.language}
+													checked={checked}
+													pendingId={pendingId}
+													open={openSeriesId === group.id}
+													onOpen={() => setOpenSeriesId(openSeriesId === group.id ? null : group.id)}
+													onToggle={onToggle}
+												/>
+											))}
+										</div>
+									</div>
+								)}
+							</Unfold>
+						</>
+					)}
 				</div>
 			</section>
 		</div>
@@ -208,7 +244,7 @@ const SeriesBlock: React.FC<SeriesBlockProps> = ({ group, language, checked, pen
 	return (
 		<section className={`advancement-series${open ? ' is-open' : ''}${progress.percent === 100 ? ' is-complete' : ''}`}>
 			<button type="button" className="advancement-series-head" onClick={onOpen} aria-expanded={open}>
-				<Cover src={groupCover(group.id)} size={22} />
+				<Cover src={groupCover(group.id, group.image)} size={22} />
 				<span className="advancement-series-title">
 					<strong>{labelOf(group, language)}</strong>
 					<span className="advancement-bar" aria-hidden="true">
@@ -232,7 +268,6 @@ const SeriesBlock: React.FC<SeriesBlockProps> = ({ group, language, checked, pen
 							/>
 						))}
 					</ul>
-					{group.todo && <p className="advancement-todo">{t(`advancement.todos.${group.todo}`)}</p>}
 				</div>
 			</Unfold>
 		</section>
@@ -247,18 +282,24 @@ interface CheckRowProps {
 	onToggle: (id: string) => void;
 }
 
-const CheckRow: React.FC<CheckRowProps> = ({ item, language, checked, disabled, onToggle }) => (
-	<li className={checked ? 'is-done' : undefined}>
-		<label>
-			<input
-				type="checkbox"
-				checked={checked}
-				disabled={disabled}
-				onChange={() => onToggle(item.id)}
-			/>
-			<span>{labelOf(item, language)}</span>
-		</label>
-	</li>
-);
+const CheckRow: React.FC<CheckRowProps> = ({ item, language, checked, disabled, onToggle }) => {
+	const inputId = `adv-${item.id}`;
+	return (
+		<li className={checked ? 'is-done' : undefined}>
+			<label htmlFor={inputId} className="advancement-check">
+				<input
+					id={inputId}
+					className="custom-checkbox"
+					type="checkbox"
+					checked={checked}
+					disabled={disabled}
+					onChange={() => onToggle(item.id)}
+				/>
+				<span className="custom-checkbox-label" aria-hidden="true" />
+				<span className="advancement-check-label">{labelOf(item, language)}</span>
+			</label>
+		</li>
+	);
+};
 
 export default Advancement;

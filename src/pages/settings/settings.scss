@@ -93,9 +93,15 @@
 	}
 
 	.btn-primary {
-		border: none;
+		border: 1px solid var(--color-primary-deep);
 		background: var(--color-primary-deep);
 		color: #fff;
+
+		&:hover:not(:disabled) {
+			border-color: var(--color-primary);
+			background: var(--color-primary);
+			color: #fff;
+		}
 
 		&:disabled {
 			opacity: 0.6;
@@ -107,6 +113,12 @@
 		border: 1px solid var(--color-grey);
 		background: transparent;
 		color: var(--color-text);
+
+		&:hover:not(:disabled) {
+			border-color: var(--color-heading);
+			background: rgba(28, 40, 35, 0.06);
+			color: var(--color-heading);
+		}
 	}
 
 	.settings-status {
@@ -179,15 +191,27 @@
 	}
 
 	.btn-primary {
-		border: none;
+		border: 1px solid var(--color-primary-deep);
 		background: var(--color-primary-deep);
 		color: #fff;
+
+		&:hover:not(:disabled) {
+			border-color: var(--color-primary);
+			background: var(--color-primary);
+			color: #fff;
+		}
 	}
 
 	.btn-ghost {
 		border: 1px solid var(--color-grey);
 		background: transparent;
 		color: var(--color-text);
+
+		&:hover:not(:disabled) {
+			border-color: var(--color-heading);
+			background: rgba(28, 40, 35, 0.06);
+			color: var(--color-heading);
+		}
 	}
 }
 

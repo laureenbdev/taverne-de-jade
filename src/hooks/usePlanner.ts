@@ -7,13 +7,9 @@ import { PlannerStorageService } from '../services/planner/plannerStorage.ts';
 
 function normalizePlan(plan: PlannedCharacter): PlannedCharacter {
 	const raised = withRaisedTargets(plan);
-	const signature = farmingSignature(raised);
-	const stale = raised.taskSignature !== '' && raised.taskSignature !== signature;
 	return {
 		...raised,
-		taskSignature: signature,
-		checkedTasks: stale ? [] : raised.checkedTasks,
-		done: stale ? false : raised.done,
+		taskSignature: farmingSignature(raised),
 	};
 }
 

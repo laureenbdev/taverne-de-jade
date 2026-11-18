@@ -98,10 +98,13 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 		};
 	}, [dropdown.present]);
 
-	useLayoutEffect(() => {
-		if (!dropdown.present || !anchor) return;
-		searchInputRef.current?.focus();
-	}, [dropdown.present, anchor]);
+	useEffect(() => {
+		if (!dropdown.present || !dropdown.shown || !anchor) return;
+		const frame = window.requestAnimationFrame(() => {
+			searchInputRef.current?.focus({ preventScroll: true });
+		});
+		return () => window.cancelAnimationFrame(frame);
+	}, [dropdown.present, dropdown.shown, anchor]);
 
 	// Gérer la navigation au clavier
 	const handleKeyDown = (e: React.KeyboardEvent) => {

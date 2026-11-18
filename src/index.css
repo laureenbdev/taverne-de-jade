@@ -377,13 +377,14 @@ html::-webkit-scrollbar-thumb {
   position: relative;
   z-index: 1;
   width: 100%;
+  max-width: 1600px;
   flex: 1;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 20px;
   padding: 0 24px 32px;
-  margin-top: 28vh;
+  margin: 28vh auto 0;
 }
 
 .page-title {
@@ -500,6 +501,33 @@ section.right {
 .custom-checkbox:checked + .custom-checkbox-label {
   border-color: var(--color-primary-deep);
   background: var(--color-primary-deep) url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20.285 6.709a1 1 0 0 0-1.414 0L9 16.586 5.129 12.71a1 1 0 1 0-1.415 1.415l4.586 4.586a1 1 0 0 0 1.415 0L20.285 8.123a1 1 0 0 0 0-1.414z'/%3E%3C/svg%3E") center / 12px no-repeat;
+}
+
+/* global action buttons */
+.btn-primary,
+.btn-ghost,
+.btn-submit,
+.btn-secondary {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-submit:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--color-heading);
+  background: rgba(28, 40, 35, 0.06);
+  color: var(--color-heading);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-deep);
 }
 
 @media (max-width: 760px) {

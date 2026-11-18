@@ -15,6 +15,7 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, onToggle }) => {
 	const { t } = useTranslation();
 
 	return (
+		<div className={`side-nav-slot${collapsed ? ' is-collapsed' : ''}`}>
 		<nav className={`side-nav${collapsed ? ' is-collapsed' : ''}`} aria-label={t('nav.menu')}>
 			<button
 				type="button"
@@ -48,6 +49,7 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, onToggle }) => {
 				})}
 			</ul>
 		</nav>
+		</div>
 	);
 };
 

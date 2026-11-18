@@ -145,7 +145,8 @@
   "itemSelect": {
     "placeholder": "Choisir un élément…",
     "search": "Rechercher…",
-    "empty": "Aucun élément trouvé"
+    "empty": "Aucun élément trouvé",
+    "clear": "Effacer la sélection"
   },
   "characterSelect": {
     "placeholder": "Choisir un personnage…",
@@ -204,6 +205,8 @@
     "editTitle": "Modifier le personnage",
     "saveError": "Impossible d'enregistrer. Lance la requête SQL du planificateur dans Supabase, puis réessaie.",
     "emptyRoster": "Aucun personnage pour l'instant.",
+    "rosterMore": "Afficher plus de personnages",
+    "rosterLess": "Réduire la liste",
     "currentLevel": "Niveau actuel",
     "targetLevel": "Niveau cible",
     "weapon": "Arme équipée",
@@ -220,6 +223,10 @@
       "weapon": "Arme",
       "talents": "Talents",
       "artifacts": "Artéfacts"
+    },
+    "tabStatus": {
+      "missing": "Non renseigné",
+      "todo": "À améliorer"
     },
     "elements": {
       "pyro": "Pyro",
@@ -239,8 +246,10 @@
     },
     "talents": "Talents",
     "heroWit": "Leçons du héros",
-    "weaponStones": "Pierres d'arme",
+    "mysticOre": "Minerai mystique",
+    "stellaFortuna": "Stella Fortuna orpheline",
     "resin": "résine",
+    "condensedResin": "résine condensée",
     "day": "1 jour",
     "days": "{{count}} jours",
     "inDays": "en {{days}}",
@@ -265,6 +274,7 @@
     "target": "Cible",
     "targetValue": "Valeur cible",
     "addStat": "Ajouter une stat",
+    "chooseStat": "Choisir une stat…",
     "removeStat": "Retirer la stat",
     "unreached": "Pas encore atteintes",
     "unreachedEmpty": "Toutes les stats visées sont atteintes.",
@@ -289,10 +299,11 @@
       "boss": "Boss",
       "weekly": "Boss hebdomadaires",
       "local": "Spécialités",
-      "common": "Ennemis",
-      "elite": "Ennemis d'élite",
+      "enemies": "Ennemis",
+      "common": "Classiques",
+      "elite": "Élites",
       "leyline": "Moras et livres d'XP",
-      "overworld": "Rien à farmer"
+      "overworld": "Autres"
     },
     "weekdays": {
       "monday": "lun",
@@ -323,6 +334,7 @@
       "er": "Recharge d'énergie",
       "cr": "Taux CRIT",
       "cd": "Dégâts CRIT",
+      "cr_cd": "TC/DC",
       "heal": "Bonus de soins",
       "pyro": "Bonus Pyro",
       "hydro": "Bonus Hydro",
@@ -351,6 +363,7 @@
       "elite": "Matériaux d'élite"
     },
     "stones": {
+      "group": "Pierres élémentaires",
       "label": "{{tier}} {{stone}}",
       "tiers": {
         "sliver": "Éclat",
@@ -375,13 +388,6 @@
     "done": "{{done}} / {{total}}",
     "empty": "Rien de coché pour l'instant.",
     "saveError": "Impossible d'enregistrer. Lance la requête SQL de la progression dans Supabase, puis réessaie.",
-    "todos": {
-      "story": "Extrait seulement. À remplacer par la liste complète des quêtes d'histoire via l'API.",
-      "world": "Extrait seulement. À remplacer par la liste complète des quêtes du monde via l'API.",
-      "hangouts": "Extrait seulement. À remplacer par la liste complète des anecdotes via l'API.",
-      "areas": "Zones incomplètes. À compléter quand une carte ou une API les publie.",
-      "viewpoints": "Extrait seulement. À remplacer par chaque panorama via l'API.",
-      "achievements": "Séries seulement. À remplacer par chaque succès via l'API."
-    }
+    "catalogError": "Impossible de charger le catalogue depuis l'API."
   }
 }

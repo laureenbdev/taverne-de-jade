@@ -58,10 +58,31 @@
 			}
 		}
 
+		.item-select-clear {
+			display: inline-flex;
+			flex: none;
+			align-items: center;
+			justify-content: center;
+			width: 22px;
+			height: 22px;
+			margin-left: 6px;
+			padding: 0;
+			border: 0;
+			border-radius: 999px;
+			background: rgba(28, 40, 35, 0.08);
+			color: var(--color-text);
+			cursor: pointer;
+
+			&:hover {
+				background: rgba(28, 40, 35, 0.14);
+				color: var(--color-heading);
+			}
+		}
+
 		.caret {
 			transition: transform 0.2s;
 			flex-shrink: 0;
-			margin-left: 10px;
+			margin-left: 6px;
 
 			&.open {
 				transform: rotate(180deg);

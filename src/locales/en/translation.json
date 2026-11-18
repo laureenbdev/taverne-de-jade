@@ -145,7 +145,8 @@
   "itemSelect": {
     "placeholder": "Select an item…",
     "search": "Search…",
-    "empty": "No item found"
+    "empty": "No item found",
+    "clear": "Clear selection"
   },
   "characterSelect": {
     "placeholder": "Select a character…",
@@ -204,6 +205,8 @@
     "editTitle": "Edit character",
     "saveError": "Couldn't save. Run the planner SQL in Supabase, then try again.",
     "emptyRoster": "No characters yet.",
+    "rosterMore": "Show more characters",
+    "rosterLess": "Show fewer characters",
     "currentLevel": "Current level",
     "targetLevel": "Target level",
     "weapon": "Equipped weapon",
@@ -220,6 +223,10 @@
       "weapon": "Weapon",
       "talents": "Talents",
       "artifacts": "Artifacts"
+    },
+    "tabStatus": {
+      "missing": "Not set",
+      "todo": "Needs progress"
     },
     "elements": {
       "pyro": "Pyro",
@@ -239,8 +246,10 @@
     },
     "talents": "Talents",
     "heroWit": "Hero's Wit",
-    "weaponStones": "Weapon stones",
+    "mysticOre": "Mystic Enhancement Ore",
+    "stellaFortuna": "Masterless Stella Fortuna",
     "resin": "resin",
+    "condensedResin": "condensed resin",
     "day": "1 day",
     "days": "{{count}} days",
     "inDays": "in {{days}}",
@@ -265,6 +274,7 @@
     "target": "Target",
     "targetValue": "Target value",
     "addStat": "Add a stat",
+    "chooseStat": "Choose a stat…",
     "removeStat": "Remove stat",
     "unreached": "Not reached yet",
     "unreachedEmpty": "Every targeted stat is reached.",
@@ -289,10 +299,11 @@
       "boss": "Bosses",
       "weekly": "Weekly bosses",
       "local": "Specialties",
-      "common": "Enemies",
-      "elite": "Elite enemies",
+      "enemies": "Enemies",
+      "common": "Common",
+      "elite": "Elite",
       "leyline": "Mora and EXP books",
-      "overworld": "Nothing to farm"
+      "overworld": "Other"
     },
     "weekdays": {
       "monday": "Mon",
@@ -323,6 +334,7 @@
       "er": "Energy Recharge",
       "cr": "CRIT Rate",
       "cd": "CRIT DMG",
+      "cr_cd": "CR/CD",
       "heal": "Healing Bonus",
       "pyro": "Pyro DMG",
       "hydro": "Hydro DMG",
@@ -351,6 +363,7 @@
       "elite": "Elite materials"
     },
     "stones": {
+      "group": "Elemental stones",
       "label": "{{tier}} of {{stone}}",
       "tiers": {
         "sliver": "Sliver",
@@ -375,13 +388,6 @@
     "done": "{{done}} / {{total}}",
     "empty": "Nothing checked yet.",
     "saveError": "Couldn't save. Run the advancement SQL in Supabase, then try again.",
-    "todos": {
-      "story": "Sample only. Replace with the full story quest list from the API.",
-      "world": "Sample only. Replace with the full world quest list from the API.",
-      "hangouts": "Sample only. Replace with the full hangout list from the API.",
-      "areas": "Incomplete areas. Fill these in when a map or an API publishes them.",
-      "viewpoints": "Sample only. Replace with every viewpoint from the API.",
-      "achievements": "Series only. Replace with every achievement from the API."
-    }
+    "catalogError": "Couldn't load the catalog from the API."
   }
 }

@@ -15,8 +15,7 @@ export const useWeapons = () => {
 				setIsLoading(true);
 				setError(null);
 				const allWeapons = await WeaponsApiService.getAll();
-				// Filtrer pour n'afficher que les 4 et 5 étoiles
-				const filteredWeapons = allWeapons.filter((weapon) => weapon.rarity === 4 || weapon.rarity === 5);
+				const filteredWeapons = allWeapons.filter((weapon) => weapon.rarity >= 3);
 				setWeapons(filteredWeapons);
 			} catch (err) {
 				const errorMessage = err instanceof Error ? err.message : 'Unknown error';
