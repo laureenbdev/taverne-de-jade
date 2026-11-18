@@ -32,6 +32,7 @@ type PlannerRow = {
 	done?: boolean | null;
 	task_signature?: string | null;
 	checked_tasks?: string[] | null;
+	hidden_tasks?: string[] | null;
 	artifact_build?: unknown;
 };
 
@@ -40,11 +41,11 @@ function requireClient() {
 	return supabase;
 }
 
-function readCheckedTasks(raw: unknown): string[] {
+function readTaskIds(raw: unknown): string[] {
 	if (Array.isArray(raw)) return raw.filter((id): id is string => typeof id === 'string');
 	if (typeof raw === 'string') {
 		try {
-			return readCheckedTasks(JSON.parse(raw));
+			return readTaskIds(JSON.parse(raw));
 		} catch {
 			return [];
 		}
@@ -86,7 +87,8 @@ function toPlan(row: PlannerRow): PlannedCharacter | null {
 		favorite: row.favorite === true,
 		done: row.done === true,
 		taskSignature: row.task_signature ?? '',
-		checkedTasks: readCheckedTasks(row.checked_tasks),
+		checkedTasks: readTaskIds(row.checked_tasks),
+		hiddenTasks: readTaskIds(row.hidden_tasks),
 		artifactBuild: row.artifact_build ?? null,
 	});
 }
@@ -118,6 +120,7 @@ function toRow(plan: PlannedCharacter) {
 		done: plan.done,
 		task_signature: plan.taskSignature,
 		checked_tasks: plan.checkedTasks,
+		hidden_tasks: plan.hiddenTasks,
 		artifact_build: plan.artifactBuild,
 	};
 }
@@ -148,6 +151,7 @@ const PLANNER_COLUMNS = [
 	'done',
 	'task_signature',
 	'checked_tasks',
+	'hidden_tasks',
 	'artifact_build',
 ].join(', ');
 
@@ -180,9 +184,14 @@ const TASK_COLUMNS = [
 	'artifact_build',
 ].join(', ');
 
+const HIDDEN_COLUMNS = [
+	TASK_COLUMNS,
+	'hidden_tasks',
+].join(', ');
+
 export async function listPlanner(userId: string): Promise<PlannedCharacter[]> {
 	const client = requireClient();
-	const attempts = [PLANNER_COLUMNS, TASK_COLUMNS, LEGACY_COLUMNS];
+	const attempts = [PLANNER_COLUMNS, HIDDEN_COLUMNS, TASK_COLUMNS, LEGACY_COLUMNS];
 	let data: PlannerRow[] | null = null;
 	let lastError: string | null = null;
 	for (const columns of attempts) {

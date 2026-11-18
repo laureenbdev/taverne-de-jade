@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crown, Drop, Hourglass, X } from 'phosphor-react';
 
-import { ArtifactSetStats } from '../../features/planner/artifactFarm.ts';
+import { ArtifactSetStats, ArtifactStatEntry } from '../../features/planner/artifactFarm.ts';
 import { catalogIconUrl } from '../../services/genshin/images.ts';
 
 interface ArtifactSetModalProps {
@@ -16,6 +16,19 @@ const SLOT_ICONS = {
 	goblet: Drop,
 	circlet: Crown,
 } as const;
+
+const StatList: React.FC<{ entries: ArtifactStatEntry[] }> = ({ entries }) => {
+	const { t } = useTranslation();
+	return (
+		<ul>
+			{entries.map((entry) => (
+				<li key={entry.stat} className={entry.open ? 'is-open' : 'is-done'}>
+					{t(`planner.stats.${entry.stat}`)}
+				</li>
+			))}
+		</ul>
+	);
+};
 
 const ArtifactSetModal: React.FC<ArtifactSetModalProps> = ({ stats, localize, onClose }) => {
 	const { t } = useTranslation();
@@ -61,11 +74,7 @@ const ArtifactSetModal: React.FC<ArtifactSetModalProps> = ({ stats, localize, on
 												<Icon size={14} />
 												{t(`planner.slots.${slot.id}`)}
 											</h3>
-											<ul>
-												{slot.values.map((stat) => (
-													<li key={stat}>{t(`planner.stats.${stat}`)}</li>
-												))}
-											</ul>
+											<StatList entries={slot.values} />
 										</section>
 									);
 								})}
@@ -74,11 +83,7 @@ const ArtifactSetModal: React.FC<ArtifactSetModalProps> = ({ stats, localize, on
 						{hasSubs && (
 							<div className="planner-artifact-set-subs">
 								<h3>{t('planner.subs')}</h3>
-								<ul>
-									{stats.subs.map((stat) => (
-										<li key={stat}>{t(`planner.stats.${stat}`)}</li>
-									))}
-								</ul>
+								<StatList entries={stats.subs} />
 							</div>
 						)}
 					</>

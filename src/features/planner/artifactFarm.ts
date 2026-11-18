@@ -26,13 +26,19 @@ export interface ArtifactFarmCluster {
 	characters: ArtifactFarmCharacter[];
 }
 
+export interface ArtifactStatEntry {
+	stat: string;
+	/** true si au moins un perso non coché demande encore cette stat */
+	open: boolean;
+}
+
 export interface ArtifactSetStats {
 	setName: string;
 	image: string;
-	sands: string[];
-	goblet: string[];
-	circlet: string[];
-	subs: string[];
+	sands: ArtifactStatEntry[];
+	goblet: ArtifactStatEntry[];
+	circlet: ArtifactStatEntry[];
+	subs: ArtifactStatEntry[];
 }
 
 type DomainBucket = {
@@ -160,29 +166,29 @@ export function buildArtifactFarm(input: {
 		));
 }
 
-export function statsForArtifactSet(set: ArtifactFarmSet): ArtifactSetStats {
-	const sands = new Set<string>();
-	const goblet = new Set<string>();
-	const circlet = new Set<string>();
-	const subs = new Set<string>();
-
-	set.characters.forEach((character) => {
-		const { build } = character;
-		if (build.sands) sands.add(build.sands);
-		if (build.goblet) goblet.add(build.goblet);
-		if (build.circlet) circlet.add(build.circlet);
-		build.subs.forEach((sub) => {
-			if (sub.stat) subs.add(sub.stat);
+function collectStatEntries(
+	characters: ArtifactFarmCharacter[],
+	pick: (build: ArtifactFarmCharacter['build']) => string[],
+): ArtifactStatEntry[] {
+	const byStat = new Map<string, boolean>();
+	characters.forEach((character) => {
+		pick(character.build).forEach((stat) => {
+			if (!stat) return;
+			const open = !character.done;
+			byStat.set(stat, (byStat.get(stat) ?? false) || open);
 		});
 	});
+	return [...byStat.entries()].map(([stat, open]) => ({ stat, open }));
+}
 
+export function statsForArtifactSet(set: ArtifactFarmSet): ArtifactSetStats {
 	return {
 		setName: set.name,
 		image: set.image,
-		sands: [...sands],
-		goblet: [...goblet],
-		circlet: [...circlet],
-		subs: [...subs],
+		sands: collectStatEntries(set.characters, (build) => (build.sands ? [build.sands] : [])),
+		goblet: collectStatEntries(set.characters, (build) => (build.goblet ? [build.goblet] : [])),
+		circlet: collectStatEntries(set.characters, (build) => (build.circlet ? [build.circlet] : [])),
+		subs: collectStatEntries(set.characters, (build) => build.subs.map((sub) => sub.stat).filter(Boolean)),
 	};
 }
 

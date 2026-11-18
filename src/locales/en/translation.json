@@ -255,6 +255,8 @@
     "inDays": "in {{days}}",
     "check": "Mark as done",
     "uncheck": "Mark as to do",
+    "hideResource": "Hide from planner",
+    "showResource": "Show on planner",
     "favoriteOn": "Remove from favorites",
     "favoriteOff": "Add to favorites",
     "artifactsTitle": "Artifacts",

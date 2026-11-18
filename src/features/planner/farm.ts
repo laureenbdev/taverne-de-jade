@@ -186,6 +186,7 @@ export function buildFarm(input: {
 	const weapons = new Map(input.weapons.map((weapon) => [weapon.id, weapon]));
 
 	const checked = new Set(input.plans.flatMap((plan) => plan.checkedTasks));
+	const hidden = new Set(input.plans.flatMap((plan) => plan.hiddenTasks));
 	const isOpen = (task: FarmTask) => !checked.has(task.id);
 
 	const tasks: FarmTask[] = [];
@@ -193,10 +194,12 @@ export function buildFarm(input: {
 		const character = characters.get(plan.characterId);
 		const weapon = plan.weaponId ? weapons.get(plan.weaponId) : undefined;
 		needsForCharacter(plan, character, weapon, input.gameData, experience).forEach((line) => {
+			const id = `${plan.characterId}:${line.id}`;
+			if (hidden.has(id)) return;
 			const item = catalogItemForNeed(catalogItems, line);
 			const source = sourceOf(line.kind, item);
 			tasks.push({
-				id: `${plan.characterId}:${line.id}`,
+				id,
 				characterId: plan.characterId,
 				characterName: character?.name ?? plan.characterId,
 				favorite: plan.favorite,

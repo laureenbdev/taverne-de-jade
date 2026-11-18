@@ -244,6 +244,7 @@ export interface PlannedCharacter {
 	done: boolean;
 	taskSignature: string;
 	checkedTasks: string[];
+	hiddenTasks: string[];
 	artifactBuild: ArtifactBuild | null;
 }
 
@@ -385,6 +386,9 @@ export function planFromLegacy(raw: LegacyPlan): PlannedCharacter | null {
 	const checkedTasks = Array.isArray(raw.checkedTasks)
 		? raw.checkedTasks.filter((id): id is string => typeof id === 'string')
 		: [];
+	const hiddenTasks = Array.isArray(raw.hiddenTasks)
+		? raw.hiddenTasks.filter((id): id is string => typeof id === 'string')
+		: [];
 	return {
 		characterId: raw.characterId,
 		currentLevel,
@@ -407,6 +411,7 @@ export function planFromLegacy(raw: LegacyPlan): PlannedCharacter | null {
 		done: raw.done === true,
 		taskSignature: typeof raw.taskSignature === 'string' ? raw.taskSignature : '',
 		checkedTasks,
+		hiddenTasks,
 		artifactBuild: readArtifactBuild(raw.artifactBuild, artifactSet),
 	};
 }
@@ -458,6 +463,7 @@ export function mergeSavedPlan(previous: PlannedCharacter | undefined, next: Pla
 		favorite: next.favorite ?? previous?.favorite ?? false,
 		done: sameFarm ? (next.done ?? previous?.done ?? false) : false,
 		checkedTasks: sameFarm ? (next.checkedTasks ?? previous?.checkedTasks ?? []) : [],
+		hiddenTasks: sameFarm ? (next.hiddenTasks ?? previous?.hiddenTasks ?? []) : [],
 		taskSignature: signature,
 		artifactSet: next.artifactBuild?.set ?? next.artifactSet ?? null,
 		artifactBuild: next.artifactBuild === undefined ? (previous?.artifactBuild ?? null) : next.artifactBuild,

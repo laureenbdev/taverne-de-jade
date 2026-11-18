@@ -7,7 +7,6 @@ import { shortDomainName } from '../../features/planner/artifactFarm.ts';
 import { FarmCluster, FarmSectionId, FarmTask, FarmView } from '../../features/planner/farm.ts';
 import {
 	FarmLine,
-	PLANNER_TABS,
 	PlannedCharacter,
 	PlannerTab,
 	plannerTabForLine,
@@ -265,26 +264,19 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 		});
 	};
 
-	const toggleRow = (row: FarmTask[]) => {
-		const allChecked = row.every((task) => {
-			const plan = plans.find((item) => item.characterId === task.characterId);
-			return plan ? checked(plan, task.id) : true;
-		});
-		row.forEach((task) => {
-			const plan = plans.find((item) => item.characterId === task.characterId);
-			if (!plan) return;
-			const has = checked(plan, task.id);
-			if (allChecked) {
-				if (!has) return;
-				void onSavePlan({ ...plan, checkedTasks: plan.checkedTasks.filter((id) => id !== task.id) });
-				return;
-			}
-			if (has) return;
-			void onSavePlan({ ...plan, checkedTasks: [...plan.checkedTasks, task.id] });
+	const toggleTask = (task: FarmTask) => {
+		const plan = plans.find((item) => item.characterId === task.characterId);
+		if (!plan) return;
+		const has = checked(plan, task.id);
+		void onSavePlan({
+			...plan,
+			checkedTasks: has
+				? plan.checkedTasks.filter((id) => id !== task.id)
+				: [...plan.checkedTasks, task.id],
 		});
 	};
 
-	const renderTiles = (cluster: FarmCluster) => {
+	const renderTiles = (cluster: FarmCluster, byCharacter = false) => {
 		const rows = materialRows(cluster);
 		if (rows.length === 0) return null;
 		return (
@@ -292,27 +284,78 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 				{rows.map((row) => {
 					const sample = row[0];
 					const count = row.reduce((total, task) => total + task.line.count, 0);
-					const doneCount = row.filter((task) => {
-						const plan = plans.find((item) => item.characterId === task.characterId);
-						return plan ? checked(plan, task.id) : false;
-					}).length;
+					const remaining = row.reduce((total, task) => (
+						taskChecked(task) ? total : total + task.line.count
+					), 0);
+					const doneCount = row.filter(taskChecked).length;
 					const done = doneCount === row.length;
+					const partial = !done && doneCount > 0;
 					const name = taskName(sample);
 					const favorite = row.some((task) => task.favorite);
+					const people = [...row].sort((left, right) => (
+						Number(right.favorite) - Number(left.favorite)
+						|| left.characterName.localeCompare(right.characterName, i18n.language)
+					));
 					return (
-						<li key={sample.line.id} className="tooltip-anchor">
-							<div className={`planner-task-tile${done ? ' is-checked' : ''}${!done && doneCount > 0 ? ' is-partial' : ''}${favorite ? ' is-favorite' : ''}`}>
-								{sample.item?.image && (
-									<img src={catalogIconUrl(sample.item.image)} alt={name} onError={(event) => { event.currentTarget.style.display = 'none'; }} />
-								)}
-								<span>× {formatCount(count)}</span>
-								<RoundCheck
-									checked={done}
-									label={`${name}, ${done ? t('planner.uncheck') : t('planner.check')}`}
-									onClick={() => toggleRow(row)}
-								/>
+						<li key={sample.line.id} className="planner-task-group">
+							<div className="tooltip-anchor">
+								<div className={`planner-task-tile${done ? ' is-checked' : ''}${partial ? ' is-partial' : ''}${favorite ? ' is-favorite' : ''}`}>
+									{sample.item?.image && (
+										<img src={catalogIconUrl(sample.item.image)} alt={name} onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+									)}
+									<span className="planner-task-count">
+										{(done || partial) ? (
+											<span className="is-struck">× {formatCount(count)}</span>
+										) : (
+											<>× {formatCount(count)}</>
+										)}
+										{partial && (
+											<span className="is-remaining">× {formatCount(remaining)}</span>
+										)}
+									</span>
+									{byCharacter && (
+										<RoundCheck
+											checked={done}
+											label={`${name}, ${done ? t('planner.uncheck') : t('planner.check')}`}
+											onClick={() => toggleTask(sample)}
+										/>
+									)}
+								</div>
+								<span className="tooltip top" role="tooltip" aria-hidden="true">{name}</span>
 							</div>
-							<span className="tooltip top" role="tooltip" aria-hidden="true">{name}</span>
+							{!byCharacter && (
+								<div className="planner-faces">
+									{people.map((task) => {
+										const plan = plans.find((item) => item.characterId === task.characterId);
+										const taskDone = plan ? checked(plan, task.id) : false;
+										const character = byId.get(task.characterId);
+										const weapon = plan?.weaponId ? weapons.find((item) => item.id === plan.weaponId) : undefined;
+										const tab = plan
+											? plannerTabForLine(plan, character, weapon, task.line)
+											: 'level';
+										return (
+											<span key={task.id} className="tooltip-anchor planner-task-face">
+												<span className="planner-task-face-wrap">
+													<button
+														type="button"
+														className={`planner-face${taskDone ? ' is-checked' : ''}${task.favorite ? ' is-favorite' : ''}`}
+														aria-label={task.characterName}
+														onClick={() => onEdit(task.characterId, tab)}
+													>
+														<img src={characterIconUrl(task.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+													</button>
+													<RoundCheck
+														checked={taskDone}
+														label={`${task.characterName}, ${taskDone ? t('planner.uncheck') : t('planner.check')}`}
+														onClick={() => toggleTask(task)}
+													/>
+												</span>
+												<span className="tooltip top" role="tooltip" aria-hidden="true">{task.characterName}</span>
+											</span>
+										);
+									})}
+								</div>
+							)}
 						</li>
 					);
 				})}
@@ -325,12 +368,10 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 		const subtitle = cluster.subtitle ? sourceLabel(cluster.subtitle) : '';
 		const days = cluster.days.map((day) => t(`planner.weekdays.${day}`)).join(' · ');
 		const domain = subtitle && subtitle !== title ? subtitle : '';
-		const people = [...new Map(cluster.tasks.map((task) => [task.characterId, task])).values()]
-			.sort((left, right) => Number(right.favorite) - Number(left.favorite) || left.characterName.localeCompare(right.characterName, i18n.language));
 		const groupFavorite = byCharacter
 			? plans.some((plan) => plan.characterId === cluster.key && plan.favorite)
 			: cluster.tasks.some((task) => task.favorite);
-		const tiles = renderTiles(cluster);
+		const tiles = renderTiles(cluster, byCharacter);
 		const portraitDone = byCharacter && clusterDone(cluster);
 		return (
 			<article key={cluster.key} className={`planner-cluster${single ? ' is-single' : ''}${groupFavorite ? ' is-favorite' : ''}`}>
@@ -355,32 +396,6 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 					)}
 				</header>
 				{tiles}
-				{!byCharacter && (
-					<div className="planner-faces">
-						{people.map((task) => {
-							const own = cluster.tasks.filter((item) => item.characterId === task.characterId);
-							const plan = plans.find((item) => item.characterId === task.characterId);
-							const done = own.every((item) => (plan ? checked(plan, item.id) : false));
-							const character = byId.get(task.characterId);
-							const weapon = plan?.weaponId ? weapons.find((item) => item.id === plan.weaponId) : undefined;
-							const tabs = own.map((item) => (plan ? plannerTabForLine(plan, character, weapon, item.line) : 'level'));
-							const tab = PLANNER_TABS.find((entry) => tabs.includes(entry)) ?? 'level';
-							return (
-								<span key={task.characterId} className="tooltip-anchor">
-									<button
-										type="button"
-										className={`planner-face${done ? ' is-checked' : ''}${task.favorite ? ' is-favorite' : ''}`}
-										aria-label={task.characterName}
-										onClick={() => onEdit(task.characterId, tab)}
-									>
-										<img src={characterIconUrl(task.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
-									</button>
-									<span className="tooltip top" role="tooltip" aria-hidden="true">{task.characterName}</span>
-								</span>
-							);
-						})}
-					</div>
-				)}
 			</article>
 		);
 	};
@@ -559,7 +574,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 																	weapon,
 																	task.line,
 																) === 'level'),
-															})}
+															}, true)}
 														</div>
 													)}
 												</td>
@@ -589,7 +604,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 																	weapon,
 																	task.line,
 																) === 'weapon'),
-															})}
+															}, true)}
 														</div>
 													)}
 												</td>
@@ -612,7 +627,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 																	weapon,
 																	task.line,
 																) === 'talents'),
-															})}
+															}, true)}
 														</div>
 													)}
 												</td>

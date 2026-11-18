@@ -7,6 +7,8 @@ import {
 	Crown,
 	Diamond,
 	Drop,
+	Eye,
+	EyeSlash,
 	Flame,
 	Hourglass,
 	Leaf,
@@ -56,6 +58,7 @@ import { GameData } from '../../services/genshin/gameDataApi.ts';
 import { catalogIconUrl, characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
 import { MaterialCatalog } from '../../services/genshin/materialsApi.ts';
 import { Weapon } from '../../services/genshin/weaponsApi.ts';
+import { RoundCheck } from './planner-shared.tsx';
 
 const ELEMENT_ICONS: Record<string, typeof Flame> = {
 	pyro: Flame,
@@ -146,6 +149,8 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	const [talentBurst, setTalentBurst] = useState<TalentLevel>(initial?.talentBurst ?? 1);
 	const [talentBurstTarget, setTalentBurstTarget] = useState<TalentLevel>(initial?.talentBurstTarget ?? 1);
 	const [build, setBuild] = useState<ArtifactBuild>(initial?.artifactBuild ?? emptyArtifactBuild(initial?.artifactSet ?? null));
+	const [checkedTasks, setCheckedTasks] = useState<string[]>(initial?.checkedTasks ?? []);
+	const [hiddenTasks, setHiddenTasks] = useState<string[]>(initial?.hiddenTasks ?? []);
 	const [tab, setTab] = useState<PlannerTab>(initialTab);
 	const skipSave = useRef(true);
 	const onSubmitRef = useRef(onSubmit);
@@ -166,13 +171,11 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		favorite: initial?.favorite ?? false,
 		done: initial?.done ?? false,
 		taskSignature: initial?.taskSignature ?? '',
-		checkedTasks: initial?.checkedTasks ?? [],
 	});
 	metaRef.current = {
 		favorite: initial?.favorite ?? false,
 		done: initial?.done ?? false,
 		taskSignature: initial?.taskSignature ?? '',
-		checkedTasks: initial?.checkedTasks ?? [],
 	};
 
 	useEffect(() => {
@@ -202,7 +205,8 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			favorite: metaRef.current.favorite,
 			done: metaRef.current.done,
 			taskSignature: metaRef.current.taskSignature,
-			checkedTasks: metaRef.current.checkedTasks,
+			checkedTasks,
+			hiddenTasks,
 			artifactBuild: build,
 		});
 	}, [
@@ -216,6 +220,8 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		weaponCurrentAscended,
 		weaponTarget,
 		weaponTargetAscended,
+		checkedTasks,
+		hiddenTasks,
 		talentNormal,
 		talentNormalTarget,
 		talentSkill,
@@ -333,7 +339,8 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			favorite: false,
 			done: false,
 			taskSignature: '',
-			checkedTasks: [],
+			checkedTasks,
+			hiddenTasks,
 			artifactBuild: build,
 		};
 		const labelOf = (line: FarmNeed) => {
@@ -358,7 +365,16 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 					: line.kind === 'fortuna'
 						? catalog?.fortunaImage
 						: item?.image;
-				return { id: line.id, name: labelOf(line), count: line.count, image };
+				const taskId = `${selected.id}:${line.id}`;
+				return {
+					id: line.id,
+					taskId,
+					name: labelOf(line),
+					count: line.count,
+					image,
+					done: checkedTasks.includes(taskId),
+					hidden: hiddenTasks.includes(taskId),
+				};
 			});
 	}, [
 		showBuild,
@@ -383,9 +399,28 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		talentBurst,
 		talentBurstTarget,
 		build,
+		checkedTasks,
+		hiddenTasks,
 		localize,
 		t,
 	]);
+
+	const toggleResourceTask = (taskId: string) => {
+		setCheckedTasks((current) => (
+			current.includes(taskId)
+				? current.filter((id) => id !== taskId)
+				: [...current, taskId]
+		));
+	};
+
+	const toggleHiddenTask = (taskId: string) => {
+		setHiddenTasks((current) => (
+			current.includes(taskId)
+				? current.filter((id) => id !== taskId)
+				: [...current, taskId]
+		));
+	};
+
 	const ElementIcon = selected ? (ELEMENT_ICONS[selected.element] ?? Sparkle) : Sparkle;
 	const WeaponTypeIcon = selected ? (WEAPON_ICONS[selected.weapon] ?? Sword) : Sword;
 	const tabStatus = useMemo(() => {
@@ -694,12 +729,45 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 				{resourceLines.length > 0 && (
 					<div className="planner-modal-resources">
 						<h3>{t('planner.views.resources')}</h3>
-						<ul>
+						<ul className="planner-task-tiles">
 							{resourceLines.map((line) => (
-								<li key={line.id}>
-									{line.image && <img src={catalogIconUrl(line.image)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
-									<span>{line.name}</span>
-									<strong>× {line.count.toLocaleString(i18n.language)}</strong>
+								<li key={line.id} className="tooltip-anchor">
+									<div className={`planner-task-tile${line.done ? ' is-checked' : ''}${line.hidden ? ' is-hidden' : ''}`}>
+										{line.image && (
+											<img
+												src={catalogIconUrl(line.image)}
+												alt=""
+												onError={(event) => { event.currentTarget.style.display = 'none'; }}
+											/>
+										)}
+										<span className="planner-task-count">
+											{line.done ? (
+												<span className="is-struck">× {line.count.toLocaleString(i18n.language)}</span>
+											) : (
+												<>× {line.count.toLocaleString(i18n.language)}</>
+											)}
+										</span>
+										<button
+											type="button"
+											className={`planner-hide${line.hidden ? ' is-on' : ''}`}
+											aria-pressed={line.hidden}
+											aria-label={line.hidden ? t('planner.showResource') : t('planner.hideResource')}
+											onClick={(event) => {
+												event.stopPropagation();
+												toggleHiddenTask(line.taskId);
+											}}
+										>
+											{line.hidden
+												? <EyeSlash size={12} weight="bold" />
+												: <Eye size={12} weight="bold" />}
+										</button>
+										<RoundCheck
+											checked={line.done}
+											label={`${line.name}, ${line.done ? t('planner.uncheck') : t('planner.check')}`}
+											onClick={() => toggleResourceTask(line.taskId)}
+										/>
+									</div>
+									<span className="tooltip top" role="tooltip" aria-hidden="true">{line.name}</span>
 								</li>
 							))}
 						</ul>
