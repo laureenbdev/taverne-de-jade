@@ -7,6 +7,8 @@ import Banner from './components/banner/banner.tsx';
 import Footer from './components/footer/footer.tsx';
 import SideNav from './components/side-nav/side-nav.tsx';
 import { AuthProvider } from './features/auth/AuthContext.tsx';
+// TODO(prelaunch): supprimer PrelaunchAuthGate (accès libre aux non-connectés)
+import PrelaunchAuthGate from './features/auth/PrelaunchAuthGate.tsx';
 import { routes } from './routes.tsx';
 
 function AppFrame() {
@@ -43,9 +45,12 @@ function App() {
 
   return (
     <AuthProvider>
-      <HashRouter>
-        <AppFrame />
-      </HashRouter>
+      {/* TODO(prelaunch): retirer PrelaunchAuthGate et laisser HashRouter > AppFrame seuls */}
+      <PrelaunchAuthGate>
+        <HashRouter>
+          <AppFrame />
+        </HashRouter>
+      </PrelaunchAuthGate>
     </AuthProvider>
   );
 }

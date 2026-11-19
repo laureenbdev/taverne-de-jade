@@ -1,0 +1,56 @@
+/* TODO(prelaunch): supprimer ce fichier avec PrelaunchAuthGate.tsx */
+
+.prelaunch-auth-gate {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 48px 16px 24px;
+	background:
+		radial-gradient(ellipse 80% 50% at 50% -10%, rgba(61, 190, 143, 0.18), transparent 55%),
+		linear-gradient(165deg, #0c100e 0%, #121816 45%, #1a2420 100%);
+	color: var(--color-text-on-dark);
+
+	&__panel {
+		width: min(100%, 420px);
+		text-align: center;
+		margin-bottom: 8px;
+	}
+
+	&__logo {
+		display: inline-block;
+		width: 56px;
+		height: 56px;
+		margin-bottom: 12px;
+		border-radius: 14px;
+		background:
+			radial-gradient(circle at 30% 30%, var(--color-gold-light), var(--color-gold) 55%, #8a6a3a);
+		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+	}
+
+	h1 {
+		margin: 0 0 10px;
+		font-size: clamp(1.6rem, 4vw, 2rem);
+		color: var(--color-text-on-dark);
+	}
+
+	&__lede {
+		margin: 0 auto 18px;
+		max-width: 34ch;
+		font-size: 0.95rem;
+		line-height: 1.45;
+		color: var(--color-muted-on-dark);
+	}
+
+	&__status,
+	&__error {
+		margin: 12px 0 0;
+		font-size: 0.95rem;
+		line-height: 1.4;
+	}
+
+	&__error {
+		color: #e2a0a0;
+	}
+}

@@ -191,6 +191,10 @@
     "pseudoHint": "Required to create an account.",
     "pseudoInvalid": "Choose a pseudo between 2 and 24 characters.",
     "accountCreated": "Account created. Check your inbox if confirmation is enabled.",
+    "gate": {
+      "loading": "Loading…",
+      "lede": "Access is restricted for now: sign in to enter the tavern."
+    },
     "errors": {
       "notConfigured": "Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_PUBLISHABLE_KEY in .env.local, then restart the server.",
       "invalidCredentials": "Incorrect email or password.",

@@ -191,6 +191,10 @@
     "pseudoHint": "Obligatoire pour créer un compte.",
     "pseudoInvalid": "Choisissez un pseudo de 2 à 24 caractères.",
     "accountCreated": "Compte créé. Vérifiez vos e-mails si la confirmation est activée.",
+    "gate": {
+      "loading": "Chargement…",
+      "lede": "Accès restreint pour le moment : connectez-vous pour entrer dans la taverne."
+    },
     "errors": {
       "notConfigured": "Renseignez REACT_APP_SUPABASE_URL et REACT_APP_SUPABASE_PUBLISHABLE_KEY dans .env.local, puis redémarrez le serveur.",
       "invalidCredentials": "E-mail ou mot de passe incorrect.",

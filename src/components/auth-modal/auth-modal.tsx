@@ -12,9 +12,11 @@ type AuthMode = 'signIn' | 'signUp';
 interface AuthModalProps {
 	mode: AuthMode | null;
 	onClose: () => void;
+	/** TODO(prelaunch): retirer `locked` avec le gate d'accès */
+	locked?: boolean;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, locked = false }) => {
 	const { t } = useTranslation();
 	const { configured, signIn, signUp } = useAuth();
 	const [email, setEmail] = useState('');
@@ -33,14 +35,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
 		setPseudo('');
 		setMessage('');
 
+		if (locked) return undefined;
+
 		const onKey = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') onClose();
 		};
 		window.addEventListener('keydown', onKey);
 		return () => window.removeEventListener('keydown', onKey);
-	}, [mode, onClose]);
+	}, [mode, onClose, locked]);
 
-	useLockBodyScroll(Boolean(mode));
+	useLockBodyScroll(Boolean(mode) && !locked);
 	if (!mode) return null;
 
 	const handleSignIn = async () => {
@@ -51,7 +55,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
 		if (error) {
 			setMessageIsError(true);
 			setMessage(error);
-		} else onClose();
+		} else if (!locked) onClose();
 	};
 
 	const handleSignUp = async () => {
@@ -72,11 +76,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
 		} else if (result.needsConfirmation) {
 			setMessageIsError(false);
 			setMessage(t('auth.accountCreated'));
-		} else onClose();
+		} else if (!locked) onClose();
 	};
 
-	return createPortal(
-		<div className="auth-modal-overlay" onClick={onClose}>
+	const dialog = (
+		<div
+			className={`auth-modal-overlay${locked ? ' auth-modal-overlay--locked' : ''}`}
+			onClick={locked ? undefined : onClose}
+		>
 			<div
 				className="auth-modal-content"
 				role="dialog"
@@ -86,9 +93,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
 			>
 				<div className="auth-modal-header">
 					<h2 id="auth-modal-title">{isSignUp ? t('auth.signUp') : t('auth.title')}</h2>
-					<button type="button" className="auth-modal-close" onClick={onClose} aria-label={t('common.close')}>
-						<X size={24} />
-					</button>
+					{!locked && (
+						<button type="button" className="auth-modal-close" onClick={onClose} aria-label={t('common.close')}>
+							<X size={24} />
+						</button>
+					)}
 				</div>
 
 				{!configured && <p className="auth-modal-message error">{t('auth.errors.notConfigured')}</p>}
@@ -147,9 +156,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose }) => {
 					</form>
 				)}
 			</div>
-		</div>,
-		document.body,
+		</div>
 	);
+
+	// TODO(prelaunch): le rendu inline `locked` peut repartir en portal-only une fois le gate retiré
+	if (locked) return dialog;
+	return createPortal(dialog, document.body);
 };
 
 export default AuthModal;
