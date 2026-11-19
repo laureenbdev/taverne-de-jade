@@ -196,10 +196,16 @@
 	}
 }
 
-.planner-empty {
+.planner-empty,
+.planner-loading {
 	margin: 12px 0 0;
 	color: var(--color-text);
 	font-size: 0.95rem;
+}
+
+.planner-loading {
+	color: #6d756f;
+	font-style: italic;
 }
 
 .planner-level-fields,

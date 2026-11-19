@@ -110,7 +110,12 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 		<div className="section-container">
 			<h2>{t('planner.characters')}</h2>
 			{(loadError || saveError) && <p className="planner-save-error">{saveError ? t('planner.saveError') : loadError}</p>}
-			{roster.length === 0 && !plansLoading && !loadError && <p className="planner-empty">{t('planner.emptyRoster')}</p>}
+			{plansLoading ? (
+				<p className="planner-loading" aria-live="polite">{t('planner.loadingRoster')}</p>
+			) : roster.length === 0 && !loadError ? (
+				<p className="planner-empty">{t('planner.emptyRoster')}</p>
+			) : null}
+			{!plansLoading && (
 			<div ref={rosterRef} className="planner-roster-wrap">
 				<div className="planner-roster">
 					{head.map(renderCharacter)}
@@ -136,6 +141,7 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 					</button>
 				)}
 			</div>
+			)}
 		</div>
 	);
 };

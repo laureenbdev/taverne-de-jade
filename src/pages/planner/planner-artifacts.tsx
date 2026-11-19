@@ -13,6 +13,7 @@ import { RoundCheck } from './planner-shared.tsx';
 interface PlannerArtifactsProps {
 	clusters: ArtifactFarmCluster[];
 	plans: PlannedCharacter[];
+	loading: boolean;
 	localize: (name: string) => string;
 	onEdit: (characterId: string) => void;
 	onToggleDone: (characterId: string) => void;
@@ -22,6 +23,7 @@ interface PlannerArtifactsProps {
 const PlannerArtifacts: React.FC<PlannerArtifactsProps> = ({
 	clusters,
 	plans,
+	loading,
 	localize,
 	onEdit,
 	onToggleDone,
@@ -32,7 +34,11 @@ const PlannerArtifacts: React.FC<PlannerArtifactsProps> = ({
 	return (
 		<div className="section-container">
 			<h2>{t('planner.artifactsTitle')}</h2>
-			{clusters.length === 0 ? <p className="planner-empty">{t('planner.artifactsEmpty')}</p> : (
+			{loading ? (
+				<p className="planner-loading" aria-live="polite">{t('planner.loadingArtifacts')}</p>
+			) : clusters.length === 0 ? (
+				<p className="planner-empty">{t('planner.artifactsEmpty')}</p>
+			) : (
 				<div className="planner-farm planner-artifact-farm">
 					<div className="planner-cluster-grid">
 						{clusters.map((cluster) => {

@@ -424,10 +424,10 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 	return (
 		<div className="section-container">
 			<h2>{t('planner.materials')}</h2>
-			{plans.length === 0 ? (
+			{loading || !farm ? (
+				<p className="planner-loading" aria-live="polite">{t('planner.loadingMaterials')}</p>
+			) : plans.length === 0 ? (
 				<p className="planner-empty">{t('planner.materialsNeedRoster')}</p>
-			) : loading || !farm ? (
-				<p className="planner-empty">{t('common.loading')}</p>
 			) : (
 				<>
 					<div className="planner-materials-bar">

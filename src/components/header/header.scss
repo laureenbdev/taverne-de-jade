@@ -1,8 +1,11 @@
 header {
-    --header-pad-x: 50px;
+    /* 12px centre le logo 40px dans la colonne menu repliée (64px) */
+    --header-pad-left: 12px;
+    --header-pad-right: 50px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
     background-color: rgba(12, 16, 14, 0.92);
     backdrop-filter: blur(14px);
     border-bottom: 1px solid rgba(198, 163, 106, 0.28);
@@ -10,13 +13,14 @@ header {
     top: 0;
     z-index: 1000;
     width: 100%;
-    height: 100px;
-    padding: 0 var(--header-pad-x);
+    height: 64px;
+    padding: 0 var(--header-pad-right) 0 var(--header-pad-left);
 
     .header_logo {
         display: block;
-        width: 50px;
-        height: 50px;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
         background: url(../../../public/img/logo-taverne.png) no-repeat center center/cover;
         text-decoration: none;
     }
@@ -24,15 +28,51 @@ header {
     .header_title {
         display: flex;
         align-items: center;
+        gap: 12px;
         text-decoration: none;
         color: inherit;
+
+        &:hover {
+            .header_title_main {
+                color: var(--color-gold);
+            }
+
+            .header_title_accent {
+                color: var(--color-primary);
+            }
+        }
     }
 
     h1 {
-        color: var(--color-primary);
-        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+        margin: 0;
+        padding: 0;
+        /* léger décalage optique : le texte uppercase paraît trop haut à côté du logo */
+        transform: translateY(2px);
+        font-family: Cinzel, serif;
         font-weight: 500;
-        font-size: 1.8rem;
+        line-height: 1.05;
+        text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .header_title_main {
+        color: var(--color-gold-light);
+        font-size: 1.05rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        transition: color 0.2s ease;
+    }
+
+    .header_title_accent {
+        color: #7ae0b4;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        transition: color 0.2s ease;
     }
 
     .header_account {
@@ -72,21 +112,27 @@ header {
 
 @media (max-width: 1200px) {
     header {
-        --header-pad-x: 20px;
+        --header-pad-right: 20px;
 
-        h1 {
-            font-size: 1.35rem;
-            padding: 12px;
+        .header_title_main {
+            font-size: 0.98rem;
+            letter-spacing: 0.12em;
+        }
+
+        .header_title_accent {
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
         }
     }
 }
 
 @media (max-width: 860px) {
     header {
-        --header-pad-x: 16px;
+        --header-pad-left: 12px;
+        --header-pad-right: 16px;
         height: auto;
         flex-wrap: wrap;
-        padding: 8px var(--header-pad-x) 12px;
+        padding: 8px var(--header-pad-right) 12px var(--header-pad-left);
         row-gap: 4px;
 
         .header_logo {
@@ -94,10 +140,14 @@ header {
             height: 40px;
         }
 
-        h1 {
-            font-size: 1.05rem;
-            padding: 8px;
-            white-space: nowrap;
+        .header_title_main {
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+        }
+
+        .header_title_accent {
+            font-size: 0.68rem;
+            letter-spacing: 0.16em;
         }
 
         .header_account {

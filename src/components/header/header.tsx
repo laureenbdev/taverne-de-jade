@@ -33,7 +33,10 @@ const Header: React.FC = () => {
         <header ref={headerRef} className="header">
             <NavLink to="/" end className="header_title">
                 <span className="header_logo" aria-hidden="true" />
-                <h1>La Taverne de Jade</h1>
+                <h1>
+                    <span className="header_title_main">La Taverne</span>
+                    <span className="header_title_accent">de Jade</span>
+                </h1>
             </NavLink>
             {session && name && (
                 <NavLink

@@ -14,7 +14,10 @@ const PageHome: React.FC = () => {
             <section className="left">
                 <div className="hero">
                     <p className="hero-kicker">{t("home.kicker")}</p>
-                    <h2>{t("home.title")}</h2>
+                    <h2 className="hero-title">
+                        <span className="hero-title-main">La Taverne</span>
+                        <span className="hero-title-accent">de Jade</span>
+                    </h2>
                     <p className="hero-lede">{t("home.lede")}</p>
                 </div>
 

@@ -109,6 +109,8 @@ const Planner: React.FC = () => {
 		}
 	};
 
+	const dataLoading = gameDataLoading || charactersLoading || plansLoading || catalogLoading || weaponsLoading;
+
 	const editCharacter = (characterId: string, tab: PlannerTab = 'level') => {
 		setSaveError(null);
 		setModal({ mode: 'edit', characterId, tab });
@@ -145,7 +147,7 @@ const Planner: React.FC = () => {
 					weapons={weapons}
 					byId={byId}
 					userId={userId}
-					loading={gameDataLoading || charactersLoading || plansLoading || catalogLoading}
+					loading={dataLoading}
 					localize={localize}
 					onEdit={editCharacter}
 					onSavePlan={(plan) => run(() => savePlan(plan)).then(() => undefined)}
@@ -154,6 +156,7 @@ const Planner: React.FC = () => {
 				<PlannerArtifacts
 					clusters={artifactFarm}
 					plans={plans}
+					loading={dataLoading}
 					localize={localize}
 					onEdit={(characterId) => editCharacter(characterId, 'artifacts')}
 					onToggleDone={toggleArtifactDone}
