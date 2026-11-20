@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "./header.scss";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChatCircleText, UserCircle } from "phosphor-react";
+import { ChatCircleText, List, UserCircle, X } from "phosphor-react";
 
 import FeedbackModal from "../feedback-modal/feedback-modal.tsx";
 import { useAuth } from "../../features/auth/AuthContext.tsx";
@@ -13,7 +13,12 @@ function shortEmail(email: string) {
     return `${email.slice(0, visible)}...`;
 }
 
-const Header: React.FC = () => {
+interface HeaderProps {
+    mobileNavOpen?: boolean;
+    onMobileNavToggle?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ mobileNavOpen = false, onMobileNavToggle }) => {
     const headerRef = useRef<HTMLElement>(null);
     const { t } = useTranslation();
     const { session, profile } = useAuth();
@@ -35,13 +40,27 @@ const Header: React.FC = () => {
 
     return (
         <header ref={headerRef} className="header">
-            <NavLink to="/" end className="header_title">
-                <span className="header_logo" aria-hidden="true" />
-                <h1>
-                    <span className="header_title_main">La Taverne</span>
-                    <span className="header_title_accent">de Jade</span>
-                </h1>
-            </NavLink>
+            <div className="header_brand">
+                {onMobileNavToggle && (
+                    <button
+                        type="button"
+                        className="header_menu"
+                        onClick={onMobileNavToggle}
+                        aria-expanded={mobileNavOpen}
+                        aria-controls="side-nav"
+                        aria-label={mobileNavOpen ? t('nav.collapse') : t('nav.expand')}
+                    >
+                        {mobileNavOpen ? <X size={22} weight="bold" /> : <List size={22} weight="bold" />}
+                    </button>
+                )}
+                <NavLink to="/" end className="header_title">
+                    <span className="header_logo" aria-hidden="true" />
+                    <h1>
+                        <span className="header_title_main">La Taverne</span>
+                        <span className="header_title_accent">de Jade</span>
+                    </h1>
+                </NavLink>
+            </div>
             {session && (
                 <div className="header_actions">
                     <div className="tooltip-anchor header_feedback_anchor">

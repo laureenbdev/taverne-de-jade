@@ -579,10 +579,18 @@ section.right {
   color: var(--color-primary-deep);
 }
 
+@media (max-width: 860px) {
+  .page {
+    gap: 14px;
+    padding: 0 14px 24px;
+  }
+}
+
 @media (max-width: 760px) {
   .page {
     margin-top: calc(var(--banner-height) * 0.44);
     flex-direction: column;
+    padding: 0 12px 20px;
   }
 
   section.right {
@@ -591,6 +599,6 @@ section.right {
   }
 
   section .section-container {
-    padding: 4px 16px 18px;
+    padding: 4px 14px 16px;
   }
 }

@@ -12,7 +12,9 @@ import { navConfig, type NavItem } from '../../routes.tsx';
 
 interface SideNavProps {
 	collapsed: boolean;
+	mobileOpen?: boolean;
 	onToggle: () => void;
+	onMobileClose?: () => void;
 }
 
 const LANGUAGES: { value: Language; label: string }[] = [
@@ -25,7 +27,7 @@ function pathMatches(pathname: string, path: string) {
 	return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-const SideNav: React.FC<SideNavProps> = ({ collapsed, onToggle }) => {
+const SideNav: React.FC<SideNavProps> = ({ collapsed, mobileOpen = false, onToggle, onMobileClose }) => {
 	const { t, i18n } = useTranslation();
 	const { isAdmin, setLanguage } = useAuth();
 	const location = useLocation();
@@ -168,8 +170,20 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, onToggle }) => {
 	};
 
 	return (
-		<div className={`side-nav-slot${collapsed ? ' is-collapsed' : ''}`}>
-			<nav className={`side-nav${collapsed ? ' is-collapsed' : ''}`} aria-label={t('nav.menu')}>
+		<div className={`side-nav-slot${collapsed ? ' is-collapsed' : ''}${mobileOpen ? ' is-mobile-open' : ''}`}>
+			{mobileOpen && (
+				<button
+					type="button"
+					className="side-nav-backdrop"
+					aria-label={t('nav.collapse')}
+					onClick={onMobileClose}
+				/>
+			)}
+			<nav
+				id="side-nav"
+				className={`side-nav${collapsed ? ' is-collapsed' : ''}${mobileOpen ? ' is-mobile-open' : ''}`}
+				aria-label={t('nav.menu')}
+			>
 				<button
 					type="button"
 					className="side-nav-toggle"

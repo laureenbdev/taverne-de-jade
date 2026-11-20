@@ -12,17 +12,64 @@ import { AuthProvider } from './features/auth/AuthContext.tsx';
 import PrelaunchAuthGate from './features/auth/PrelaunchAuthGate.tsx';
 import { routes } from './routes.tsx';
 
+const MOBILE_NAV_MQ = '(max-width: 860px)';
+
 function AppFrame() {
   const location = useLocation();
   const [navCollapsed, setNavCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isMobileNav, setIsMobileNav] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia(MOBILE_NAV_MQ).matches
+  ));
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_NAV_MQ);
+    const apply = () => {
+      setIsMobileNav(mq.matches);
+      if (!mq.matches) setMobileNavOpen(false);
+    };
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileNavOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileNavOpen]);
 
   return (
     <>
       <Banner />
-      <Header />
+      <Header
+        mobileNavOpen={mobileNavOpen}
+        onMobileNavToggle={() => setMobileNavOpen((open) => !open)}
+      />
       <ImpersonationBanner />
-      <div className="app-shell">
-        <SideNav collapsed={navCollapsed} onToggle={() => setNavCollapsed((open) => !open)} />
+      <div className={`app-shell${mobileNavOpen ? ' is-mobile-nav-open' : ''}`}>
+        <SideNav
+          collapsed={isMobileNav ? false : navCollapsed}
+          mobileOpen={mobileNavOpen}
+          onToggle={() => setNavCollapsed((open) => !open)}
+          onMobileClose={() => setMobileNavOpen(false)}
+        />
         <div className="app-main">
           <div key={location.pathname} className="app-route">
             <Routes>
