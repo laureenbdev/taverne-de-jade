@@ -1,6 +1,7 @@
 footer {
     position: relative;
     z-index: 1;
+    flex-shrink: 0;
     margin-top: 72px;
     background:
         linear-gradient(180deg, rgba(61, 190, 143, 0.09), transparent 90px),

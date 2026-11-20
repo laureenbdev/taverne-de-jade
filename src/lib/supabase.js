@@ -19,4 +19,28 @@ function createSupabaseClient() {
   }
 }
 
+/** Client jetable : ne touche pas à la session admin persistée. */
+export function createEphemeralSupabaseClient() {
+  if (!supabaseUrl || !supabaseKey) return null
+
+  const memoryStorage = {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  }
+
+  try {
+    return createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storage: memoryStorage,
+      },
+    })
+  } catch {
+    return null
+  }
+}
+
 export const supabase = createSupabaseClient()

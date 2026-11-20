@@ -12,6 +12,7 @@ import {
 	plannerTabForLine,
 	rankIndex,
 } from '../../features/planner/materials.ts';
+import { LateUnfold } from '../../components/unfold/unfold.tsx';
 import { Character } from '../../services/genshin/charactersApi.ts';
 import { catalogIconUrl, characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
 import { Weapon } from '../../services/genshin/weaponsApi.ts';
@@ -424,11 +425,14 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 	return (
 		<div className="section-container">
 			<h2>{t('planner.materials')}</h2>
-			{loading || !farm ? (
-				<p className="planner-loading" aria-live="polite">{t('planner.loadingMaterials')}</p>
-			) : plans.length === 0 ? (
-				<p className="planner-empty">{t('planner.materialsNeedRoster')}</p>
-			) : (
+			<LateUnfold
+				loading={loading || !farm}
+				className="admin-unfold"
+				fallback={<p className="planner-loading" aria-live="polite">{t('planner.loadingMaterials')}</p>}
+			>
+				{plans.length === 0 ? (
+					<p className="planner-empty">{t('planner.materialsNeedRoster')}</p>
+				) : (
 				<>
 					<div className="planner-materials-bar">
 						<ul className="planner-stats">
@@ -663,7 +667,8 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 						</div>
 					)}
 				</>
-			)}
+				)}
+			</LateUnfold>
 		</div>
 	);
 };

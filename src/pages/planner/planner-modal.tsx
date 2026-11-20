@@ -27,6 +27,7 @@ import {
 
 import CharacterSelect from '../../components/character-select/character-select.tsx';
 import ItemSelect from '../../components/item-select/item-select.tsx';
+import SelectField from '../../components/select-field/select-field.tsx';
 import {
 	ArtifactBuild,
 	CIRCLET_STATS,
@@ -460,9 +461,10 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		talentBurstTarget,
 		build,
 	]);
-	const statOptions = (stats: readonly string[]) => stats.map((stat) => (
-		<option key={stat} value={stat}>{t(`planner.stats.${stat}`)}</option>
-	));
+	const statOptions = (stats: readonly string[]) => stats.map((stat) => ({
+		value: stat,
+		label: t(`planner.stats.${stat}`),
+	}));
 
 	return (
 		<div className="planner-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="planner-modal-title">
@@ -556,16 +558,26 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 							<div className="planner-level-fields">
 								<label>
 									{t('planner.currentLevel')}
-									<select value={rankKey({ level: currentLevel, ascended: currentAscended })} onChange={(event) => changeCurrent(event.target.value)}>
-										{LEVEL_RANKS.map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
-									</select>
+									<SelectField
+										value={rankKey({ level: currentLevel, ascended: currentAscended })}
+										onChange={changeCurrent}
+										options={LEVEL_RANKS.map((rank) => ({
+											value: rankKey(rank),
+											label: rankKey(rank),
+										}))}
+									/>
 								</label>
 								<ArrowRight className="planner-level-arrow" size={18} />
 								<label>
 									{t('planner.targetLevel')}
-									<select value={rankKey({ level: targetLevel, ascended: targetAscended })} onChange={(event) => changeTarget(event.target.value)}>
-										{ranksFrom(currentLevel, currentAscended).map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
-									</select>
+									<SelectField
+										value={rankKey({ level: targetLevel, ascended: targetAscended })}
+										onChange={changeTarget}
+										options={ranksFrom(currentLevel, currentAscended).map((rank) => ({
+											value: rankKey(rank),
+											label: rankKey(rank),
+										}))}
+									/>
 								</label>
 							</div>
 						</section>
@@ -589,16 +601,26 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									<div className="planner-level-fields">
 										<label>
 											{t('planner.currentLevel')}
-											<select value={rankKey({ level: weaponCurrent, ascended: weaponCurrentAscended })} onChange={(event) => changeWeaponCurrent(event.target.value)}>
-												{WEAPON_LEVEL_RANKS.map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
-											</select>
+											<SelectField
+												value={rankKey({ level: weaponCurrent, ascended: weaponCurrentAscended })}
+												onChange={changeWeaponCurrent}
+												options={WEAPON_LEVEL_RANKS.map((rank) => ({
+													value: rankKey(rank),
+													label: rankKey(rank),
+												}))}
+											/>
 										</label>
 										<ArrowRight className="planner-level-arrow" size={18} />
 										<label>
 											{t('planner.targetLevel')}
-											<select value={rankKey({ level: weaponTarget, ascended: weaponTargetAscended })} onChange={(event) => changeWeaponTarget(event.target.value)}>
-												{ranksFrom(weaponCurrent, weaponCurrentAscended, WEAPON_LEVEL_RANKS).map((rank) => <option key={rankKey(rank)} value={rankKey(rank)}>{rankKey(rank)}</option>)}
-											</select>
+											<SelectField
+												value={rankKey({ level: weaponTarget, ascended: weaponTargetAscended })}
+												onChange={changeWeaponTarget}
+												options={ranksFrom(weaponCurrent, weaponCurrentAscended, WEAPON_LEVEL_RANKS).map((rank) => ({
+													value: rankKey(rank),
+													label: rankKey(rank),
+												}))}
+											/>
 										</label>
 									</div>
 								</>
@@ -612,45 +634,66 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									<span><Sword size={16} />{t('planner.talentNormal')}</span>
 									<label>
 										{t('planner.currentLevel')}
-										<select value={talentNormal} onChange={(event) => changeTalentCurrent(talentNormalTarget, setTalentNormal, setTalentNormalTarget, event.target.value)}>
-											{TALENT_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
-										</select>
+										<SelectField
+											value={String(talentNormal)}
+											onChange={(next) => changeTalentCurrent(talentNormalTarget, setTalentNormal, setTalentNormalTarget, next)}
+											options={TALENT_LEVELS.map((level) => ({ value: String(level), label: String(level) }))}
+										/>
 									</label>
 									<label>
 										{t('planner.targetLevel')}
-										<select value={talentNormalTarget} onChange={(event) => changeTalentTarget(talentNormal, setTalentNormalTarget, event.target.value)}>
-											{TALENT_LEVELS.filter((level) => level >= talentNormal).map((level) => <option key={level} value={level}>{level}</option>)}
-										</select>
+										<SelectField
+											value={String(talentNormalTarget)}
+											onChange={(next) => changeTalentTarget(talentNormal, setTalentNormalTarget, next)}
+											options={TALENT_LEVELS.filter((level) => level >= talentNormal).map((level) => ({
+												value: String(level),
+												label: String(level),
+											}))}
+										/>
 									</label>
 								</div>
 								<div className="planner-level-block">
 									<span><Lightning size={16} />{t('planner.talentSkill')}</span>
 									<label>
 										{t('planner.currentLevel')}
-										<select value={talentSkill} onChange={(event) => changeTalentCurrent(talentSkillTarget, setTalentSkill, setTalentSkillTarget, event.target.value)}>
-											{TALENT_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
-										</select>
+										<SelectField
+											value={String(talentSkill)}
+											onChange={(next) => changeTalentCurrent(talentSkillTarget, setTalentSkill, setTalentSkillTarget, next)}
+											options={TALENT_LEVELS.map((level) => ({ value: String(level), label: String(level) }))}
+										/>
 									</label>
 									<label>
 										{t('planner.targetLevel')}
-										<select value={talentSkillTarget} onChange={(event) => changeTalentTarget(talentSkill, setTalentSkillTarget, event.target.value)}>
-											{TALENT_LEVELS.filter((level) => level >= talentSkill).map((level) => <option key={level} value={level}>{level}</option>)}
-										</select>
+										<SelectField
+											value={String(talentSkillTarget)}
+											onChange={(next) => changeTalentTarget(talentSkill, setTalentSkillTarget, next)}
+											options={TALENT_LEVELS.filter((level) => level >= talentSkill).map((level) => ({
+												value: String(level),
+												label: String(level),
+											}))}
+										/>
 									</label>
 								</div>
 								<div className="planner-level-block">
 									<span><Star size={16} />{t('planner.talentBurst')}</span>
 									<label>
 										{t('planner.currentLevel')}
-										<select value={talentBurst} onChange={(event) => changeTalentCurrent(talentBurstTarget, setTalentBurst, setTalentBurstTarget, event.target.value)}>
-											{TALENT_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
-										</select>
+										<SelectField
+											value={String(talentBurst)}
+											onChange={(next) => changeTalentCurrent(talentBurstTarget, setTalentBurst, setTalentBurstTarget, next)}
+											options={TALENT_LEVELS.map((level) => ({ value: String(level), label: String(level) }))}
+										/>
 									</label>
 									<label>
 										{t('planner.targetLevel')}
-										<select value={talentBurstTarget} onChange={(event) => changeTalentTarget(talentBurst, setTalentBurstTarget, event.target.value)}>
-											{TALENT_LEVELS.filter((level) => level >= talentBurst).map((level) => <option key={level} value={level}>{level}</option>)}
-										</select>
+										<SelectField
+											value={String(talentBurstTarget)}
+											onChange={(next) => changeTalentTarget(talentBurst, setTalentBurstTarget, next)}
+											options={TALENT_LEVELS.filter((level) => level >= talentBurst).map((level) => ({
+												value: String(level),
+												label: String(level),
+											}))}
+										/>
 									</label>
 								</div>
 							</div>
@@ -681,10 +724,14 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 											{slot === 'circlet' && <Crown size={14} />}
 											{t(`planner.slots.${slot}`)}
 										</span>
-										<select value={build[slot]} onChange={(event) => patchBuild({ [slot]: event.target.value })}>
-											<option value="">{t('planner.any')}</option>
-											{statOptions(stats)}
-										</select>
+										<SelectField
+											value={build[slot]}
+											onChange={(next) => patchBuild({ [slot]: next })}
+											options={[
+												{ value: '', label: t('planner.any') },
+												...statOptions(stats),
+											]}
+										/>
 									</label>
 								))}
 							</div>
@@ -692,16 +739,17 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 								<span className="planner-subs-title">{t('planner.subs')}</span>
 								{build.subs.map((sub, index) => (
 									<div key={`sub-${index}`} className="planner-sub">
-										<select
+										<SelectField
 											value={sub.stat}
 											aria-label={t('planner.chooseStat')}
-											onChange={(event) => patchBuild({
-												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, stat: event.target.value } : entry)),
+											onChange={(next) => patchBuild({
+												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, stat: next } : entry)),
 											})}
-										>
-											<option value="">{t('planner.chooseStat')}</option>
-											{statOptions(SUBSTATS)}
-										</select>
+											options={[
+												{ value: '', label: t('planner.chooseStat') },
+												...statOptions(SUBSTATS),
+											]}
+										/>
 										<input
 											type="text"
 											inputMode="decimal"

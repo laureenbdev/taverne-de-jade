@@ -11,6 +11,7 @@ import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useFarmCatalog } from '../../hooks/useFarmCatalog.ts';
 import { useGameData } from '../../hooks/useGameData.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
+import { useModalPayload, useModalPresence } from '../../hooks/useModalPresence.ts';
 import { usePlanner } from '../../hooks/usePlanner.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import { catalogIconUrl } from '../../services/genshin/images.ts';
@@ -36,10 +37,16 @@ const Planner: React.FC = () => {
 	const [setStats, setSetStats] = useState<ReturnType<typeof statsForArtifactSet> | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
-	useLockBodyScroll(Boolean(modal) || Boolean(setStats));
+	const modalPresence = useModalPresence(Boolean(modal));
+	const setStatsPresence = useModalPresence(Boolean(setStats));
+	const activeModal = useModalPayload(modal, modalPresence.present);
+	const activeSetStats = useModalPayload(setStats, setStatsPresence.present);
+	useLockBodyScroll(modalPresence.present || setStatsPresence.present);
 
 	const byId = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
-	const editing = modal?.mode === 'edit' ? plans.find((plan) => plan.characterId === modal.characterId) ?? null : null;
+	const editing = activeModal?.mode === 'edit'
+		? plans.find((plan) => plan.characterId === activeModal.characterId) ?? null
+		: null;
 	const available = characters.filter((character) => !plans.some((plan) => plan.characterId === character.id));
 	const french = i18n.language.toLowerCase().startsWith('fr');
 
@@ -164,13 +171,16 @@ const Planner: React.FC = () => {
 				/>
 			</section>
 
-			{modal && createPortal(
-				<div className="planner-modal-overlay" onClick={() => { if (!saving) setModal(null); }}>
+			{modalPresence.present && activeModal && createPortal(
+				<div
+					className={`planner-modal-overlay modal-layer${modalPresence.shown ? ' is-open' : ''}`}
+					onClick={() => { if (!saving) setModal(null); }}
+				>
 					<PlannerModal
-						key={modal.mode === 'add' ? 'add' : `${modal.characterId}:${modal.tab}`}
-						initialTab={modal.mode === 'edit' ? modal.tab : 'level'}
-						mode={modal.mode}
-						characters={modal.mode === 'add' ? available : characters}
+						key={activeModal.mode === 'add' ? 'add' : `${activeModal.characterId}:${activeModal.tab}`}
+						initialTab={activeModal.mode === 'edit' ? activeModal.tab : 'level'}
+						mode={activeModal.mode}
+						characters={activeModal.mode === 'add' ? available : characters}
 						weapons={weapons}
 						artifactChoices={artifactChoices}
 						charactersLoading={charactersLoading}
@@ -184,14 +194,14 @@ const Planner: React.FC = () => {
 						onClose={() => { if (!saving) setModal(null); }}
 						onSubmit={(plan) => {
 							void run(() => savePlan(plan)).then((ok) => {
-								if (!ok || modal.mode !== 'add') return;
+								if (!ok || activeModal.mode !== 'add') return;
 								setModal({ mode: 'edit', characterId: plan.characterId, tab: 'level' });
 							});
 						}}
 						onRemove={() => {
-							if (modal.mode !== 'edit') return;
+							if (activeModal.mode !== 'edit') return;
 							setSaving(true);
-							void run(() => removeCharacter(modal.characterId)).then((ok) => {
+							void run(() => removeCharacter(activeModal.characterId)).then((ok) => {
 								setSaving(false);
 								if (ok) setModal(null);
 							});
@@ -201,10 +211,13 @@ const Planner: React.FC = () => {
 				document.body,
 			)}
 
-			{setStats && createPortal(
-				<div className="planner-modal-overlay" onClick={() => setSetStats(null)}>
+			{setStatsPresence.present && activeSetStats && createPortal(
+				<div
+					className={`planner-modal-overlay modal-layer${setStatsPresence.shown ? ' is-open' : ''}`}
+					onClick={() => setSetStats(null)}
+				>
 					<ArtifactSetModal
-						stats={setStats}
+						stats={activeSetStats}
 						localize={localize}
 						onClose={() => setSetStats(null)}
 					/>

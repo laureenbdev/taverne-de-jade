@@ -1,9 +1,21 @@
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 
-import { HouseLine, ChartBar, CalendarBlank, Sparkle, Gear } from 'phosphor-react';
+import {
+  HouseLine,
+  ChartBar,
+  CalendarBlank,
+  Sparkle,
+  Gear,
+  ShieldCheck,
+  UsersThree,
+  ChatCircleText,
+} from 'phosphor-react';
 
 import Advancement from './pages/advancement/advancement.tsx';
+import AdminPage from './pages/admin/admin.tsx';
+import AdminFeedbackPage from './pages/admin/admin-feedback.tsx';
+import AdminUsersPage from './pages/admin/admin-users.tsx';
 import Home from './pages/home/home.tsx';
 import Planner from './pages/planner/planner.tsx';
 import Wishes from './pages/wishes/wishes.tsx';
@@ -14,6 +26,8 @@ export interface NavItem {
   labelKey: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   element?: React.ComponentType;
+  adminOnly?: boolean;
+  children?: NavItem[];
 }
 
 export const navConfig: NavItem[] = [
@@ -47,14 +61,45 @@ export const navConfig: NavItem[] = [
     icon: Gear,
     element: Settings,
   },
+  {
+    path: '/admin',
+    labelKey: 'nav.admin',
+    icon: ShieldCheck,
+    adminOnly: true,
+    element: AdminPage,
+    children: [
+      {
+        path: '/admin/users',
+        labelKey: 'nav.adminUsers',
+        icon: UsersThree,
+        element: AdminUsersPage,
+        adminOnly: true,
+      },
+      {
+        path: '/admin/feedback',
+        labelKey: 'nav.adminFeedback',
+        icon: ChatCircleText,
+        element: AdminFeedbackPage,
+        adminOnly: true,
+      },
+    ],
+  },
 ];
 
-export const routes: RouteObject[] = navConfig
-  .filter((item) => item.element)
-  .map((item) => {
-    const Component = item.element!;
-    return {
-      path: item.path,
-      element: <Component />,
-    };
-  });
+function flattenRoutes(items: NavItem[]): RouteObject[] {
+  const routes: RouteObject[] = [];
+  for (const item of items) {
+    if (item.element) {
+      routes.push({
+        path: item.path,
+        element: React.createElement(item.element),
+      });
+    }
+    if (item.children?.length) {
+      routes.push(...flattenRoutes(item.children));
+    }
+  }
+  return routes;
+}
+
+export const routes: RouteObject[] = flattenRoutes(navConfig);

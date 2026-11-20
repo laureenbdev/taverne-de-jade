@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./header.scss";
 import { NavLink } from "react-router-dom";
-import { UserCircle } from "phosphor-react";
+import { useTranslation } from "react-i18next";
+import { ChatCircleText, UserCircle } from "phosphor-react";
 
+import FeedbackModal from "../feedback-modal/feedback-modal.tsx";
 import { useAuth } from "../../features/auth/AuthContext.tsx";
 
 function shortEmail(email: string) {
@@ -13,7 +15,9 @@ function shortEmail(email: string) {
 
 const Header: React.FC = () => {
     const headerRef = useRef<HTMLElement>(null);
+    const { t } = useTranslation();
     const { session, profile } = useAuth();
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
     const email = session?.user.email;
     const name = session ? (profile.displayName || (email ? shortEmail(email) : '')) : '';
 
@@ -38,18 +42,34 @@ const Header: React.FC = () => {
                     <span className="header_title_accent">de Jade</span>
                 </h1>
             </NavLink>
-            {session && name && (
-                <NavLink
-                    to="/settings"
-                    className="header_account"
-                >
-                    <UserCircle size={22} weight="duotone" />
-                    <span className="header_account_text">
-                        <span className="header_account_name">{name}</span>
-                        <span className="header_account_uid">{profile.uid || '—'}</span>
-                    </span>
-                </NavLink>
+            {session && (
+                <div className="header_actions">
+                    <div className="tooltip-anchor header_feedback_anchor">
+                        <button
+                            type="button"
+                            className="header_feedback"
+                            onClick={() => setFeedbackOpen(true)}
+                            aria-label={t('feedback.open')}
+                        >
+                            <ChatCircleText size={22} weight="duotone" />
+                        </button>
+                        <span className="tooltip bottom" role="tooltip">{t('feedback.open')}</span>
+                    </div>
+                    {name && (
+                        <NavLink
+                            to="/settings"
+                            className="header_account"
+                        >
+                            <UserCircle size={22} weight="duotone" />
+                            <span className="header_account_text">
+                                <span className="header_account_name">{name}</span>
+                                <span className="header_account_uid">{profile.uid || '—'}</span>
+                            </span>
+                        </NavLink>
+                    )}
+                </div>
             )}
+            <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
         </header>
     );
 };

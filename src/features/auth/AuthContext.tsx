@@ -12,16 +12,38 @@ interface AuthContextValue {
 	loading: boolean;
 	configured: boolean;
 	profile: PlayerProfile;
+	isAdmin: boolean;
 	signIn: (email: string, password: string) => Promise<string | null>;
 	signUp: (email: string, password: string, displayName: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
 	signOut: () => Promise<string | null>;
 	saveProfile: (profile: PlayerProfile) => Promise<string | null>;
 	setLanguage: (language: Language) => Promise<string | null>;
+	updateEmail: (email: string) => Promise<string | null>;
+	updatePassword: (currentPassword: string, nextPassword: string) => Promise<string | null>;
+	requestPasswordReset: (email?: string) => Promise<string | null>;
 }
 
 const SETTINGS_KEY = 'taverne-settings';
+const ADMIN_CACHE_KEY = 'taverne-is-admin';
 
 const emptyProfile: PlayerProfile = { displayName: '', uid: '', server: '' };
+
+function readCachedAdmin(): boolean {
+	try {
+		return localStorage.getItem(ADMIN_CACHE_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
+function writeCachedAdmin(value: boolean) {
+	try {
+		if (value) localStorage.setItem(ADMIN_CACHE_KEY, '1');
+		else localStorage.removeItem(ADMIN_CACHE_KEY);
+	} catch {
+		/* ignore */
+	}
+}
 
 function readLocalProfile(): PlayerProfile {
 	try {
@@ -89,6 +111,7 @@ type ProfileRow = {
 	server?: string | null;
 	language?: string | null;
 	display_name?: string | null;
+	is_admin?: boolean | null;
 };
 
 function profileError(message: string) {
@@ -116,9 +139,15 @@ async function applyLanguage(language: Language) {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [session, setSession] = useState<Session | null>(null);
 	const [profile, setProfile] = useState<PlayerProfile>(readLocalProfile);
+	const [isAdmin, setIsAdminState] = useState(readCachedAdmin);
 	const [loading, setLoading] = useState(Boolean(supabase));
 	const profileRequest = useRef(0);
 	const profileRevision = useRef(0);
+
+	const setIsAdmin = useCallback((value: boolean) => {
+		setIsAdminState(value);
+		writeCachedAdmin(value);
+	}, []);
 
 	const applySession = useCallback(async (next: Session | null) => {
 		const requestId = ++profileRequest.current;
@@ -127,18 +156,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		if (!supabase || !next) {
 			if (requestId !== profileRequest.current || revisionAtStart !== profileRevision.current) return;
 			setProfile(readLocalProfile());
+			setIsAdmin(false);
 			return;
 		}
 
 		const metaName = readDisplayName(next.user);
 		const withName = await supabase
 			.from('profiles')
-			.select('uid, server, language, display_name')
+			.select('uid, server, language, display_name, is_admin')
 			.eq('id', next.user.id)
 			.maybeSingle();
 
 		let row = withName.data as ProfileRow | null;
 		let rowError = withName.error;
+		if (rowError && isMissingColumn(rowError.message, 'is_admin')) {
+			const withoutAdmin = await supabase
+				.from('profiles')
+				.select('uid, server, language, display_name')
+				.eq('id', next.user.id)
+				.maybeSingle();
+			row = withoutAdmin.data as ProfileRow | null;
+			rowError = withoutAdmin.error;
+		}
 		if (rowError && isMissingColumn(rowError.message, 'display_name')) {
 			const fallback = await supabase
 				.from('profiles')
@@ -157,33 +196,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 		if (rowError || !row) {
 			setProfile({ ...local, displayName });
+			setIsAdmin(false);
 			return;
 		}
 
 		const remote = readProfileRow(row, displayName);
 		setProfile(remote);
+		setIsAdmin(row.is_admin === true);
 		writeLocalProfile(remote);
 		const language = readLanguage(row.language);
 		if (language) await applyLanguage(language);
-	}, []);
+	}, [setIsAdmin]);
 
 	useEffect(() => {
 		if (!supabase) return;
 
 		let active = true;
 
-		supabase.auth.getSession().then(({ data }) => {
+		supabase.auth.getSession().then(async ({ data }) => {
 			if (!active) return;
-			applySession(data.session);
+			await applySession(data.session);
+			if (!active) return;
 			setLoading(false);
 		});
 
 		const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
 			setTimeout(() => {
 				if (!active) return;
-				void applySession(nextSession);
+				void applySession(nextSession).then(() => {
+					if (!active) return;
+					setLoading(false);
+				});
 			}, 0);
-			setLoading(false);
 		});
 
 		return () => {
@@ -223,9 +267,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 	const signOut = useCallback(async () => {
 		if (!supabase) return i18n.t('auth.errors.notConfigured');
+		try {
+			sessionStorage.removeItem('taverne-impersonation');
+		} catch {
+			/* ignore */
+		}
 		const { error } = await supabase.auth.signOut();
 		return error ? error.message : null;
 	}, []);
+
+	const updateEmail = useCallback(async (email: string) => {
+		if (!supabase || !session) return i18n.t('auth.errors.notConfigured');
+		const next = email.trim().toLowerCase();
+		if (!next || !next.includes('@')) return i18n.t('settings.security.emailInvalid');
+		if (next === (session.user.email || '').toLowerCase()) {
+			return i18n.t('settings.security.emailUnchanged');
+		}
+		const { error } = await supabase.auth.updateUser({ email: next });
+		return error ? translateAuthError(error.message) : null;
+	}, [session]);
+
+	const updatePassword = useCallback(async (currentPassword: string, nextPassword: string) => {
+		if (!supabase || !session?.user.email) return i18n.t('auth.errors.notConfigured');
+		if (nextPassword.length < 8) return i18n.t('settings.security.passwordTooShort');
+		if (currentPassword === nextPassword) return i18n.t('settings.security.passwordUnchanged');
+
+		const { error: reauthError } = await supabase.auth.signInWithPassword({
+			email: session.user.email,
+			password: currentPassword,
+		});
+		if (reauthError) return i18n.t('settings.security.currentPasswordInvalid');
+
+		const { error } = await supabase.auth.updateUser({ password: nextPassword });
+		return error ? translateAuthError(error.message) : null;
+	}, [session]);
+
+	const requestPasswordReset = useCallback(async (email?: string) => {
+		if (!supabase) return i18n.t('auth.errors.notConfigured');
+		const target = (email || session?.user.email || '').trim().toLowerCase();
+		if (!target || !target.includes('@')) return i18n.t('settings.security.emailInvalid');
+
+		const redirectTo = `${window.location.origin}${window.location.pathname}#/settings`;
+		const { error } = await supabase.auth.resetPasswordForEmail(target, { redirectTo });
+		return error ? translateAuthError(error.message) : null;
+	}, [session]);
 
 	const writeProfile = useCallback(async (
 		next: PlayerProfile,
@@ -294,12 +379,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		loading,
 		configured: Boolean(supabase),
 		profile,
+		isAdmin,
 		signIn,
 		signUp,
 		signOut,
 		saveProfile,
 		setLanguage,
-	}), [session, loading, profile, signIn, signUp, signOut, saveProfile, setLanguage]);
+		updateEmail,
+		updatePassword,
+		requestPasswordReset,
+	}), [
+		session,
+		loading,
+		profile,
+		isAdmin,
+		signIn,
+		signUp,
+		signOut,
+		saveProfile,
+		setLanguage,
+		updateEmail,
+		updatePassword,
+		requestPasswordReset,
+	]);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

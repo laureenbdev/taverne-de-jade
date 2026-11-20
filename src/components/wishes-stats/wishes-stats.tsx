@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './wishes-stats.scss';
 
+import { LateUnfold } from '../unfold/unfold.tsx';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import { useWishes } from '../../hooks/useWishes.ts';
 import { Wish } from '../../features/wishes/types.ts';
@@ -56,7 +57,7 @@ function isWeaponWish(wish: Wish, weaponNames: Set<string>): boolean {
 
 const WishesStats: React.FC = () => {
 	const { t } = useTranslation();
-	const { wishes } = useWishes();
+	const { wishes, isLoading } = useWishes();
 	const { weapons } = useWeapons();
 
 	const rated = wishes.filter((wish) => wish.banner !== 'standard' && wish.won !== null);
@@ -75,49 +76,55 @@ const WishesStats: React.FC = () => {
 			: Math.round(wishes.reduce((sum, wish) => sum + wish.totalWishes, 0) / wishes.length);
 
 	return (
-		<div className="wishes-stats">
-			<article className="stat-card">
-				<StatRing
-					className="is-win"
-					value={winRate ?? 0}
-					label={winRate === null ? '—' : `${winRate}%`}
-				/>
-				<h3>{t('wishes.statsCards.winRate')}</h3>
-				<p>
-					{rated.length === 0
-						? t('wishes.statsCards.winEmpty')
-						: `${t('wishes.statsCards.won', { count: wins })} · ${t('wishes.statsCards.lost', { count: losses })}`}
-				</p>
-			</article>
+		<LateUnfold
+			loading={isLoading}
+			className="admin-unfold"
+			fallback={<p className="wishes-loading" aria-live="polite">{t('common.loading')}</p>}
+		>
+			<div className="wishes-stats">
+				<article className="stat-card">
+					<StatRing
+						className="is-win"
+						value={winRate ?? 0}
+						label={winRate === null ? '—' : `${winRate}%`}
+					/>
+					<h3>{t('wishes.statsCards.winRate')}</h3>
+					<p>
+						{rated.length === 0
+							? t('wishes.statsCards.winEmpty')
+							: `${t('wishes.statsCards.won', { count: wins })} · ${t('wishes.statsCards.lost', { count: losses })}`}
+					</p>
+				</article>
 
-			<article className="stat-card">
-				<StatRing
-					className="is-characters"
-					value={fiveStars === 0 ? 0 : (characterCount / fiveStars) * 100}
-					label={String(fiveStars)}
-				/>
-				<h3>{t('wishes.statsCards.fiveStars')}</h3>
-				<p>
-					{fiveStars === 0
-						? t('wishes.statsCards.fiveStarsEmpty')
-						: `${t('wishes.statsCards.characters', { count: characterCount })} · ${t('wishes.statsCards.weapons', { count: weaponCount })}`}
-				</p>
-			</article>
+				<article className="stat-card">
+					<StatRing
+						className="is-characters"
+						value={fiveStars === 0 ? 0 : (characterCount / fiveStars) * 100}
+						label={String(fiveStars)}
+					/>
+					<h3>{t('wishes.statsCards.fiveStars')}</h3>
+					<p>
+						{fiveStars === 0
+							? t('wishes.statsCards.fiveStarsEmpty')
+							: `${t('wishes.statsCards.characters', { count: characterCount })} · ${t('wishes.statsCards.weapons', { count: weaponCount })}`}
+					</p>
+				</article>
 
-			<article className="stat-card">
-				<StatRing
-					className="is-pity"
-					value={averagePity === null ? 0 : (averagePity / HARD_PITY) * 100}
-					label={averagePity === null ? '—' : String(averagePity)}
-				/>
-				<h3>{t('wishes.statsCards.pity')}</h3>
-				<p>
-					{wishes.length === 0
-						? t('wishes.statsCards.pityEmpty')
-						: t('wishes.statsCards.pulls', { count: wishes.length })}
-				</p>
-			</article>
-		</div>
+				<article className="stat-card">
+					<StatRing
+						className="is-pity"
+						value={averagePity === null ? 0 : (averagePity / HARD_PITY) * 100}
+						label={averagePity === null ? '—' : String(averagePity)}
+					/>
+					<h3>{t('wishes.statsCards.pity')}</h3>
+					<p>
+						{wishes.length === 0
+							? t('wishes.statsCards.pityEmpty')
+							: t('wishes.statsCards.pulls', { count: wishes.length })}
+					</p>
+				</article>
+			</div>
+		</LateUnfold>
 	);
 };
 

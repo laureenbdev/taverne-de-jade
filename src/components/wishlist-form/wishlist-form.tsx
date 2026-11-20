@@ -9,6 +9,7 @@ import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import ItemSelect from '../item-select/item-select.tsx';
 import { characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
+import { useModalPresence } from '../../hooks/useModalPresence.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 
 interface WishlistFormProps {
@@ -59,8 +60,9 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 		image: formData.type === 'character' ? characterIconUrl(item.id) : weaponIconUrl(item.id),
 	}));
 	const isLoading = formData.type === 'character' ? isLoadingCharacters : isLoadingWeapons;
-	useLockBodyScroll(isOpen);
-	if (!isOpen) return null;
+	const { present, shown } = useModalPresence(isOpen);
+	useLockBodyScroll(present);
+	if (!present) return null;
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -81,7 +83,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 	};
 
 	return createPortal(
-		<div className="wishlist-form-overlay" onClick={onClose}>
+		<div className={`wishlist-form-overlay modal-layer${shown ? ' is-open' : ''}`} onClick={onClose}>
 			<div className="wishlist-form-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wishlist-form-header">
 					<h2>{item ? t('wishlist.form.editTitle') : t('wishlist.form.addTitle')}</h2>

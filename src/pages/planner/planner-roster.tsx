@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CaretDown, Plus, Star } from 'phosphor-react';
 
 import { PlannedCharacter } from '../../features/planner/materials.ts';
-import Unfold from '../../components/unfold/unfold.tsx';
+import Unfold, { LateUnfold } from '../../components/unfold/unfold.tsx';
 import { Character } from '../../services/genshin/charactersApi.ts';
 import { characterIconUrl } from '../../services/genshin/images.ts';
 
@@ -110,38 +110,41 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 		<div className="section-container">
 			<h2>{t('planner.characters')}</h2>
 			{(loadError || saveError) && <p className="planner-save-error">{saveError ? t('planner.saveError') : loadError}</p>}
-			{plansLoading ? (
-				<p className="planner-loading" aria-live="polite">{t('planner.loadingRoster')}</p>
-			) : roster.length === 0 && !loadError ? (
-				<p className="planner-empty">{t('planner.emptyRoster')}</p>
-			) : null}
-			{!plansLoading && (
-			<div ref={rosterRef} className="planner-roster-wrap">
-				<div className="planner-roster">
-					{head.map(renderCharacter)}
-					{!rosterOverflow && addButton}
-				</div>
-				{rosterOverflow && (
-					<Unfold open={rosterOpen} className="planner-roster-extra">
+			<LateUnfold
+				loading={plansLoading}
+				className="admin-unfold"
+				fallback={<p className="planner-loading" aria-live="polite">{t('planner.loadingRoster')}</p>}
+			>
+				{roster.length === 0 && !loadError ? (
+					<p className="planner-empty">{t('planner.emptyRoster')}</p>
+				) : (
+					<div ref={rosterRef} className="planner-roster-wrap">
 						<div className="planner-roster">
-							{rest.map(renderCharacter)}
-							{addButton}
+							{head.map(renderCharacter)}
+							{!rosterOverflow && addButton}
 						</div>
-					</Unfold>
+						{rosterOverflow && (
+							<Unfold open={rosterOpen} className="planner-roster-extra">
+								<div className="planner-roster">
+									{rest.map(renderCharacter)}
+									{addButton}
+								</div>
+							</Unfold>
+						)}
+						{rosterOverflow && (
+							<button
+								type="button"
+								className={`planner-roster-toggle${rosterOpen ? ' is-open' : ''}`}
+								aria-expanded={rosterOpen}
+								aria-label={rosterOpen ? t('planner.rosterLess') : t('planner.rosterMore')}
+								onClick={() => setRosterOpen((open) => !open)}
+							>
+								<CaretDown size={16} weight="bold" />
+							</button>
+						)}
+					</div>
 				)}
-				{rosterOverflow && (
-					<button
-						type="button"
-						className={`planner-roster-toggle${rosterOpen ? ' is-open' : ''}`}
-						aria-expanded={rosterOpen}
-						aria-label={rosterOpen ? t('planner.rosterLess') : t('planner.rosterMore')}
-						onClick={() => setRosterOpen((open) => !open)}
-					>
-						<CaretDown size={16} weight="bold" />
-					</button>
-				)}
-			</div>
-			)}
+			</LateUnfold>
 		</div>
 	);
 };

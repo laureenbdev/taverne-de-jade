@@ -208,6 +208,7 @@
 	font-style: italic;
 }
 
+
 .planner-level-fields,
 .planner-talent-fields {
 	display: grid;
@@ -255,7 +256,6 @@
 	font-weight: 500;
 }
 
-.planner-modal select,
 .planner-modal input[type='number'],
 .planner-modal input[type='text'] {
 	padding: 10px 12px;
@@ -271,13 +271,10 @@
 	}
 }
 
-.planner-modal select {
-	appearance: none;
-	padding-right: 40px;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%236b5a3e' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
-	background-repeat: no-repeat;
-	background-position: right 14px center;
-	background-size: 14px;
+.planner-modal .select-field-trigger {
+	border-color: rgba(198, 163, 106, 0.9);
+	background: #fffdf8;
+	color: var(--color-heading);
 }
 
 .planner-clear {
@@ -1414,8 +1411,8 @@ body.modal-open .planner-add {
 	font-size: 0.88rem;
 	font-weight: 500;
 
-	select {
-		width: 100%;
+	.select-field-trigger {
+		min-height: 2.15rem;
 		padding-top: 7px;
 		padding-bottom: 7px;
 	}
@@ -1433,8 +1430,8 @@ body.modal-open .planner-add {
 	font-weight: 600;
 }
 
-.planner-modal .planner-main-stat select,
-.planner-modal .planner-sub select,
+.planner-modal .planner-main-stat .select-field-trigger,
+.planner-modal .planner-sub .select-field-trigger,
 .planner-modal .planner-sub input {
 	padding-top: 7px;
 	padding-bottom: 7px;

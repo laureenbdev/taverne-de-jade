@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Header from './components/header/header.tsx';
 import Banner from './components/banner/banner.tsx';
 import Footer from './components/footer/footer.tsx';
+import ImpersonationBanner from './components/impersonation-banner/impersonation-banner.tsx';
 import SideNav from './components/side-nav/side-nav.tsx';
 import { AuthProvider } from './features/auth/AuthContext.tsx';
 // TODO(prelaunch): supprimer PrelaunchAuthGate (accès libre aux non-connectés)
@@ -19,6 +20,7 @@ function AppFrame() {
     <>
       <Banner />
       <Header />
+      <ImpersonationBanner />
       <div className="app-shell">
         <SideNav collapsed={navCollapsed} onToggle={() => setNavCollapsed((open) => !open)} />
         <div className="app-main">
@@ -45,12 +47,12 @@ function App() {
 
   return (
     <AuthProvider>
-      {/* TODO(prelaunch): retirer PrelaunchAuthGate et laisser HashRouter > AppFrame seuls */}
-      <PrelaunchAuthGate>
-        <HashRouter>
+      <HashRouter>
+        {/* TODO(prelaunch): retirer PrelaunchAuthGate et laisser AppFrame seul */}
+        <PrelaunchAuthGate>
           <AppFrame />
-        </HashRouter>
-      </PrelaunchAuthGate>
+        </PrelaunchAuthGate>
+      </HashRouter>
     </AuthProvider>
   );
 }

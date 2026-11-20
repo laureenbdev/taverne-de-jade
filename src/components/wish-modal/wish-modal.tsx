@@ -8,7 +8,9 @@ import { WISH_BANNERS, Wish, WishBanner, WishFormData } from '../../features/wis
 import { useCharacters } from '../../hooks/useCharacters.ts';
 import { useWeapons } from '../../hooks/useWeapons.ts';
 import ItemSelect from '../item-select/item-select.tsx';
+import SelectField from '../select-field/select-field.tsx';
 import { characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
+import { useModalPresence } from '../../hooks/useModalPresence.ts';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 
 interface WishModalProps {
@@ -51,8 +53,9 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 		if (weapons.some((weapon) => weapon.name === wish.characterName)) setSubject('weapon');
 	}, [isOpen, wish, weapons]);
 
-	useLockBodyScroll(isOpen);
-	if (!isOpen) return null;
+	const { present, shown } = useModalPresence(isOpen);
+	useLockBodyScroll(present);
+	if (!present) return null;
 
 	const mixedBanner = formData.banner === 'standard' || formData.banner === 'chronicled';
 	const usesWeapons = formData.banner === 'weapon' || (mixedBanner && subject === 'weapon');
@@ -82,7 +85,7 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 	};
 
 	return createPortal(
-		<div className="wish-modal-overlay" onClick={onClose}>
+		<div className={`wish-modal-overlay modal-layer${shown ? ' is-open' : ''}`} onClick={onClose}>
 			<div className="wish-modal-content inner-scroll" onClick={(e) => e.stopPropagation()}>
 				<div className="wish-modal-header">
 					<h2>{wish ? t('wishes.modal.editTitle') : t('wishes.modal.addTitle')}</h2>
@@ -94,33 +97,32 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 				<form onSubmit={handleSubmit} className="wish-modal-form">
 					<div className="form-group">
 						<label htmlFor="banner">{t('wishes.modal.banner')}</label>
-						<select
+						<SelectField
 							id="banner"
 							value={formData.banner}
-							onChange={(e) => handleBanner(e.target.value as WishBanner)}
-						>
-							{WISH_BANNERS.map((banner) => (
-								<option key={banner} value={banner}>
-									{t(`wishes.banners.${banner}`)}
-								</option>
-							))}
-						</select>
+							onChange={(next) => handleBanner(next as WishBanner)}
+							options={WISH_BANNERS.map((banner) => ({
+								value: banner,
+								label: t(`wishes.banners.${banner}`),
+							}))}
+						/>
 					</div>
 
 					{mixedBanner && (
 						<div className="form-group">
 							<label htmlFor="subject">{t('wishes.modal.subject')}</label>
-							<select
+							<SelectField
 								id="subject"
 								value={subject}
-								onChange={(e) => {
-									setSubject(e.target.value as 'character' | 'weapon');
+								onChange={(next) => {
+									setSubject(next as 'character' | 'weapon');
 									setFormData((prev) => ({ ...prev, characterName: '' }));
 								}}
-							>
-								<option value="character">{t('common.character')}</option>
-								<option value="weapon">{t('common.weapon')}</option>
-							</select>
+								options={[
+									{ value: 'character', label: t('common.character') },
+									{ value: 'weapon', label: t('common.weapon') },
+								]}
+							/>
 						</div>
 					)}
 
@@ -166,14 +168,15 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 					{formData.banner !== 'standard' && (
 						<div className="form-group">
 							<label htmlFor="won">{t('wishes.modal.win')}</label>
-							<select
+							<SelectField
 								id="won"
 								value={formData.won === false ? 'no' : 'yes'}
-								onChange={(e) => setFormData((prev) => ({ ...prev, won: e.target.value === 'yes' }))}
-							>
-								<option value="yes">{t('wishes.modal.yes')}</option>
-								<option value="no">{t('wishes.modal.no')}</option>
-							</select>
+								onChange={(next) => setFormData((prev) => ({ ...prev, won: next === 'yes' }))}
+								options={[
+									{ value: 'yes', label: t('wishes.modal.yes') },
+									{ value: 'no', label: t('wishes.modal.no') },
+								]}
+							/>
 						</div>
 					)}
 

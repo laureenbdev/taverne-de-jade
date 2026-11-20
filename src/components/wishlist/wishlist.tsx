@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import './wishlist.scss';
 
 import { Plus } from 'phosphor-react';
+import { LateUnfold } from '../unfold/unfold.tsx';
 import { useWishlist } from '../../hooks/useWishlist.ts';
 import { WishlistItem, WishlistItemFormData } from '../../features/wishlist/types.ts';
 import WishlistCard from '../wishlist-card/wishlist-card.tsx';
@@ -13,7 +14,7 @@ import WishlistForm from '../wishlist-form/wishlist-form.tsx';
  */
 const Wishlist: React.FC = () => {
 	const { t } = useTranslation();
-	const { items, addItem, updateItem, toggleCompleted, deleteItem } = useWishlist();
+	const { items, isLoading, addItem, updateItem, toggleCompleted, deleteItem } = useWishlist();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
 
@@ -75,57 +76,63 @@ const Wishlist: React.FC = () => {
 
 	return (
 		<div className="wishlist">
-			<div className="wishlist-content inner-scroll">
-				{itemsWithDate.length > 0 && (
-					<div className="wishlist-section">
-						{itemsWithDate.map((item) => (
-							<WishlistCard
-								key={item.id}
-								item={item}
-								onEdit={handleEdit}
-								onDelete={handleDelete}
-								onToggleCompleted={toggleCompleted}
-							/>
-						))}
-					</div>
-				)}
-
-				{itemsWithoutDate.length > 0 && (
-					<div className="wishlist-section">
-						{itemsWithoutDate.map((item) => (
-							<WishlistCard
-								key={item.id}
-								item={item}
-								onEdit={handleEdit}
-								onDelete={handleDelete}
-								onToggleCompleted={toggleCompleted}
-							/>
-						))}
-					</div>
-				)}
-
-				{items.length === 0 && (
-					<div className="wishlist-empty">
-						<p>{t('wishlist.empty')}</p>
-					</div>
-				)}
-			</div>
-
-			<button
-				className="add-item-button"
-				onClick={handleAddClick}
-				role="button"
-				tabIndex={0}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						handleAddClick();
-					}
-				}}
+			<LateUnfold
+				loading={isLoading}
+				className="admin-unfold"
+				fallback={<p className="wishes-loading" aria-live="polite">{t('common.loading')}</p>}
 			>
-				<Plus size={24} />
-				<span>{t('wishlist.addItem')}</span>
-			</button>
+				<div className="wishlist-content inner-scroll">
+					{itemsWithDate.length > 0 && (
+						<div className="wishlist-section">
+							{itemsWithDate.map((item) => (
+								<WishlistCard
+									key={item.id}
+									item={item}
+									onEdit={handleEdit}
+									onDelete={handleDelete}
+									onToggleCompleted={toggleCompleted}
+								/>
+							))}
+						</div>
+					)}
+
+					{itemsWithoutDate.length > 0 && (
+						<div className="wishlist-section">
+							{itemsWithoutDate.map((item) => (
+								<WishlistCard
+									key={item.id}
+									item={item}
+									onEdit={handleEdit}
+									onDelete={handleDelete}
+									onToggleCompleted={toggleCompleted}
+								/>
+							))}
+						</div>
+					)}
+
+					{items.length === 0 && (
+						<div className="wishlist-empty">
+							<p>{t('wishlist.empty')}</p>
+						</div>
+					)}
+				</div>
+
+				<button
+					className="add-item-button"
+					onClick={handleAddClick}
+					role="button"
+					tabIndex={0}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							handleAddClick();
+						}
+					}}
+				>
+					<Plus size={24} />
+					<span>{t('wishlist.addItem')}</span>
+				</button>
+			</LateUnfold>
 
 			<WishlistForm
 				isOpen={isFormOpen}

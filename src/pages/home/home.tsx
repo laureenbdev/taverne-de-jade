@@ -7,7 +7,6 @@ import { changelogPreview } from "../../data/changelog.ts";
 
 const PageHome: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const isFrench = i18n.resolvedLanguage?.startsWith("fr");
 
     return (
         <div id="home-page" className="page">
@@ -23,10 +22,7 @@ const PageHome: React.FC = () => {
 
                 <div className="section-container sheet">
                     <article className="welcome">
-                        <h2>
-                            <span className={isFrench ? "icon-fr" : "icon-uk"} aria-hidden="true" />
-                            {t("home.welcomeTitle")}
-                        </h2>
+                        <h2>{t("home.welcomeTitle")}</h2>
                         <div className="welcome-copy">
                             <p>{t("home.welcome1")}</p>
                             <div>

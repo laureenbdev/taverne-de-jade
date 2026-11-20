@@ -29,6 +29,8 @@
   --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.22);
   --radius: 16px;
   --header-height: 100px;
+  --banner-height: 50vh;
+  --page-banner-offset: calc(var(--banner-height) * 0.56);
 }
 
 * {
@@ -59,8 +61,14 @@ body {
   color: var(--color-text);
 }
 
+html,
+body {
+  min-height: 100%;
+}
+
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -144,9 +152,7 @@ code {
 
 /* icons */
 .icon-primo,
-.icon-interfate,
-.icon-fr,
-.icon-uk {
+.icon-interfate {
   display: inline-block;
   flex-shrink: 0;
 }
@@ -158,16 +164,6 @@ code {
 }
 .icon-interfate {
   background: url("/public/img/icons/intertwined_fate.webp") no-repeat center 50%/cover;
-  width: 30px;
-  height: 30px;
-}
-.icon-fr {
-  background: url("/public/img/icons/fr.png") no-repeat center 50%/cover;
-  width: 30px;
-  height: 30px;
-}
-.icon-uk {
-  background: url("/public/img/icons/uk.png") no-repeat center 50%/cover;
   width: 30px;
   height: 30px;
 }
@@ -360,7 +356,7 @@ html::-webkit-scrollbar-corner {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows 0.32s ease, opacity 0.24s ease;
+  transition: grid-template-rows 0.22s ease, opacity 0.18s ease;
 }
 
 .unfold.is-open {
@@ -368,9 +364,18 @@ html::-webkit-scrollbar-corner {
   opacity: 1;
 }
 
+/* Même timing que le back-office */
+.unfold.admin-unfold {
+  transition-duration: 0.28s, 0.2s;
+}
+
 .unfold-inner {
   min-height: 0;
   overflow: hidden;
+}
+
+.unfold.is-open > .unfold-inner {
+  overflow: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -379,19 +384,56 @@ html::-webkit-scrollbar-corner {
   }
 }
 
+/* modal open / close */
+.modal-layer {
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.modal-layer.is-open {
+  opacity: 1;
+}
+
+.modal-layer > :first-child {
+  opacity: 0.88;
+  transform: translateY(14px) scale(0.97);
+  transition:
+    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-layer.is-open > :first-child {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-layer,
+  .modal-layer > :first-child {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* global pages */
+html,
+body {
+  overflow-x: clip;
+}
+
 .page {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 1600px;
-  flex: 1;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 20px;
   padding: 0 24px 32px;
-  margin: 28vh auto 0;
+  margin: var(--page-banner-offset) auto 0;
 }
 
 .page-title {
@@ -539,7 +581,7 @@ section.right {
 
 @media (max-width: 760px) {
   .page {
-    margin-top: 16vh;
+    margin-top: calc(var(--banner-height) * 0.44);
     flex-direction: column;
   }
 

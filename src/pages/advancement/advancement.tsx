@@ -12,7 +12,7 @@ import {
 	labelOf,
 } from '../../features/advancement/catalog.ts';
 import { categoryCover, groupCover } from '../../features/advancement/covers.ts';
-import Unfold from '../../components/unfold/unfold.tsx';
+import Unfold, { LateUnfold } from '../../components/unfold/unfold.tsx';
 import { useAdvancement } from '../../hooks/useAdvancement.ts';
 import { AdvancementApiService } from '../../services/genshin/advancementApi.ts';
 import './advancement.scss';
@@ -165,62 +165,62 @@ const Advancement: React.FC = () => {
 
 				<div className="section-container">
 					<h2>{t('advancement.categories')}</h2>
-					{catalogLoading ? (
-						<p className="advancement-loading">{t('common.loading')}</p>
-					) : (
-						<>
-							<div className="advancement-board">
-								{categories.map((category) => {
-									const progress = countChecked(categoryItems(category), checked);
-									return (
-										<button
-											key={category.id}
-											type="button"
-											className={`advancement-card${progress.percent === 100 ? ' is-complete' : ''}${openCategoryId === category.id ? ' is-selected' : ''}`}
-											aria-expanded={openCategoryId === category.id}
-											onClick={() => selectCategory(category.id)}
-										>
-											<span className="advancement-card-image">
-												<Cover src={categoryCover(category.image)} size={36} />
-											</span>
-											<strong>{labelOf(category, i18n.language)}</strong>
-											<span className="advancement-bar" aria-hidden="true">
-												<span style={{ width: `${progress.percent}%` }} />
-											</span>
-											<small>{t('advancement.done', { done: progress.done, total: progress.total })}</small>
-										</button>
-									);
-								})}
-							</div>
-							<Unfold open={Boolean(openCategoryId)}>
-								{openCategory && (
-									<div className="advancement-detail" ref={detailRef}>
-										<div className="advancement-detail-head">
-											<h3>{labelOf(openCategory, i18n.language)}</h3>
-											<p>{t('advancement.done', { done: openProgress?.done ?? 0, total: openProgress?.total ?? 0 })}</p>
-										</div>
-										<span className="advancement-bar" aria-hidden="true">
-											<span style={{ width: `${openProgress?.percent ?? 0}%` }} />
+					<LateUnfold
+						loading={catalogLoading}
+						className="admin-unfold"
+						fallback={<p className="advancement-loading">{t('common.loading')}</p>}
+					>
+						<div className="advancement-board">
+							{categories.map((category) => {
+								const progress = countChecked(categoryItems(category), checked);
+								return (
+									<button
+										key={category.id}
+										type="button"
+										className={`advancement-card${progress.percent === 100 ? ' is-complete' : ''}${openCategoryId === category.id ? ' is-selected' : ''}`}
+										aria-expanded={openCategoryId === category.id}
+										onClick={() => selectCategory(category.id)}
+									>
+										<span className="advancement-card-image">
+											<Cover src={categoryCover(category.image)} size={36} />
 										</span>
-										<div className="advancement-series-list">
-											{openCategory.groups.map((group) => (
-												<SeriesBlock
-													key={group.id}
-													group={group}
-													language={i18n.language}
-													checked={checked}
-													pendingId={pendingId}
-													open={openSeriesId === group.id}
-													onOpen={() => setOpenSeriesId(openSeriesId === group.id ? null : group.id)}
-													onToggle={onToggle}
-												/>
-											))}
-										</div>
+										<strong>{labelOf(category, i18n.language)}</strong>
+										<span className="advancement-bar" aria-hidden="true">
+											<span style={{ width: `${progress.percent}%` }} />
+										</span>
+										<small>{t('advancement.done', { done: progress.done, total: progress.total })}</small>
+									</button>
+								);
+							})}
+						</div>
+						<Unfold open={Boolean(openCategoryId)}>
+							{openCategory && (
+								<div className="advancement-detail" ref={detailRef}>
+									<div className="advancement-detail-head">
+										<h3>{labelOf(openCategory, i18n.language)}</h3>
+										<p>{t('advancement.done', { done: openProgress?.done ?? 0, total: openProgress?.total ?? 0 })}</p>
 									</div>
-								)}
-							</Unfold>
-						</>
-					)}
+									<span className="advancement-bar" aria-hidden="true">
+										<span style={{ width: `${openProgress?.percent ?? 0}%` }} />
+									</span>
+									<div className="advancement-series-list">
+										{openCategory.groups.map((group) => (
+											<SeriesBlock
+												key={group.id}
+												group={group}
+												language={i18n.language}
+												checked={checked}
+												pendingId={pendingId}
+												open={openSeriesId === group.id}
+												onOpen={() => setOpenSeriesId(openSeriesId === group.id ? null : group.id)}
+												onToggle={onToggle}
+											/>
+										))}
+									</div>
+								</div>
+							)}
+						</Unfold>
+					</LateUnfold>
 				</div>
 			</section>
 		</div>

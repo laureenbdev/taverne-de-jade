@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'phosphor-react';
 
 import { useAuth } from '../../features/auth/AuthContext.tsx';
+import { useModalPayload, useModalPresence } from '../../hooks/useModalPresence.ts';
+import PasswordField from '../password-field/password-field.tsx';
 import { useLockBodyScroll } from '../../hooks/useLockBodyScroll.ts';
 import './auth-modal.scss';
 
@@ -18,14 +20,18 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, locked = false }) => {
 	const { t } = useTranslation();
-	const { configured, signIn, signUp } = useAuth();
+	const { configured, signIn, signUp, requestPasswordReset } = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [pseudo, setPseudo] = useState('');
 	const [message, setMessage] = useState('');
 	const [messageIsError, setMessageIsError] = useState(true);
 	const [submitting, setSubmitting] = useState(false);
-	const isSignUp = mode === 'signUp';
+	const [resetBusy, setResetBusy] = useState(false);
+	const open = Boolean(mode);
+	const { present, shown } = useModalPresence(open);
+	const activeMode = useModalPayload(mode, present);
+	const isSignUp = activeMode === 'signUp';
 
 	useEffect(() => {
 		if (!mode) return;
@@ -44,8 +50,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, locked = false }) 
 		return () => window.removeEventListener('keydown', onKey);
 	}, [mode, onClose, locked]);
 
-	useLockBodyScroll(Boolean(mode) && !locked);
-	if (!mode) return null;
+	useLockBodyScroll(present && !locked);
+	if (!present || !activeMode) return null;
 
 	const handleSignIn = async () => {
 		setSubmitting(true);
@@ -79,9 +85,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, locked = false }) 
 		} else if (!locked) onClose();
 	};
 
+	const handleReset = async () => {
+		setMessage('');
+		setResetBusy(true);
+		const error = await requestPasswordReset(email);
+		setResetBusy(false);
+		if (error) {
+			setMessageIsError(true);
+			setMessage(error);
+			return;
+		}
+		setMessageIsError(false);
+		setMessage(t('auth.resetSent'));
+	};
+
 	const dialog = (
 		<div
-			className={`auth-modal-overlay${locked ? ' auth-modal-overlay--locked' : ''}`}
+			className={[
+				'auth-modal-overlay',
+				'modal-layer',
+				shown ? 'is-open' : '',
+				locked ? 'auth-modal-overlay--locked' : '',
+			].filter(Boolean).join(' ')}
 			onClick={locked ? undefined : onClose}
 		>
 			<div
@@ -136,8 +161,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, locked = false }) 
 						)}
 						<label>
 							{t('auth.password')}
-							<input
-								type="password"
+							<PasswordField
 								value={password}
 								autoComplete={isSignUp ? 'new-password' : 'current-password'}
 								required
@@ -145,6 +169,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, locked = false }) 
 								onChange={(event) => setPassword(event.target.value)}
 							/>
 						</label>
+						{!isSignUp && (
+							<button
+								type="button"
+								className="auth-modal-reset"
+								disabled={resetBusy || !email.trim()}
+								onClick={() => void handleReset()}
+							>
+								{t('auth.forgotPassword')}
+							</button>
+						)}
 						<div className="auth-modal-actions">
 							<button type="submit" className="btn-submit" disabled={submitting}>
 								{isSignUp ? t('auth.signUp') : t('auth.signIn')}
