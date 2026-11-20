@@ -152,6 +152,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	const [build, setBuild] = useState<ArtifactBuild>(initial?.artifactBuild ?? emptyArtifactBuild(initial?.artifactSet ?? null));
 	const [checkedTasks, setCheckedTasks] = useState<string[]>(initial?.checkedTasks ?? []);
 	const [hiddenTasks, setHiddenTasks] = useState<string[]>(initial?.hiddenTasks ?? []);
+	const [notes, setNotes] = useState(initial?.notes ?? '');
 	const [tab, setTab] = useState<PlannerTab>(initialTab);
 	const skipSave = useRef(true);
 	const onSubmitRef = useRef(onSubmit);
@@ -209,6 +210,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			checkedTasks,
 			hiddenTasks,
 			artifactBuild: build,
+			notes,
 		});
 	}, [
 		characterId,
@@ -230,6 +232,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		talentBurst,
 		talentBurstTarget,
 		build,
+		notes,
 	]);
 
 	const changeCurrent = (value: string) => {
@@ -343,6 +346,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			checkedTasks,
 			hiddenTasks,
 			artifactBuild: build,
+			notes,
 		};
 		const labelOf = (line: FarmNeed) => {
 			if (line.kind === 'xp') return t('planner.heroWit');
@@ -508,6 +512,16 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									{t(`planner.weaponTypes.${selected.weapon}`, { defaultValue: selected.weapon })}
 								</span>
 							</p>
+						)}
+						{showBuild && (
+							<textarea
+								className="planner-notes"
+								value={notes}
+								onChange={(event) => setNotes(event.target.value)}
+								placeholder={t('planner.notesPlaceholder')}
+								aria-label={t('planner.notes')}
+								rows={2}
+							/>
 						)}
 					</div>
 					{mode === 'edit' && (

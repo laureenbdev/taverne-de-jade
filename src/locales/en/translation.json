@@ -410,6 +410,8 @@
     "addStat": "Add a stat",
     "chooseStat": "Choose a stat…",
     "removeStat": "Remove stat",
+    "notes": "Notes",
+    "notesPlaceholder": "notes",
     "views": {
       "label": "Display",
       "source": "By source",

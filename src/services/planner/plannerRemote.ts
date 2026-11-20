@@ -34,7 +34,18 @@ type PlannerRow = {
 	checked_tasks?: string[] | null;
 	hidden_tasks?: string[] | null;
 	artifact_build?: unknown;
+	notes?: string | null;
 };
+
+export type PlannerFarmViewMode = 'source' | 'character' | 'table';
+
+function isFarmViewMode(value: unknown): value is PlannerFarmViewMode {
+	return value === 'source' || value === 'character' || value === 'table';
+}
+
+function isMissingColumn(message: string, column: string) {
+	return message.includes(column) && /schema cache|does not exist|could not find/i.test(message);
+}
 
 function requireClient() {
 	if (!supabase) throw new Error('Supabase is not configured');
@@ -90,11 +101,12 @@ function toPlan(row: PlannerRow): PlannedCharacter | null {
 		checkedTasks: readTaskIds(row.checked_tasks),
 		hiddenTasks: readTaskIds(row.hidden_tasks),
 		artifactBuild: row.artifact_build ?? null,
+		notes: typeof row.notes === 'string' ? row.notes : '',
 	});
 }
 
-function toRow(plan: PlannedCharacter) {
-	return {
+function toRow(plan: PlannedCharacter, includeNotes = true) {
+	const row: Record<string, unknown> = {
 		character_id: plan.characterId,
 		current_level: plan.currentLevel,
 		current_ascended: plan.currentAscended,
@@ -123,9 +135,42 @@ function toRow(plan: PlannedCharacter) {
 		hidden_tasks: plan.hiddenTasks,
 		artifact_build: plan.artifactBuild,
 	};
+	if (includeNotes) row.notes = plan.notes;
+	return row;
 }
 
 const PLANNER_COLUMNS = [
+	'character_id',
+	'current_level',
+	'current_ascended',
+	'target_level',
+	'target_ascended',
+	'weapon_id',
+	'weapon_level',
+	'weapon_current_level',
+	'weapon_current_ascended',
+	'weapon_target_level',
+	'weapon_target_ascended',
+	'talent_normal',
+	'talent_skill',
+	'talent_burst',
+	'talent_normal_current',
+	'talent_normal_target',
+	'talent_skill_current',
+	'talent_skill_target',
+	'talent_burst_current',
+	'talent_burst_target',
+	'artifact_set',
+	'favorite',
+	'done',
+	'task_signature',
+	'checked_tasks',
+	'hidden_tasks',
+	'artifact_build',
+	'notes',
+].join(', ');
+
+const PLANNER_COLUMNS_WITHOUT_NOTES = [
 	'character_id',
 	'current_level',
 	'current_ascended',
@@ -191,7 +236,7 @@ const HIDDEN_COLUMNS = [
 
 export async function listPlanner(userId: string): Promise<PlannedCharacter[]> {
 	const client = requireClient();
-	const attempts = [PLANNER_COLUMNS, HIDDEN_COLUMNS, TASK_COLUMNS, LEGACY_COLUMNS];
+	const attempts = [PLANNER_COLUMNS, PLANNER_COLUMNS_WITHOUT_NOTES, HIDDEN_COLUMNS, TASK_COLUMNS, LEGACY_COLUMNS];
 	let data: PlannerRow[] | null = null;
 	let lastError: string | null = null;
 	for (const columns of attempts) {
@@ -219,6 +264,14 @@ export async function insertPlanner(userId: string, plan: PlannedCharacter): Pro
 		user_id: userId,
 		...toRow(plan),
 	});
+	if (error && isMissingColumn(error.message, 'notes')) {
+		const { error: fallback } = await client.from('planner_characters').insert({
+			user_id: userId,
+			...toRow(plan, false),
+		});
+		if (fallback) throw new Error(fallback.message);
+		return;
+	}
 	if (error) throw new Error(error.message);
 }
 
@@ -229,6 +282,40 @@ export async function updatePlanner(userId: string, plan: PlannedCharacter): Pro
 		.update(toRow(plan))
 		.eq('user_id', userId)
 		.eq('character_id', plan.characterId);
+	if (error && isMissingColumn(error.message, 'notes')) {
+		const { error: fallback } = await client
+			.from('planner_characters')
+			.update(toRow(plan, false))
+			.eq('user_id', userId)
+			.eq('character_id', plan.characterId);
+		if (fallback) throw new Error(fallback.message);
+		return;
+	}
+	if (error) throw new Error(error.message);
+}
+
+export async function readPlannerFarmView(userId: string): Promise<PlannerFarmViewMode | null> {
+	const client = requireClient();
+	const { data, error } = await client
+		.from('profiles')
+		.select('planner_farm_view')
+		.eq('id', userId)
+		.maybeSingle();
+	if (error) {
+		if (isMissingColumn(error.message, 'planner_farm_view')) return null;
+		throw new Error(error.message);
+	}
+	const value = (data as { planner_farm_view?: unknown } | null)?.planner_farm_view;
+	return isFarmViewMode(value) ? value : null;
+}
+
+export async function writePlannerFarmView(userId: string, mode: PlannerFarmViewMode): Promise<void> {
+	const client = requireClient();
+	const { error } = await client.from('profiles').upsert({
+		id: userId,
+		planner_farm_view: mode,
+	}, { onConflict: 'id' });
+	if (error && isMissingColumn(error.message, 'planner_farm_view')) return;
 	if (error) throw new Error(error.message);
 }
 

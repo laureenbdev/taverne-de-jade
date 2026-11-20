@@ -257,7 +257,8 @@
 }
 
 .planner-modal input[type='number'],
-.planner-modal input[type='text'] {
+.planner-modal input[type='text'],
+.planner-modal textarea {
 	padding: 10px 12px;
 	border: 1px solid rgba(198, 163, 106, 0.9);
 	border-radius: 8px;
@@ -269,6 +270,15 @@
 		outline: 2px solid var(--color-primary);
 		outline-offset: 1px;
 	}
+}
+
+.planner-modal textarea.planner-notes {
+	width: 100%;
+	min-height: 0;
+	padding: 6px 10px;
+	resize: vertical;
+	line-height: 1.35;
+	font-size: 0.9rem;
 }
 
 .planner-modal .select-field-trigger {
@@ -398,7 +408,7 @@
 
 .planner-modal-identity {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: 12px;
 	min-width: 0;
 }
@@ -1439,7 +1449,7 @@ body.modal-open .planner-add {
 
 .planner-sub {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 104px 28px;
+	grid-template-columns: minmax(0, 1fr) 148px 28px;
 	gap: 6px;
 	align-items: center;
 
@@ -1600,7 +1610,7 @@ body.modal-open .planner-add {
 	}
 
 	.planner-sub {
-		grid-template-columns: minmax(0, 1fr) 88px 28px;
+		grid-template-columns: minmax(0, 1fr) 120px 28px;
 	}
 
 	.planner-cluster header {

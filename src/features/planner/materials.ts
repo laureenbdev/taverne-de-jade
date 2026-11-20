@@ -246,6 +246,7 @@ export interface PlannedCharacter {
 	checkedTasks: string[];
 	hiddenTasks: string[];
 	artifactBuild: ArtifactBuild | null;
+	notes: string;
 }
 
 type LegacyPlan = Partial<PlannedCharacter> & {
@@ -413,6 +414,7 @@ export function planFromLegacy(raw: LegacyPlan): PlannedCharacter | null {
 		checkedTasks,
 		hiddenTasks,
 		artifactBuild: readArtifactBuild(raw.artifactBuild, artifactSet),
+		notes: typeof raw.notes === 'string' ? raw.notes : '',
 	};
 }
 
@@ -467,6 +469,7 @@ export function mergeSavedPlan(previous: PlannedCharacter | undefined, next: Pla
 		taskSignature: signature,
 		artifactSet: next.artifactBuild?.set ?? next.artifactSet ?? null,
 		artifactBuild: next.artifactBuild === undefined ? (previous?.artifactBuild ?? null) : next.artifactBuild,
+		notes: typeof next.notes === 'string' ? next.notes : (previous?.notes ?? ''),
 	};
 }
 

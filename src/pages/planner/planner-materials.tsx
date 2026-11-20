@@ -15,10 +15,15 @@ import {
 import { LateUnfold } from '../../components/unfold/unfold.tsx';
 import { Character } from '../../services/genshin/charactersApi.ts';
 import { catalogIconUrl, characterIconUrl, weaponIconUrl } from '../../services/genshin/images.ts';
+import {
+	PlannerFarmViewMode,
+	readPlannerFarmView,
+	writePlannerFarmView,
+} from '../../services/planner/plannerRemote.ts';
 import { Weapon } from '../../services/genshin/weaponsApi.ts';
 import { LevelRange, RoundCheck } from './planner-shared.tsx';
 
-type FarmViewMode = 'source' | 'character' | 'table';
+type FarmViewMode = PlannerFarmViewMode;
 type TableSortKey = 'character' | 'level' | 'weapon' | 'talents' | 'artifacts';
 type TableSort = { key: TableSortKey; dir: 'asc' | 'desc' };
 
@@ -88,6 +93,26 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 
 	useEffect(() => {
 		setFarmView(readFarmView(userId));
+		if (!userId) return;
+		let cancelled = false;
+		void (async () => {
+			try {
+				const remote = await readPlannerFarmView(userId);
+				if (cancelled) return;
+				if (remote) {
+					setFarmView(remote);
+					writeFarmView(remote, userId);
+					return;
+				}
+				const local = readFarmView(userId);
+				await writePlannerFarmView(userId, local);
+			} catch (error) {
+				console.error('Erreur lors de la synchro du mode planner:', error);
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
 	}, [userId]);
 
 	const formatCount = (count: number) => count.toLocaleString(i18n.language);
@@ -134,6 +159,10 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 	const chooseFarmView = (mode: FarmViewMode) => {
 		setFarmView(mode);
 		writeFarmView(mode, userId);
+		if (!userId) return;
+		void writePlannerFarmView(userId, mode).catch((error) => {
+			console.error('Erreur lors de la sauvegarde du mode planner:', error);
+		});
 	};
 
 	const characterGroups = useMemo(() => {
