@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+	ArrowLineUp,
 	ArrowRight,
 	ChartLineUp,
 	CircleDashed,
@@ -9,10 +10,12 @@ import {
 	Drop,
 	Eye,
 	EyeSlash,
+	Flower,
 	Flame,
 	Hourglass,
 	Leaf,
 	Lightning,
+	ListChecks,
 	Plus,
 	Snowflake,
 	Sparkle,
@@ -30,11 +33,13 @@ import ItemSelect from '../../components/item-select/item-select.tsx';
 import SelectField from '../../components/select-field/select-field.tsx';
 import {
 	ArtifactBuild,
+	artifactPieceNeedKey,
+	artifactMainStatLabel,
+	artifactSubStatLabel,
 	CIRCLET_STATS,
 	emptyArtifactBuild,
 	GOBLET_STATS,
 	hasArtifactPlan,
-	normalizeArtifactStatId,
 	SANDS_STATS,
 	SUBSTATS,
 } from '../../features/planner/artifactBuild.ts';
@@ -85,6 +90,7 @@ const TAB_ICONS = {
 	weapon: Sword,
 	talents: Sparkle,
 	artifacts: Diamond,
+	build: ListChecks,
 } as const;
 
 interface Selectable {
@@ -448,11 +454,13 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 			|| talentBurst < talentBurstTarget;
 		const artifactsMissing = !hasArtifactPlan(build);
 		const artifactsTodo = !artifactsMissing && build.done !== true;
+		const buildMissing = hasArtifactPlan(build) && !build.subs.some((sub) => sub.stat.trim() !== '');
 		return {
 			level: levelTodo ? 'todo' as const : null,
 			weapon: weaponMissing ? 'missing' as const : weaponTodo ? 'todo' as const : null,
 			talents: talentsTodo ? 'todo' as const : null,
 			artifacts: artifactsMissing ? 'missing' as const : artifactsTodo ? 'todo' as const : null,
+			build: buildMissing ? 'missing' as const : null,
 		};
 	}, [
 		currentLevel,
@@ -472,10 +480,61 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 		talentBurstTarget,
 		build,
 	]);
-	const statOptions = (stats: readonly string[]) => stats.map((stat) => ({
+	const mainStatOptions = (stats: readonly string[]) => stats.map((stat) => ({
 		value: stat,
-		label: t(`planner.stats.${normalizeArtifactStatId(stat)}`),
+		label: artifactMainStatLabel(t, stat, false),
 	}));
+
+	const subStatOptions = (stats: readonly string[]) => stats.map((stat) => ({
+		value: stat,
+		label: artifactSubStatLabel(t, stat, false),
+	}));
+
+	const renderArtifactPiece = (
+		id: import('../../features/planner/artifactBuild.ts').ArtifactPieceId,
+		Icon: typeof Flower,
+		stats: readonly string[] | null,
+	) => {
+		const needKey = artifactPieceNeedKey(id);
+		const needed = build[needKey];
+		return (
+			<div key={id} className={`planner-artifact-slot${needed ? ' is-needed' : ''}`}>
+				<div className="planner-artifact-slot-head">
+					<span className="planner-slot-label">
+						<Icon size={14} aria-hidden="true" />
+						{t(`planner.slots.${id}`)}
+					</span>
+					<button
+						type="button"
+						className={`planner-piece-need-mark${needed ? ' is-on' : ''} tooltip-anchor`}
+						aria-pressed={needed}
+						aria-label={needed
+							? t('planner.pieceUnmarkNeed', { slot: t(`planner.slots.${id}`) })
+							: t('planner.pieceMarkNeed', { slot: t(`planner.slots.${id}`) })}
+						onClick={() => patchBuild({ [needKey]: !needed })}
+					>
+						<WarningCircle size={16} weight={needed ? 'fill' : 'regular'} aria-hidden="true" />
+						<span className="tooltip top" role="tooltip">
+							{needed
+								? t('planner.pieceUnmarkNeed', { slot: t(`planner.slots.${id}`) })
+								: t('planner.pieceMarkNeed', { slot: t(`planner.slots.${id}`) })}
+						</span>
+					</button>
+				</div>
+				{stats && (
+					<SelectField
+						value={build[id]}
+						aria-label={t(`planner.slots.${id}`)}
+						onChange={(next) => patchBuild({ [id]: next })}
+						options={[
+							{ value: '', label: t('planner.any') },
+							...mainStatOptions(stats),
+						]}
+					/>
+				)}
+			</div>
+		);
+	};
 
 	return (
 		<div ref={dialogRef} className="planner-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="planner-modal-title" tabIndex={-1}>
@@ -520,16 +579,6 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 								</span>
 							</p>
 						)}
-						{showBuild && (
-							<textarea
-								className="planner-notes"
-								value={notes}
-								onChange={(event) => setNotes(event.target.value)}
-								placeholder={t('planner.notesPlaceholder')}
-								aria-label={t('planner.notes')}
-								rows={2}
-							/>
-						)}
 					</div>
 					{mode === 'edit' && (
 						<button
@@ -547,7 +596,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 				{showBuild && (
 					<>
 						<div className="planner-tabs" role="tablist">
-							{(['level', 'weapon', 'talents', 'artifacts'] as const).map((id) => {
+							{(['level', 'weapon', 'talents', 'artifacts', 'build'] as const).map((id) => {
 								const Icon = TAB_ICONS[id];
 								const status = tabStatus[id];
 								const StatusIcon = status === 'missing' ? CircleDashed : WarningCircle;
@@ -732,30 +781,29 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 									<ItemSelect items={artifactChoices} isLoading={false} value={build.setB ?? ''} onChange={(name) => chooseSet('setB', name)} placeholder={t('planner.artifactNone')} />
 								</div>
 							</div>
-							<div className="planner-main-stats">
-								{([
-									['sands', SANDS_STATS],
-									['goblet', GOBLET_STATS],
-									['circlet', CIRCLET_STATS],
-								] as const).map(([slot, stats]) => (
-									<label key={slot} className="planner-main-stat">
-										<span className="planner-slot-label">
-											{slot === 'sands' && <Hourglass size={14} />}
-											{slot === 'goblet' && <Drop size={14} />}
-											{slot === 'circlet' && <Crown size={14} />}
-											{t(`planner.slots.${slot}`)}
-										</span>
-										<SelectField
-											value={build[slot]}
-											onChange={(next) => patchBuild({ [slot]: next })}
-											options={[
-												{ value: '', label: t('planner.any') },
-												...statOptions(stats),
-											]}
-										/>
-									</label>
-								))}
+							<div className="planner-artifact-slots planner-artifact-slots-fixed">
+								{renderArtifactPiece('flower', Flower, null)}
+								{renderArtifactPiece('plume', ArrowLineUp, null)}
 							</div>
+							<div className="planner-artifact-slots planner-artifact-slots-mains">
+								{renderArtifactPiece('sands', Hourglass, SANDS_STATS)}
+								{renderArtifactPiece('goblet', Drop, GOBLET_STATS)}
+								{renderArtifactPiece('circlet', Crown, CIRCLET_STATS)}
+							</div>
+						</section>
+						)}
+						{tab === 'build' && (
+						<section className="planner-form-block planner-build">
+							<label className="planner-build-notes">
+								<span>{t('planner.notes')}</span>
+								<textarea
+									className="planner-notes"
+									value={notes}
+									onChange={(event) => setNotes(event.target.value)}
+									placeholder={t('planner.notesPlaceholder')}
+									rows={4}
+								/>
+							</label>
 							<div className="planner-subs">
 								<span className="planner-subs-title">{t('planner.subs')}</span>
 								{build.subs.map((sub, index) => (
@@ -768,14 +816,14 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 											})}
 											options={[
 												{ value: '', label: t('planner.chooseStat') },
-												...statOptions(SUBSTATS),
+												...subStatOptions(SUBSTATS),
 											]}
 										/>
 										<input
 											type="text"
 											inputMode="decimal"
 											aria-label={t('planner.targetValue')}
-											placeholder={t('planner.targetValue')}
+											placeholder={t('planner.targetValuePlaceholder')}
 											value={sub.target}
 											onChange={(event) => patchBuild({
 												subs: build.subs.map((entry, entryIndex) => (entryIndex === index ? { ...entry, target: event.target.value } : entry)),
@@ -797,7 +845,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 				)}
 				{resourceLines.length > 0 && (
 					<div className="planner-modal-resources">
-						<h3>{t('planner.views.resources')}</h3>
+						<p className="planner-modal-resources-label">{t('planner.views.resources')}</p>
 						<ul className="planner-task-tiles">
 							{resourceLines.map((line) => (
 								<li key={line.id} className="tooltip-anchor">

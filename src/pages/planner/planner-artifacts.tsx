@@ -52,7 +52,7 @@ const PlannerArtifacts: React.FC<PlannerArtifactsProps> = ({
 								return (
 									<article key={cluster.key} className={`planner-cluster${cluster.favorite ? ' is-favorite' : ''}`}>
 										<header>
-											<h3 className="planner-cluster-title">{title}</h3>
+											<p className="planner-cluster-title">{title}</p>
 										</header>
 										{cluster.sets.length > 0 && (
 											<ul className="planner-task-tiles">

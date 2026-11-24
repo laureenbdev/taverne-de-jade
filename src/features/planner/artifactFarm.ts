@@ -1,5 +1,5 @@
 import { ArtifactSetInfo } from '../../services/genshin/artifactsApi.ts';
-import { ArtifactBuild, hasArtifactPlan } from './artifactBuild.ts';
+import { ArtifactBuild, ArtifactPieceId, hasArtifactPlan, isArtifactPieceNeeded, normalizeArtifactStatId } from './artifactBuild.ts';
 import { PlannedCharacter } from './materials.ts';
 
 export interface ArtifactFarmCharacter {
@@ -32,13 +32,23 @@ export interface ArtifactStatEntry {
 	open: boolean;
 }
 
+export interface ArtifactMainGroup {
+	main: string;
+	subs: ArtifactStatEntry[];
+	open: boolean;
+}
+
+export type ArtifactPieceWanted = Record<ArtifactPieceId, boolean>;
+
 export interface ArtifactSetStats {
 	setName: string;
 	image: string;
-	sands: ArtifactStatEntry[];
-	goblet: ArtifactStatEntry[];
-	circlet: ArtifactStatEntry[];
-	subs: ArtifactStatEntry[];
+	sands: ArtifactMainGroup[];
+	goblet: ArtifactMainGroup[];
+	circlet: ArtifactMainGroup[];
+	flower: ArtifactStatEntry[];
+	plume: ArtifactStatEntry[];
+	pieceWanted: ArtifactPieceWanted;
 }
 
 type DomainBucket = {
@@ -178,17 +188,64 @@ function collectStatEntries(
 			byStat.set(stat, (byStat.get(stat) ?? false) || open);
 		});
 	});
-	return [...byStat.entries()].map(([stat, open]) => ({ stat, open }));
+	return [...byStat.entries()]
+		.sort(([left], [right]) => left.localeCompare(right))
+		.map(([stat, open]) => ({ stat, open }));
+}
+
+function collectMainGroups(
+	characters: ArtifactFarmCharacter[],
+	pickMain: (build: ArtifactFarmCharacter['build']) => string,
+): ArtifactMainGroup[] {
+	const byMain = new Map<string, { subs: Map<string, boolean>; open: boolean }>();
+
+	characters.forEach((character) => {
+		const main = pickMain(character.build);
+		if (!main) return;
+		const charOpen = !character.done;
+		let group = byMain.get(main);
+		if (!group) {
+			group = { subs: new Map(), open: false };
+			byMain.set(main, group);
+		}
+		group.open = group.open || charOpen;
+		const mainId = normalizeArtifactStatId(main);
+		character.build.subs.forEach((sub) => {
+			if (!sub.stat) return;
+			if (normalizeArtifactStatId(sub.stat) === mainId) return;
+			group!.subs.set(sub.stat, (group!.subs.get(sub.stat) ?? false) || charOpen);
+		});
+	});
+
+	return [...byMain.entries()]
+		.sort(([left], [right]) => left.localeCompare(right))
+		.map(([main, group]) => ({
+			main,
+			open: group.open,
+			subs: [...group.subs.entries()]
+				.sort(([left], [right]) => left.localeCompare(right))
+				.map(([stat, open]) => ({ stat, open })),
+		}));
+}
+
+function collectPieceWanted(characters: ArtifactFarmCharacter[]): ArtifactPieceWanted {
+	const pieces = ['flower', 'plume', 'sands', 'goblet', 'circlet'] as const;
+	return Object.fromEntries(
+		pieces.map((piece) => [piece, characters.some((character) => isArtifactPieceNeeded(character.build, piece))]),
+	) as ArtifactPieceWanted;
 }
 
 export function statsForArtifactSet(set: ArtifactFarmSet): ArtifactSetStats {
+	const subStats = (build: ArtifactBuild) => build.subs.map((sub) => sub.stat).filter(Boolean);
 	return {
 		setName: set.name,
 		image: set.image,
-		sands: collectStatEntries(set.characters, (build) => (build.sands ? [build.sands] : [])),
-		goblet: collectStatEntries(set.characters, (build) => (build.goblet ? [build.goblet] : [])),
-		circlet: collectStatEntries(set.characters, (build) => (build.circlet ? [build.circlet] : [])),
-		subs: collectStatEntries(set.characters, (build) => build.subs.map((sub) => sub.stat).filter(Boolean)),
+		sands: collectMainGroups(set.characters, (build) => build.sands),
+		goblet: collectMainGroups(set.characters, (build) => build.goblet),
+		circlet: collectMainGroups(set.characters, (build) => build.circlet),
+		flower: collectStatEntries(set.characters, subStats),
+		plume: collectStatEntries(set.characters, subStats),
+		pieceWanted: collectPieceWanted(set.characters),
 	};
 }
 

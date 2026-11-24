@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../../features/auth/AuthContext.tsx';
 import { ARTIFACT_SETS } from '../../features/planner/artifactSets.ts';
-import { buildArtifactFarm, ArtifactFarmSet, statsForArtifactSet } from '../../features/planner/artifactFarm.ts';
+import { buildArtifactFarm, ArtifactFarmSet } from '../../features/planner/artifactFarm.ts';
 import { buildFarm } from '../../features/planner/farm.ts';
 import { PlannerTab } from '../../features/planner/materials.ts';
 import { useCharacters } from '../../hooks/useCharacters.ts';
@@ -34,30 +34,24 @@ const Planner: React.FC = () => {
 	const { catalog, artifacts, isLoading: catalogLoading } = useFarmCatalog();
 	const { plans, isLoading: plansLoading, loadError, savePlan, removeCharacter } = usePlanner();
 	const [modal, setModal] = useState<PlannerModalState | null>(null);
-	const [setStats, setSetStats] = useState<ReturnType<typeof statsForArtifactSet> | null>(null);
+	const [openSetKey, setOpenSetKey] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const modalPresence = useModalPresence(Boolean(modal));
-	const setStatsPresence = useModalPresence(Boolean(setStats));
 	const activeModal = useModalPayload(modal, modalPresence.present);
-	const activeSetStats = useModalPayload(setStats, setStatsPresence.present);
-	useLockBodyScroll(modalPresence.present || setStatsPresence.present);
 
 	useEffect(() => {
-		if (!modal && !setStats) return;
+		if (!modal && !openSetKey) return;
 		const onKey = (event: KeyboardEvent) => {
 			if (event.key !== 'Escape' || event.defaultPrevented) return;
-			if (setStats) setSetStats(null);
+			if (openSetKey) setOpenSetKey(null);
 			else if (!saving) setModal(null);
 		};
 		window.addEventListener('keydown', onKey);
 		return () => window.removeEventListener('keydown', onKey);
-	}, [modal, setStats, saving]);
+	}, [modal, openSetKey, saving]);
 
 	const byId = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
-	const editing = activeModal?.mode === 'edit'
-		? plans.find((plan) => plan.characterId === activeModal.characterId) ?? null
-		: null;
 	const available = characters.filter((character) => !plans.some((plan) => plan.characterId === character.id));
 	const french = i18n.language.toLowerCase().startsWith('fr');
 
@@ -116,6 +110,21 @@ const Planner: React.FC = () => {
 		locale: i18n.language,
 	}), [roster, setsByName, byId, t, i18n.language]);
 
+	const activeSet = useMemo(() => {
+		if (!openSetKey) return null;
+		for (const cluster of artifactFarm) {
+			const found = cluster.sets.find((set) => set.name.toLowerCase() === openSetKey);
+			if (found) return found;
+		}
+		return null;
+	}, [openSetKey, artifactFarm]);
+	const setStatsPresence = useModalPresence(Boolean(activeSet));
+	const activeSetPayload = useModalPayload(activeSet, setStatsPresence.present);
+	const editing = activeModal?.mode === 'edit'
+		? plans.find((plan) => plan.characterId === activeModal.characterId) ?? null
+		: null;
+	useLockBodyScroll(modalPresence.present || setStatsPresence.present);
+
 	const run = async (action: () => Promise<void>) => {
 		setSaveError(null);
 		try {
@@ -142,7 +151,7 @@ const Planner: React.FC = () => {
 	};
 
 	const openSet = (set: ArtifactFarmSet) => {
-		setSetStats(statsForArtifactSet(set));
+		setOpenSetKey(set.name.toLowerCase());
 	};
 
 	return (
@@ -222,15 +231,17 @@ const Planner: React.FC = () => {
 				document.body,
 			)}
 
-			{setStatsPresence.present && activeSetStats && createPortal(
+			{setStatsPresence.present && activeSetPayload && createPortal(
 				<div
 					className={`planner-modal-overlay modal-layer${setStatsPresence.shown ? ' is-open' : ''}`}
-					onClick={() => setSetStats(null)}
+					onClick={() => setOpenSetKey(null)}
 				>
 					<ArtifactSetModal
-						stats={activeSetStats}
+						setName={activeSetPayload.name}
+						image={activeSetPayload.image}
+						characters={activeSetPayload.characters}
 						localize={localize}
-						onClose={() => setSetStats(null)}
+						onClose={() => setOpenSetKey(null)}
 					/>
 				</div>,
 				document.body,

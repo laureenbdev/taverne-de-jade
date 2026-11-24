@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 export const SUBSTATS = ['hp_', 'atk_', 'def_', 'em', 'er', 'cr', 'cd'] as const;
 
 export const SANDS_STATS = ['hp_', 'atk_', 'def_', 'er', 'em'] as const;
@@ -8,6 +10,12 @@ export const CIRCLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'cr', 'cd', 'cr_cd', 
 
 export type ArtifactStatId = typeof SUBSTATS[number] | typeof GOBLET_STATS[number] | typeof CIRCLET_STATS[number];
 
+export const ARTIFACT_PIECES = ['flower', 'plume', 'sands', 'goblet', 'circlet'] as const;
+
+export type ArtifactPieceId = typeof ARTIFACT_PIECES[number];
+
+type ArtifactPieceNeedKey = `${ArtifactPieceId}Need`;
+
 const LEGACY_FLAT_STATS = { hp: 'hp_', atk: 'atk_', def: 'def_' } as const;
 
 /** Anciennes sub-stats plates → clé % encore utilisée dans les traductions. */
@@ -15,6 +23,30 @@ export function normalizeArtifactStatId(stat: string): string {
 	return stat in LEGACY_FLAT_STATS
 		? LEGACY_FLAT_STATS[stat as keyof typeof LEGACY_FLAT_STATS]
 		: stat;
+}
+
+export function artifactStatLabel(t: TFunction, stat: string, short = false): string {
+	const id = normalizeArtifactStatId(stat);
+	if (short) {
+		const shortKey = `planner.statsShort.${id}`;
+		const shortLabel = t(shortKey);
+		if (shortLabel !== shortKey) return shortLabel;
+	}
+	return t(`planner.stats.${id}`);
+}
+
+/** Libellé de stat principale (sablier, coupe, diadème) — avec % quand pertinent. */
+export function artifactMainStatLabel(t: TFunction, stat: string, short = false): string {
+	const id = normalizeArtifactStatId(stat);
+	const key = short ? `planner.statsMainShort.${id}` : `planner.statsMain.${id}`;
+	const mainLabel = t(key);
+	if (mainLabel !== key) return mainLabel;
+	return artifactStatLabel(t, stat, short);
+}
+
+/** Sub-stats (build) — libellés sans suffixe % sur la cible numérique. */
+export function artifactSubStatLabel(t: TFunction, stat: string, short = false): string {
+	return artifactStatLabel(t, stat, short);
 }
 
 export interface ArtifactSubstat {
@@ -29,11 +61,21 @@ export interface ArtifactBuild {
 	sands: string;
 	goblet: string;
 	circlet: string;
-	sandsGot: boolean;
-	gobletGot: boolean;
-	circletGot: boolean;
+	flowerNeed: boolean;
+	plumeNeed: boolean;
+	sandsNeed: boolean;
+	gobletNeed: boolean;
+	circletNeed: boolean;
 	subs: ArtifactSubstat[];
 	done?: boolean;
+}
+
+export function artifactPieceNeedKey(piece: ArtifactPieceId): ArtifactPieceNeedKey {
+	return `${piece}Need`;
+}
+
+export function isArtifactPieceNeeded(build: ArtifactBuild, piece: ArtifactPieceId): boolean {
+	return build[artifactPieceNeedKey(piece)] === true;
 }
 
 function textOrEmpty(value: unknown): string {
@@ -49,9 +91,11 @@ export function emptyArtifactBuild(set: string | null = null): ArtifactBuild {
 		sands: '',
 		goblet: '',
 		circlet: '',
-		sandsGot: false,
-		gobletGot: false,
-		circletGot: false,
+		flowerNeed: false,
+		plumeNeed: false,
+		sandsNeed: false,
+		gobletNeed: false,
+		circletNeed: false,
 		subs: [],
 	};
 }
@@ -63,6 +107,10 @@ function numberOr(value: unknown, fallback = 0): number {
 
 function textOrNull(value: unknown): string | null {
 	return typeof value === 'string' && value.trim() !== '' ? value : null;
+}
+
+function readPieceNeed(record: Record<string, unknown>, piece: ArtifactPieceId): boolean {
+	return record[`${piece}Need`] === true;
 }
 
 export function readArtifactBuild(raw: unknown, legacySet?: string | null): ArtifactBuild | null {
@@ -83,9 +131,11 @@ export function readArtifactBuild(raw: unknown, legacySet?: string | null): Arti
 		sands: typeof record.sands === 'string' ? record.sands : '',
 		goblet: typeof record.goblet === 'string' ? record.goblet : '',
 		circlet: typeof record.circlet === 'string' ? record.circlet : '',
-		sandsGot: record.sandsGot === true,
-		gobletGot: record.gobletGot === true,
-		circletGot: record.circletGot === true,
+		flowerNeed: readPieceNeed(record, 'flower'),
+		plumeNeed: readPieceNeed(record, 'plume'),
+		sandsNeed: record.sandsNeed === true,
+		gobletNeed: record.gobletNeed === true,
+		circletNeed: record.circletNeed === true,
 		subs,
 		done: record.done === true,
 	};

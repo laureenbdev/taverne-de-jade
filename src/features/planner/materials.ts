@@ -622,7 +622,7 @@ function linesForCharacter(
 	return [...totals.values()];
 }
 
-export const PLANNER_TABS = ['level', 'weapon', 'talents', 'artifacts'] as const;
+export const PLANNER_TABS = ['level', 'weapon', 'talents', 'artifacts', 'build'] as const;
 
 export type PlannerTab = typeof PLANNER_TABS[number];
 

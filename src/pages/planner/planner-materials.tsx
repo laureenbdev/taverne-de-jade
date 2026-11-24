@@ -403,7 +403,6 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 			: cluster.tasks.some((task) => task.favorite);
 		const tiles = renderTiles(cluster, byCharacter);
 		const portraitDone = byCharacter && clusterDone(cluster);
-		const ClusterTitle = byCharacter ? 'h3' : 'h4';
 		return (
 			<article key={cluster.key} className={`planner-cluster${single ? ' is-single' : ''}${groupFavorite ? ' is-favorite' : ''}`}>
 				<header className={byCharacter ? 'is-character' : undefined}>
@@ -417,7 +416,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 							<img src={characterIconUrl(cluster.key)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
 						</button>
 					)}
-					<ClusterTitle className="planner-cluster-title">{title}</ClusterTitle>
+					<p className="planner-cluster-title">{title}</p>
 					{!byCharacter && (domain || days) && (
 						<p>
 							{domain}
@@ -433,7 +432,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 
 	const renderEnemyGroups = (common: FarmCluster[], elite: FarmCluster[]) => (
 		<section className="planner-farm-section">
-			<h3>{t('planner.sections.enemies')}</h3>
+			<p className="planner-farm-section-label">{t('planner.sections.enemies')}</p>
 			<div className="planner-cluster-grid">
 				{orderClusters([...common, ...elite]).map((cluster) => renderCluster(cluster))}
 			</div>
@@ -444,7 +443,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 		const single = id === 'boss' || id === 'local';
 		return (
 			<section key={id} className={`planner-farm-section${id === 'today' ? ' is-today' : ''}`}>
-				<h3>{t(`planner.sections.${id}`)}</h3>
+				<p className="planner-farm-section-label">{t(`planner.sections.${id}`)}</p>
 				<div className={`planner-cluster-grid${single ? ' is-single' : ''}`}>
 					{orderClusters(clusters).map((cluster) => renderCluster(cluster, single))}
 				</div>
