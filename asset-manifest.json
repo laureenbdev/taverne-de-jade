@@ -1,17 +1,17 @@
 {
   "files": {
-    "main.css": "/taverne-de-jade/static/css/main.564d04c6.css",
-    "main.js": "/taverne-de-jade/static/js/main.a6b9ca13.js",
+    "main.css": "/taverne-de-jade/static/css/main.1c5e5052.css",
+    "main.js": "/taverne-de-jade/static/js/main.b0470da2.js",
     "static/media/logo-taverne.png": "/taverne-de-jade/static/media/logo-taverne.ec745fc8b2f233edb90d.png",
     "static/media/banner-4.png": "/taverne-de-jade/static/media/banner-4.757419a23155905d3edf.png",
     "static/media/intertwined_fate.webp": "/taverne-de-jade/static/media/intertwined_fate.772050edb87e7e61f692.webp",
     "static/media/primogem.webp": "/taverne-de-jade/static/media/primogem.91508c1ea4daa8d228e8.webp",
     "index.html": "/taverne-de-jade/index.html",
-    "main.564d04c6.css.map": "/taverne-de-jade/static/css/main.564d04c6.css.map",
-    "main.a6b9ca13.js.map": "/taverne-de-jade/static/js/main.a6b9ca13.js.map"
+    "main.1c5e5052.css.map": "/taverne-de-jade/static/css/main.1c5e5052.css.map",
+    "main.b0470da2.js.map": "/taverne-de-jade/static/js/main.b0470da2.js.map"
   },
   "entrypoints": [
-    "static/css/main.564d04c6.css",
-    "static/js/main.a6b9ca13.js"
+    "static/css/main.1c5e5052.css",
+    "static/js/main.b0470da2.js"
   ]
 }
