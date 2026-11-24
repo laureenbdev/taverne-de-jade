@@ -55,6 +55,15 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 		}
 	}, [isOpen, item]);
 
+	useEffect(() => {
+		if (!isOpen) return;
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && !event.defaultPrevented) onClose();
+		};
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	}, [isOpen, onClose]);
+
 	const availableItems = (formData.type === 'character' ? characters : weapons).map((item) => ({
 		...item,
 		image: formData.type === 'character' ? characterIconUrl(item.id) : weaponIconUrl(item.id),
@@ -84,10 +93,16 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 
 	return createPortal(
 		<div className={`wishlist-form-overlay modal-layer${shown ? ' is-open' : ''}`} onClick={onClose}>
-			<div className="wishlist-form-content inner-scroll" onClick={(e) => e.stopPropagation()}>
+			<div
+				className="wishlist-form-content inner-scroll"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="wishlist-form-title"
+				onClick={(e) => e.stopPropagation()}
+			>
 				<div className="wishlist-form-header">
-					<h2>{item ? t('wishlist.form.editTitle') : t('wishlist.form.addTitle')}</h2>
-					<button className="wishlist-form-close" onClick={onClose} aria-label={t('common.close')}>
+					<h2 id="wishlist-form-title">{item ? t('wishlist.form.editTitle') : t('wishlist.form.addTitle')}</h2>
+					<button type="button" className="wishlist-form-close" onClick={onClose} aria-label={t('common.close')}>
 						<X size={24} />
 					</button>
 				</div>
@@ -99,6 +114,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 							<button
 								type="button"
 								className={`switch-option ${formData.type === 'character' ? 'active' : ''}`}
+								aria-pressed={formData.type === 'character'}
 								onClick={() => handleChange('type', 'character')}
 							>
 								{t('wishlist.form.character')}
@@ -106,6 +122,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ isOpen, item, onClose, onSu
 							<button
 								type="button"
 								className={`switch-option ${formData.type === 'weapon' ? 'active' : ''}`}
+								aria-pressed={formData.type === 'weapon'}
 								onClick={() => handleChange('type', 'weapon')}
 							>
 								{t('wishlist.form.weapon')}

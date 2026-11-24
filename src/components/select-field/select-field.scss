@@ -107,7 +107,10 @@
 	&:hover:not(:disabled),
 	&:focus-visible {
 		background: rgba(61, 190, 143, 0.12);
-		outline: none;
+	}
+
+	&:focus-visible {
+		outline-offset: -2px;
 	}
 
 	&.is-active {

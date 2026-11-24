@@ -1,0 +1,24 @@
+---
+description: Accessibilité clavier et focus visible
+alwaysApply: true
+---
+
+# Accessibilité clavier
+
+À chaque modification d’interface, vérifier la navigation au clavier et le focus visible.
+
+## Règles
+
+- Préférer les éléments natifs (`button`, `a`, `input`) plutôt que `div` + `role` + gestion manuelle du clavier.
+- Ne pas masquer le focus (`outline: none`) sans indicateur équivalent et visible (`:focus-visible`).
+- Une modale ou un panneau ouvert : le focus reste dedans (`inert` sur le reste de la page), Échap ferme, le focus revient au déclencheur.
+- Listes ou menus rendus hors du flux (portal, flyout) : pas d’arrêt Tab quand ils sont fermés ou invisibles ; le focus revient sur le champ déclencheur à la fermeture.
+- Éléments interactifs masqués ou repliés : `inert` ou hors de l’ordre de tabulation tant qu’ils ne sont pas affichés.
+- Après une action (cocher, sauvegarder, fermer), ne pas laisser le focus sur `body` ; le rendre sur le contrôle concerné.
+- Menus et tooltips : suivre `.cursor/rules/tooltips.mdc` (pas d’attribut `title`).
+
+## Vérifications rapides
+
+- Parcourir la page au Tab : ordre logique, contour visible partout.
+- Ouvrir / fermer modales et listes déroulantes au clavier.
+- Menu latéral replié : pas de focus sur des liens cachés.

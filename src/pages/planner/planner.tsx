@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -42,6 +42,17 @@ const Planner: React.FC = () => {
 	const activeModal = useModalPayload(modal, modalPresence.present);
 	const activeSetStats = useModalPayload(setStats, setStatsPresence.present);
 	useLockBodyScroll(modalPresence.present || setStatsPresence.present);
+
+	useEffect(() => {
+		if (!modal && !setStats) return;
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape' || event.defaultPrevented) return;
+			if (setStats) setSetStats(null);
+			else if (!saving) setModal(null);
+		};
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	}, [modal, setStats, saving]);
 
 	const byId = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
 	const editing = activeModal?.mode === 'edit'

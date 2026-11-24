@@ -66,6 +66,8 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, mobile = false, mobileOpen
 		setOpenGroups((prev) => ({ ...prev, [path]: !prev[path] }));
 	};
 
+	const [collapsedFlyoutPath, setCollapsedFlyoutPath] = useState<string | null>(null);
+
 	const handleLanguage = async (next: Language) => {
 		if (next === language || langBusy) return;
 		setLangBusy(true);
@@ -107,21 +109,38 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, mobile = false, mobileOpen
 			.join(' ');
 
 		if (collapsed) {
+			const flyoutOpen = collapsedFlyoutPath === item.path;
 			return (
 				<li key={item.path} className={liClass}>
-					<div className={`side-nav-flyout-anchor tooltip-anchor${childActive ? ' has-active' : ''}`}>
+					<div
+						className={`side-nav-flyout-anchor tooltip-anchor${childActive ? ' has-active' : ''}`}
+						onFocus={() => setCollapsedFlyoutPath(item.path)}
+						onBlur={(event) => {
+							if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+								setCollapsedFlyoutPath(null);
+							}
+						}}
+					>
 						<button
 							type="button"
 							className={`side-nav-group-btn${childActive ? ' is-active' : ''}`}
 							aria-label={t(item.labelKey)}
 							aria-haspopup="true"
+							aria-expanded={flyoutOpen}
+							onKeyDown={(event) => {
+								if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'ArrowDown') return;
+								event.preventDefault();
+								setCollapsedFlyoutPath(item.path);
+								const first = event.currentTarget.parentElement?.querySelector<HTMLElement>('.side-nav-flyout-link');
+								first?.focus();
+							}}
 						>
 							<Icon className="icon" size={22} />
 						</button>
 						<span className="tooltip right" role="tooltip" aria-hidden="true">
 							{t(item.labelKey)}
 						</span>
-						<div className="side-nav-flyout" role="menu">
+						<div className="side-nav-flyout" role="menu" inert={!flyoutOpen || undefined}>
 							<p className="side-nav-flyout-title">{t(item.labelKey)}</p>
 							{children.map((child) => {
 								const ChildIcon = child.icon;
@@ -130,6 +149,7 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, mobile = false, mobileOpen
 										key={child.path}
 										to={child.path}
 										role="menuitem"
+										tabIndex={-1}
 										className={({ isActive }) => `side-nav-flyout-link${isActive ? ' active' : ''}`}
 									>
 										<ChildIcon className="icon" size={16} />
@@ -187,6 +207,7 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, mobile = false, mobileOpen
 				id="side-nav"
 				className={`side-nav${collapsed ? ' is-collapsed' : ''}${mobileOpen ? ' is-mobile-open' : ''}`}
 				aria-label={t('nav.menu')}
+				inert={(mobile && !mobileOpen) || undefined}
 			>
 				<button
 					type="button"

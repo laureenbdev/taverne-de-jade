@@ -48,6 +48,15 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 	}, [isOpen, wish, defaultBanner]);
 
 	useEffect(() => {
+		if (!isOpen) return;
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && !event.defaultPrevented) onClose();
+		};
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	}, [isOpen, onClose]);
+
+	useEffect(() => {
 		if (!isOpen || !wish) return;
 		if (wish.banner !== 'standard' && wish.banner !== 'chronicled') return;
 		if (weapons.some((weapon) => weapon.name === wish.characterName)) setSubject('weapon');
@@ -86,10 +95,16 @@ const WishModal: React.FC<WishModalProps> = ({ isOpen, wish, defaultBanner = 'ch
 
 	return createPortal(
 		<div className={`wish-modal-overlay modal-layer${shown ? ' is-open' : ''}`} onClick={onClose}>
-			<div className="wish-modal-content inner-scroll" onClick={(e) => e.stopPropagation()}>
+			<div
+				className="wish-modal-content inner-scroll"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="wish-modal-title"
+				onClick={(e) => e.stopPropagation()}
+			>
 				<div className="wish-modal-header">
-					<h2>{wish ? t('wishes.modal.editTitle') : t('wishes.modal.addTitle')}</h2>
-					<button className="wish-modal-close" onClick={onClose} aria-label={t('common.close')}>
+					<h2 id="wish-modal-title">{wish ? t('wishes.modal.editTitle') : t('wishes.modal.addTitle')}</h2>
+					<button type="button" className="wish-modal-close" onClick={onClose} aria-label={t('common.close')}>
 						<X size={24} />
 					</button>
 				</div>

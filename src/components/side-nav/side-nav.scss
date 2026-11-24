@@ -195,15 +195,11 @@
 		}
 	}
 
-	a:focus,
+	/* cadre intérieur : les liens touchent les bords du menu */
 	a:focus-visible,
-	.side-nav-group-btn:focus,
 	.side-nav-group-btn:focus-visible,
-	.side-nav-action:focus,
-	.side-nav-action:focus-visible,
-	.side-nav-toggle:focus,
-	.side-nav-toggle:focus-visible {
-		outline: none;
+	.side-nav-action:focus-visible {
+		outline-offset: -2px;
 	}
 
 	.icon {

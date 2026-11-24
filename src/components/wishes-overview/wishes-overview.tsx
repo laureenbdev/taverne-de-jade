@@ -73,21 +73,14 @@ const WishesOverview: React.FC = () => {
 						</div>
 					))}
 
-					<div
+					<button
+						type="button"
 						className="section-container add-wish"
 						onClick={handleAddClick}
-						role="button"
-						tabIndex={0}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.preventDefault();
-								handleAddClick();
-							}
-						}}
 					>
 						<ListPlus size={24} />
 						<span>{t("wishes.addPull")}</span>
-					</div>
+					</button>
 				</section>
 			</LateUnfold>
 

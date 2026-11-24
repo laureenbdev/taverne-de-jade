@@ -1,0 +1,18 @@
+---
+description: Compte de test pour essais locaux et navigateur
+alwaysApply: true
+---
+
+# Compte de test
+
+Utiliser ce compte pour se connecter en local ou lors de tests dans le navigateur intégré.
+
+| Champ | Valeur |
+|-------|--------|
+| E-mail | `test-taverne@yopmail.com` |
+| Mot de passe | `Test-Taverne2026` |
+
+## Données
+
+- Il est **normal** de créer ou modifier des données avec ce compte (planificateur, progression, vœux, wishlist, retours, etc.).
+- **Inutile de les supprimer** après les tests, sauf si l’utilisateur le demande explicitement (nettoyage, scénario reproductible, démo).

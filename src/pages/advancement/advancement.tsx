@@ -115,6 +115,7 @@ const Advancement: React.FC = () => {
 	);
 
 	const onToggle = async (id: string) => {
+		const input = document.getElementById(`adv-${id}`) as HTMLInputElement | null;
 		setPendingId(id);
 		setSaveError(null);
 		try {
@@ -123,6 +124,7 @@ const Advancement: React.FC = () => {
 			setSaveError(error instanceof Error ? error.message : t('advancement.saveError'));
 		} finally {
 			setPendingId(null);
+			input?.focus({ preventScroll: true });
 		}
 	};
 
@@ -263,7 +265,7 @@ const SeriesBlock: React.FC<SeriesBlockProps> = ({ group, language, checked, pen
 								item={item}
 								language={language}
 								checked={checked.has(item.id)}
-								disabled={pendingId === item.id}
+								busy={pendingId === item.id}
 								onToggle={onToggle}
 							/>
 						))}
@@ -278,11 +280,11 @@ interface CheckRowProps {
 	item: AdvancementItem;
 	language: string;
 	checked: boolean;
-	disabled: boolean;
+	busy?: boolean;
 	onToggle: (id: string) => void;
 }
 
-const CheckRow: React.FC<CheckRowProps> = ({ item, language, checked, disabled, onToggle }) => {
+const CheckRow: React.FC<CheckRowProps> = ({ item, language, checked, busy = false, onToggle }) => {
 	const inputId = `adv-${item.id}`;
 	return (
 		<li className={checked ? 'is-done' : undefined}>
@@ -292,7 +294,7 @@ const CheckRow: React.FC<CheckRowProps> = ({ item, language, checked, disabled, 
 					className="custom-checkbox"
 					type="checkbox"
 					checked={checked}
-					disabled={disabled}
+					aria-busy={busy || undefined}
 					onChange={() => onToggle(item.id)}
 				/>
 				<span className="custom-checkbox-label" aria-hidden="true" />

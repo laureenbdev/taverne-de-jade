@@ -25,7 +25,8 @@
     "adminFeedback": "Retours",
     "menu": "Navigation",
     "collapse": "Fermer le menu",
-    "expand": "Ouvrir le menu"
+    "expand": "Ouvrir le menu",
+    "skipToContent": "Aller au contenu"
   },
   "header": {
     "account": "{{name}}"

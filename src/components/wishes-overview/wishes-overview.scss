@@ -16,8 +16,10 @@ section.wishes-overview {
         align-items: center;
         justify-content: center;
         gap: 8px;
+        width: 100%;
         min-height: 88px;
         padding: 20px 16px;
+        font: inherit;
         cursor: pointer;
         color: var(--color-primary-deep);
         transition: background-color 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
@@ -37,8 +39,7 @@ section.wishes-overview {
             transform: scale(0.985);
         }
 
-        &:focus {
-            outline: 2px solid var(--color-primary);
+        &:focus-visible {
             outline-offset: 2px;
         }
     }

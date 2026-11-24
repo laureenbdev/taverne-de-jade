@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useId, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { usePresence } from '../unfold/unfold.tsx';
@@ -37,6 +37,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 	const { t, i18n } = useTranslation();
 	const french = i18n.language.toLowerCase().startsWith('fr');
 	const titleOf = (item: SelectableItem) => (french && item.nameFr ? item.nameFr : item.name);
+	const listboxId = useId();
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdown = usePresence(isOpen);
 	const [searchTerm, setSearchTerm] = useState('');
@@ -135,18 +136,25 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 				break;
 			case 'Escape':
 				e.preventDefault();
-				setIsOpen(false);
-				setSearchTerm('');
-				setHighlightedIndex(-1);
+				close();
+				break;
+			case 'Tab':
+				close();
 				break;
 		}
 	};
 
-	const handleSelect = (item: SelectableItem) => {
-		onChange(item.name);
+	/* la liste est rendue en bas de <body> : le focus revient sur le champ en la fermant */
+	const close = () => {
 		setIsOpen(false);
 		setSearchTerm('');
 		setHighlightedIndex(-1);
+		triggerRef.current?.focus({ preventScroll: true });
+	};
+
+	const handleSelect = (item: SelectableItem) => {
+		onChange(item.name);
+		close();
 	};
 
 	const handleClear = (event: React.MouseEvent) => {
@@ -201,6 +209,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 				role="combobox"
 				aria-expanded={isOpen}
 				aria-haspopup="listbox"
+				aria-controls={listboxId}
 				tabIndex={0}
 			>
 				<span className="item-select-value">
@@ -241,7 +250,7 @@ const ItemSelect: React.FC<ItemSelectProps> = ({
 						/>
 					</div>
 
-					<div className="item-select-options inner-scroll" role="listbox">
+					<div className="item-select-options inner-scroll" id={listboxId} role="listbox">
 						{isLoading ? (
 							<div className="item-select-option loading">{t('common.loading')}</div>
 						) : filteredItems.length === 0 ? (

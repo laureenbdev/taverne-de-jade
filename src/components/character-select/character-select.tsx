@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useId, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { usePresence } from '../unfold/unfold.tsx';
@@ -30,6 +30,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 	required = false,
 }) => {
 	const { t } = useTranslation();
+	const listboxId = useId();
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdown = usePresence(isOpen);
 	const [searchTerm, setSearchTerm] = useState('');
@@ -135,18 +136,25 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 				break;
 			case 'Escape':
 				e.preventDefault();
-				setIsOpen(false);
-				setSearchTerm('');
-				setHighlightedIndex(-1);
+				close();
+				break;
+			case 'Tab':
+				close();
 				break;
 		}
 	};
 
-	const handleSelect = (character: Character) => {
-		onChange(character.name);
+	/* la liste est rendue en bas de <body> : le focus revient sur le champ en la fermant */
+	const close = () => {
 		setIsOpen(false);
 		setSearchTerm('');
 		setHighlightedIndex(-1);
+		triggerRef.current?.focus({ preventScroll: true });
+	};
+
+	const handleSelect = (character: Character) => {
+		onChange(character.name);
+		close();
 	};
 
 	const handleToggle = () => {
@@ -184,6 +192,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 				role="combobox"
 				aria-expanded={isOpen}
 				aria-haspopup="listbox"
+				aria-controls={listboxId}
 				tabIndex={0}
 			>
 				<span className="character-select-value">
@@ -213,7 +222,7 @@ const CharacterSelect: React.FC<CharacterSelectProps> = ({
 						/>
 					</div>
 
-					<div className="character-select-options inner-scroll" role="listbox">
+					<div className="character-select-options inner-scroll" id={listboxId} role="listbox">
 						{isLoading ? (
 							<div className="character-select-option loading">{t('common.loading')}</div>
 						) : filteredCharacters.length === 0 ? (

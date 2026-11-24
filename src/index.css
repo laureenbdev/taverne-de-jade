@@ -78,6 +78,30 @@ body {
   outline-offset: 3px;
 }
 
+/* conteneurs qui reçoivent le focus par script (évitement, ouverture de modale) : pas de cadre géant */
+#main-content:focus,
+[role="dialog"]:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 3000;
+  padding: 10px 16px;
+  border: 1px solid rgba(198, 163, 106, 0.45);
+  border-radius: 10px;
+  background: var(--color-bg-dark);
+  color: var(--color-gold-light);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+}
+
+.skip-link:focus {
+  transform: none;
+}
 a,
 button {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -547,6 +571,10 @@ section.right {
   display: inline-block;
 }
 
+.custom-checkbox:focus-visible+.custom-checkbox-label {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .custom-checkbox:checked + .custom-checkbox-label {
   border-color: var(--color-primary-deep);
   background: var(--color-primary-deep) url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20.285 6.709a1 1 0 0 0-1.414 0L9 16.586 5.129 12.71a1 1 0 1 0-1.415 1.415l4.586 4.586a1 1 0 0 0 1.415 0L20.285 8.123a1 1 0 0 0 0-1.414z'/%3E%3C/svg%3E") center / 12px no-repeat;

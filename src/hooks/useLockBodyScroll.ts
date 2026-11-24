@@ -13,6 +13,9 @@ const SCROLL_KEYS = new Set([
 	'ArrowDown',
 ]);
 
+/* Espace et flèches y ont leur propre action (activer un bouton, déplacer le curseur…) */
+const INTERACTIVE = 'button, a[href], input, textarea, select, [tabindex], [contenteditable="true"]';
+
 /** Scroll interne (modale, listes…) autorisé ; le document reste figé. */
 function allowsScroll(target: EventTarget | null): boolean {
 	if (!(target instanceof Element)) return false;
@@ -41,6 +44,17 @@ export function useLockBodyScroll(locked: boolean) {
 		const x = window.scrollX;
 		const y = window.scrollY;
 
+		/* les modales sont rendues hors de #root : le reste de la page devient inerte (Tab reste dans la modale) */
+		const root = document.getElementById('root');
+		const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		root?.setAttribute('inert', '');
+		const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"]');
+		const dialog = dialogs[dialogs.length - 1];
+		if (dialog && !dialog.contains(document.activeElement)) {
+			if (!dialog.hasAttribute('tabindex')) dialog.tabIndex = -1;
+			dialog.focus({ preventScroll: true });
+		}
+
 		const freeze = () => window.scrollTo(x, y);
 
 		const onWheel = (event: WheelEvent) => {
@@ -56,12 +70,7 @@ export function useLockBodyScroll(locked: boolean) {
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (!SCROLL_KEYS.has(event.key)) return;
 			const target = event.target;
-			if (target instanceof HTMLElement) {
-				const tag = target.tagName;
-				if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
-					return;
-				}
-			}
+			if (target instanceof HTMLElement && target.closest(INTERACTIVE)) return;
 			if (allowsScroll(event.target)) return;
 			event.preventDefault();
 		};
@@ -77,8 +86,12 @@ export function useLockBodyScroll(locked: boolean) {
 			window.removeEventListener('wheel', onWheel);
 			window.removeEventListener('touchmove', onTouchMove);
 			window.removeEventListener('keydown', onKeyDown);
-			if (locks > 0) return;
-			document.body.classList.remove('modal-open');
+			if (locks === 0) {
+				document.body.classList.remove('modal-open');
+				root?.removeAttribute('inert');
+			}
+			if (opener?.isConnected && !opener.closest('[inert]')) opener.focus({ preventScroll: true });
+			else if (document.activeElement === document.body) document.getElementById('main-content')?.focus({ preventScroll: true });
 		};
 	}, [locked]);
 }

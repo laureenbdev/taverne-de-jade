@@ -38,7 +38,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, onClose }) => {
 		setStatus(null);
 
 		const onKey = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') onClose();
+			if (event.key === 'Escape' && !event.defaultPrevented) onClose();
 		};
 		window.addEventListener('keydown', onKey);
 		return () => window.removeEventListener('keydown', onKey);

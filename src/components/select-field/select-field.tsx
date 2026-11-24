@@ -126,20 +126,60 @@ const SelectField: React.FC<SelectFieldProps> = ({
 			if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
 			setOpen(false);
 		};
-		const onKey = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') setOpen(false);
-		};
 		window.addEventListener('mousedown', onPointer);
-		window.addEventListener('keydown', onKey);
-		return () => {
-			window.removeEventListener('mousedown', onPointer);
-			window.removeEventListener('keydown', onKey);
-		};
+		return () => window.removeEventListener('mousedown', onPointer);
 	}, [present]);
 
-	const pick = (next: string) => {
+	/* la liste est rendue en bas de <body> : on y amène le focus à l'ouverture */
+	const menuPlaced = Boolean(coords);
+	useEffect(() => {
+		if (!open || !menuPlaced) return;
+		const menu = menuRef.current;
+		const target = menu?.querySelector<HTMLElement>('[aria-selected="true"]:not(:disabled)')
+			?? menu?.querySelector<HTMLElement>('[role="option"]:not(:disabled)');
+		target?.focus({ preventScroll: true });
+	}, [open, menuPlaced]);
+
+	const close = () => {
 		setOpen(false);
+		triggerRef.current?.focus({ preventScroll: true });
+	};
+
+	const pick = (next: string) => {
+		close();
 		if (next !== value) onChange(next);
+	};
+
+	const handleTriggerKeyDown = (event: React.KeyboardEvent) => {
+		if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+			event.preventDefault();
+			if (!disabled) setOpen(true);
+		} else if (event.key === 'Escape' && open) {
+			event.preventDefault();
+			setOpen(false);
+		}
+	};
+
+	const handleMenuKeyDown = (event: React.KeyboardEvent) => {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			close();
+			return;
+		}
+		if (event.key === 'Tab') {
+			close();
+			return;
+		}
+		const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="option"]:not(:disabled)') ?? []);
+		const index = items.indexOf(document.activeElement as HTMLElement);
+		let next: HTMLElement | undefined;
+		if (event.key === 'ArrowDown') next = items[Math.min(index + 1, items.length - 1)];
+		else if (event.key === 'ArrowUp') next = items[Math.max(index - 1, 0)];
+		else if (event.key === 'Home') next = items[0];
+		else if (event.key === 'End') next = items[items.length - 1];
+		else return;
+		event.preventDefault();
+		next?.focus();
 	};
 
 	const menu = present && coords && createPortal(
@@ -154,6 +194,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
 			].filter(Boolean).join(' ')}
 			role="listbox"
 			aria-labelledby={triggerId}
+			onKeyDown={handleMenuKeyDown}
 			style={{
 				top: coords.top,
 				left: coords.left,
@@ -219,6 +260,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
 				onClick={() => {
 					if (!disabled) setOpen((prev) => !prev);
 				}}
+				onKeyDown={handleTriggerKeyDown}
 			>
 				<span className="select-field-value">
 					{renderValue

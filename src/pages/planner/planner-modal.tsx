@@ -157,6 +157,12 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	const skipSave = useRef(true);
 	const onSubmitRef = useRef(onSubmit);
 	onSubmitRef.current = onSubmit;
+	const dialogRef = useRef<HTMLDivElement>(null);
+
+	/* la modale est remontée en passant d'« ajout » à « édition » : garder le focus dedans */
+	useEffect(() => {
+		if (document.activeElement === document.body) dialogRef.current?.focus({ preventScroll: true });
+	}, []);
 
 	const selected = mode === 'add'
 		? characters.find((character) => character.name === draftName)
@@ -471,7 +477,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	}));
 
 	return (
-		<div className="planner-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="planner-modal-title">
+		<div ref={dialogRef} className="planner-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="planner-modal-title" tabIndex={-1}>
 			<div className="planner-modal-header">
 				<h2 id="planner-modal-title">{mode === 'add' ? t('planner.addTitle') : t('planner.editTitle')}</h2>
 				<button type="button" onClick={onClose} aria-label={t('common.close')}>

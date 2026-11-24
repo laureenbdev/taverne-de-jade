@@ -80,7 +80,8 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 				className={`planner-character${character ? ` rarity-${character.rarity}` : ''}${plan.done ? ' is-done' : ''}${plan.favorite ? ' is-favorite' : ''}`}
 			>
 				<div className="planner-portrait-wrap">
-					<button type="button" className="planner-portrait" onClick={() => onEdit(plan.characterId)}>
+					{/* même action que le nom juste dessous : un seul arrêt clavier par personnage */}
+					<button type="button" className="planner-portrait" tabIndex={-1} aria-hidden="true" onClick={() => onEdit(plan.characterId)}>
 						<img src={characterIconUrl(plan.characterId)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
 					</button>
 					<button
@@ -116,7 +117,10 @@ const PlannerRoster: React.FC<PlannerRosterProps> = ({
 				fallback={<p className="planner-loading" aria-live="polite">{t('planner.loadingRoster')}</p>}
 			>
 				{roster.length === 0 && !loadError ? (
-					<p className="planner-empty">{t('planner.emptyRoster')}</p>
+					<>
+						<p className="planner-empty">{t('planner.emptyRoster')}</p>
+						<div className="planner-roster">{addButton}</div>
+					</>
 				) : (
 					<div ref={rosterRef} className="planner-roster-wrap">
 						<div className="planner-roster">

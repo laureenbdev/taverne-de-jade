@@ -15,6 +15,7 @@ import { routes } from './routes.tsx';
 const MOBILE_NAV_MQ = '(max-width: 860px)';
 
 function AppFrame() {
+  const { t } = useTranslation();
   const location = useLocation();
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -49,7 +50,9 @@ function AppFrame() {
   useEffect(() => {
     if (!mobileNavOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMobileNavOpen(false);
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      setMobileNavOpen(false);
+      document.querySelector<HTMLElement>('.header_menu')?.focus();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -57,6 +60,16 @@ function AppFrame() {
 
   return (
     <>
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById('main-content')?.focus();
+        }}
+      >
+        {t('nav.skipToContent')}
+      </a>
       <Banner />
       <Header
         mobileNavOpen={mobileNavOpen}
@@ -72,13 +85,13 @@ function AppFrame() {
           onMobileClose={() => setMobileNavOpen(false)}
         />
         <div className="app-main">
-          <div key={location.pathname} className="app-route">
+          <main id="main-content" key={location.pathname} className="app-route" tabIndex={-1}>
             <Routes>
               {routes.map((route) => (
                 <Route key={route.path} path={route.path} element={route.element} />
               ))}
             </Routes>
-          </div>
+          </main>
           <Footer />
         </div>
       </div>
