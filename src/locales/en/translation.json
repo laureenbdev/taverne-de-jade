@@ -456,12 +456,9 @@
       "circlet": "Circlet"
     },
     "stats": {
-      "hp": "HP",
-      "hp_": "HP %",
-      "atk": "ATK",
-      "atk_": "ATK %",
-      "def": "DEF",
-      "def_": "DEF %",
+      "hp_": "HP",
+      "atk_": "ATK",
+      "def_": "DEF",
       "em": "Elemental Mastery",
       "er": "Energy Recharge",
       "cr": "CRIT Rate",

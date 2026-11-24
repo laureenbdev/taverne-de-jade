@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crown, Drop, Hourglass, X } from 'phosphor-react';
 
+import { normalizeArtifactStatId } from '../../features/planner/artifactBuild.ts';
 import { ArtifactSetStats, ArtifactStatEntry } from '../../features/planner/artifactFarm.ts';
 import { catalogIconUrl } from '../../services/genshin/images.ts';
 
@@ -23,7 +24,7 @@ const StatList: React.FC<{ entries: ArtifactStatEntry[] }> = ({ entries }) => {
 		<ul>
 			{entries.map((entry) => (
 				<li key={entry.stat} className={entry.open ? 'is-open' : 'is-done'}>
-					{t(`planner.stats.${entry.stat}`)}
+					{t(`planner.stats.${normalizeArtifactStatId(entry.stat)}`)}
 				</li>
 			))}
 		</ul>

@@ -34,6 +34,7 @@ import {
 	emptyArtifactBuild,
 	GOBLET_STATS,
 	hasArtifactPlan,
+	normalizeArtifactStatId,
 	SANDS_STATS,
 	SUBSTATS,
 } from '../../features/planner/artifactBuild.ts';
@@ -473,7 +474,7 @@ const PlannerModal: React.FC<PlannerModalProps> = ({
 	]);
 	const statOptions = (stats: readonly string[]) => stats.map((stat) => ({
 		value: stat,
-		label: t(`planner.stats.${stat}`),
+		label: t(`planner.stats.${normalizeArtifactStatId(stat)}`),
 	}));
 
 	return (

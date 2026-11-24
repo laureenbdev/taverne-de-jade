@@ -1,4 +1,4 @@
-export const SUBSTATS = ['hp', 'hp_', 'atk', 'atk_', 'def', 'def_', 'em', 'er', 'cr', 'cd'] as const;
+export const SUBSTATS = ['hp_', 'atk_', 'def_', 'em', 'er', 'cr', 'cd'] as const;
 
 export const SANDS_STATS = ['hp_', 'atk_', 'def_', 'er', 'em'] as const;
 
@@ -7,6 +7,15 @@ export const GOBLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'pyro', 'hydro', 'elec
 export const CIRCLET_STATS = ['hp_', 'atk_', 'def_', 'em', 'cr', 'cd', 'cr_cd', 'heal'] as const;
 
 export type ArtifactStatId = typeof SUBSTATS[number] | typeof GOBLET_STATS[number] | typeof CIRCLET_STATS[number];
+
+const LEGACY_FLAT_STATS = { hp: 'hp_', atk: 'atk_', def: 'def_' } as const;
+
+/** Anciennes sub-stats plates → clé % encore utilisée dans les traductions. */
+export function normalizeArtifactStatId(stat: string): string {
+	return stat in LEGACY_FLAT_STATS
+		? LEGACY_FLAT_STATS[stat as keyof typeof LEGACY_FLAT_STATS]
+		: stat;
+}
 
 export interface ArtifactSubstat {
 	stat: string;
@@ -62,7 +71,11 @@ export function readArtifactBuild(raw: unknown, legacySet?: string | null): Arti
 	const subs = Array.isArray(record.subs) ? record.subs.flatMap((entry) => {
 		const sub = asRecord(entry);
 		if (!sub || typeof sub.stat !== 'string' || sub.stat.trim() === '') return [];
-		return [{ stat: sub.stat, current: numberOr(sub.current), target: textOrEmpty(sub.target) }];
+		return [{
+			stat: normalizeArtifactStatId(sub.stat),
+			current: numberOr(sub.current),
+			target: textOrEmpty(sub.target),
+		}];
 	}) : [];
 	return {
 		set: textOrNull(record.set) ?? legacySet ?? null,
