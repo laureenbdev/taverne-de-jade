@@ -1,17 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CaretDown, CaretLeft, Translate } from 'phosphor-react';
+import { CaretDown, CaretLeft, ChatCircleText, Translate, UserCircle } from 'phosphor-react';
 import './side-nav.scss';
 
 
 import { useAuth, type Language } from '../../features/auth/AuthContext.tsx';
 import { isImpersonating } from '../../features/admin/impersonation.ts';
+import FeedbackModal from '../feedback-modal/feedback-modal.tsx';
 import SelectField from '../select-field/select-field.tsx';
 import { navConfig, type NavItem } from '../../routes.tsx';
 
 interface SideNavProps {
 	collapsed: boolean;
+	mobile?: boolean;
 	mobileOpen?: boolean;
 	onToggle: () => void;
 	onMobileClose?: () => void;
@@ -27,9 +29,11 @@ function pathMatches(pathname: string, path: string) {
 	return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-const SideNav: React.FC<SideNavProps> = ({ collapsed, mobileOpen = false, onToggle, onMobileClose }) => {
+const SideNav: React.FC<SideNavProps> = ({ collapsed, mobile = false, mobileOpen = false, onToggle, onMobileClose }) => {
 	const { t, i18n } = useTranslation();
-	const { isAdmin, setLanguage } = useAuth();
+	const { isAdmin, setLanguage, session, profile } = useAuth();
+	const [feedbackOpen, setFeedbackOpen] = useState(false);
+	const accountName = session ? (profile.displayName || session.user.email || '') : '';
 	const location = useLocation();
 	const items = useMemo(
 		() => navConfig.filter((item) => !item.adminOnly || (isAdmin && !isImpersonating())),
@@ -208,35 +212,62 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, mobileOpen = false, onTogg
 				</ul>
 
 				{!collapsed && (
-					<div className="side-nav-lang">
-						<span className="side-nav-lang-label" aria-hidden="true">
-							<Translate className="icon" size={20} />
-							<span className="nav-label">{t('settings.language')}</span>
-						</span>
-						<SelectField
-							id="side-nav-language"
-							className="side-nav-lang-select"
-							tone="dark"
-							placement="top"
-							value={language}
-							disabled={langBusy}
-							aria-label={t('settings.language')}
-							onChange={(next) => void handleLanguage(next as Language)}
-							options={LANGUAGES.map((option) => ({
-								value: option.value,
-								label: option.label,
-							}))}
-							renderValue={(option) => (option?.value || language).toUpperCase()}
-							renderOption={(option) => (
-								<>
-									<span className="side-nav-lang-code">{option.value.toUpperCase()}</span>
-									<span className="side-nav-lang-name">({option.label})</span>
-								</>
-							)}
-						/>
+					<div className="side-nav-bottom">
+						{mobile && session && (
+							<div className="side-nav-account">
+								{accountName && (
+									<NavLink to="/settings" end className="side-nav-account-link">
+										<UserCircle className="icon" size={22} weight="duotone" />
+										<span className="nav-label side-nav-account-text">
+											<span className="side-nav-account-name">{accountName}</span>
+											<span className="side-nav-account-uid">{profile.uid || '—'}</span>
+										</span>
+									</NavLink>
+								)}
+								<button
+									type="button"
+									className="side-nav-action"
+									onClick={() => {
+										onMobileClose?.();
+										setFeedbackOpen(true);
+									}}
+								>
+									<ChatCircleText className="icon" size={22} weight="duotone" />
+									<span className="nav-label">{t('feedback.open')}</span>
+								</button>
+							</div>
+						)}
+						<div className="side-nav-lang">
+							<span className="side-nav-lang-label" aria-hidden="true">
+								<Translate className="icon" size={20} />
+								<span className="nav-label">{t('settings.language')}</span>
+							</span>
+							<SelectField
+								id="side-nav-language"
+								className="side-nav-lang-select"
+								tone="dark"
+								placement="top"
+								value={language}
+								disabled={langBusy}
+								aria-label={t('settings.language')}
+								onChange={(next) => void handleLanguage(next as Language)}
+								options={LANGUAGES.map((option) => ({
+									value: option.value,
+									label: option.label,
+								}))}
+								renderValue={(option) => (option?.value || language).toUpperCase()}
+								renderOption={(option) => (
+									<>
+										<span className="side-nav-lang-code">{option.value.toUpperCase()}</span>
+										<span className="side-nav-lang-name">({option.label})</span>
+									</>
+								)}
+							/>
+						</div>
 					</div>
 				)}
 			</nav>
+			{mobile && <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />}
 		</div>
 	);
 };

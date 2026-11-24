@@ -217,23 +217,13 @@ header {
             letter-spacing: 0.14em;
         }
 
+        .header_title_main,
+        .header_title_accent {
+            white-space: nowrap;
+        }
+
+        /* compte et avis passent en bas du menu latéral */
         .header_actions {
-            gap: 6px;
-            margin-left: auto;
-        }
-
-        .header_feedback {
-            width: 36px;
-            height: 36px;
-        }
-
-        .header_account {
-            width: auto;
-            padding: 0;
-            gap: 6px;
-        }
-
-        .header_account_text {
             display: none;
         }
     }
@@ -241,14 +231,6 @@ header {
 
 @media (max-width: 420px) {
     header {
-        .header_title_accent {
-            display: none;
-        }
-
-        h1 {
-            transform: none;
-        }
-
         .header_title_main {
             font-size: 0.8rem;
         }

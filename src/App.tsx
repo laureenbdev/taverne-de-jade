@@ -66,6 +66,7 @@ function AppFrame() {
       <div className={`app-shell${mobileNavOpen ? ' is-mobile-nav-open' : ''}`}>
         <SideNav
           collapsed={isMobileNav ? false : navCollapsed}
+          mobile={isMobileNav}
           mobileOpen={mobileNavOpen}
           onToggle={() => setNavCollapsed((open) => !open)}
           onMobileClose={() => setMobileNavOpen(false)}

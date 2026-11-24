@@ -75,13 +75,42 @@
 		border-top: 1px solid rgba(198, 163, 106, 0.28);
 	}
 
+	.side-nav-bottom {
+		flex: 0 0 auto;
+		margin-top: auto;
+		border-top: 1px solid rgba(198, 163, 106, 0.22);
+	}
+
+	.side-nav-account {
+		padding: 6px 0;
+		border-bottom: 1px solid rgba(198, 163, 106, 0.22);
+	}
+
+	.side-nav-account-text {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		line-height: 1.15;
+	}
+
+	.side-nav-account-name,
+	.side-nav-account-uid {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		color: inherit;
+	}
+
+	.side-nav-account-uid {
+		color: var(--color-muted-on-dark);
+		font-size: 0.75rem;
+		letter-spacing: 0.04em;
+	}
+
 	.side-nav-lang {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-top: auto;
 		padding: 12px 16px 4px 20px;
-		border-top: 1px solid rgba(198, 163, 106, 0.22);
 		color: var(--color-muted-on-dark);
 	}
 
@@ -126,7 +155,8 @@
 
 
 	a,
-	.side-nav-group-btn {
+	.side-nav-group-btn,
+	.side-nav-action {
 		position: relative;
 		display: flex;
 		align-items: center;
@@ -169,6 +199,8 @@
 	a:focus-visible,
 	.side-nav-group-btn:focus,
 	.side-nav-group-btn:focus-visible,
+	.side-nav-action:focus,
+	.side-nav-action:focus-visible,
 	.side-nav-toggle:focus,
 	.side-nav-toggle:focus-visible {
 		outline: none;
@@ -183,7 +215,9 @@
 	a:hover,
 	a:focus-visible,
 	.side-nav-group-btn:hover,
-	.side-nav-group-btn:focus-visible {
+	.side-nav-group-btn:focus-visible,
+	.side-nav-action:hover,
+	.side-nav-action:focus-visible {
 		background: rgba(61, 190, 143, 0.14);
 		color: #fff;
 
@@ -198,7 +232,8 @@
 	}
 
 	a:active,
-	.side-nav-group-btn:active {
+	.side-nav-group-btn:active,
+	.side-nav-action:active {
 		background: rgba(61, 190, 143, 0.24);
 	}
 
