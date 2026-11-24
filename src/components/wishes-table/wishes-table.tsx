@@ -31,8 +31,8 @@ const WishesTable: React.FC<WishesTableProps> = ({ wishes, onEdit, onDelete }) =
 					<th>{t('wishes.table.name')}</th>
 					<th>{t('wishes.table.total')}</th>
 					<th>{t('wishes.table.date')}</th>
-					<th></th>
-					<th></th>
+					<th scope="col">{t('common.edit')}</th>
+					<th scope="col">{t('common.delete')}</th>
 				</tr>
 			</thead>
 			<tbody>

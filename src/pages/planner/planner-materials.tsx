@@ -403,6 +403,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 			: cluster.tasks.some((task) => task.favorite);
 		const tiles = renderTiles(cluster, byCharacter);
 		const portraitDone = byCharacter && clusterDone(cluster);
+		const ClusterTitle = byCharacter ? 'h3' : 'h4';
 		return (
 			<article key={cluster.key} className={`planner-cluster${single ? ' is-single' : ''}${groupFavorite ? ' is-favorite' : ''}`}>
 				<header className={byCharacter ? 'is-character' : undefined}>
@@ -416,7 +417,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 							<img src={characterIconUrl(cluster.key)} alt="" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
 						</button>
 					)}
-					<h4>{title}</h4>
+					<ClusterTitle className="planner-cluster-title">{title}</ClusterTitle>
 					{!byCharacter && (domain || days) && (
 						<p>
 							{domain}

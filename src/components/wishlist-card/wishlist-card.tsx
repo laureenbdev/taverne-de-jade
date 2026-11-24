@@ -74,7 +74,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
 		<div className={`wishlist-card ${rarityClass} ${typeClass} ${item.isCompleted ? 'completed' : ''}`}>
 			<div className="wishlist-card-top">
 				<div className="wishlist-card-title">
-					<h4>{item.name}</h4>
+					<h3 className="wishlist-card-name">{item.name}</h3>
 					<p className="wishlist-card-meta">
 						<span className="wishlist-card-type">
 							<TypeIcon size={14} aria-hidden="true" />

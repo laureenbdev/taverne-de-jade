@@ -1128,11 +1128,14 @@ body.modal-open .planner-add {
 		}
 	}
 
-	h4 {
+	.planner-cluster-title {
 		margin: 0;
 		color: var(--color-heading);
+		font-family: Cinzel, serif;
 		font-size: 0.95rem;
+		font-weight: 500;
 		line-height: 1.2;
+		letter-spacing: 0.02em;
 	}
 
 	p {
