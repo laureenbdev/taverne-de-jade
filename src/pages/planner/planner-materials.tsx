@@ -461,7 +461,7 @@ const PlannerMaterials: React.FC<PlannerMaterialsProps> = ({
 			>
 				{plans.length === 0 ? (
 					<p className="planner-empty">{t('planner.materialsNeedRoster')}</p>
-				) : (
+				) : !farm ? null : (
 				<>
 					<div className="planner-materials-bar">
 						<ul className="planner-stats">
